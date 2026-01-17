@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './Pages/HomePage';
 import Header from './components/Header/Header';
 import Footer from './components/Footer';
+import '@mantine/core/styles.css';
+import '@mantine/carousel/styles.css';
 
 function App() {
 
