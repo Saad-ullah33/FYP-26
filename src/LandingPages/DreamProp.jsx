@@ -1,6 +1,9 @@
-import React from 'react'
+import { Button, Input } from '@mantine/core';
+import React, { useState } from 'react'
 
 const DreamProp = () => {
+    const [active, setActive] = useState('Buy');
+      const buttons = ['Buy', 'Rent', 'Projects'];
   return (
     <div className=''>
         <div>
@@ -14,28 +17,44 @@ const DreamProp = () => {
       />
 
       {/* Dark overlay to dark the image  */}
-      <div className="absolute inset-0 bg-black/30"></div>
+      <div className="absolute inset-0 bg-black/50"></div>
 
       {/* Content on top of image */}
-      <div className="absolute inset-0 flex flex-col items-start justify-center text-white px-4">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-red-700 px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-center">
           Find Your Dream Property
         </h1>
+    <div className="flex gap-3 mt-6">
+      {buttons.map((label) => (
+        <Button
+          key={label}
+          variant={active === label ? 'filled' : 'subtle'}
+          styles={(theme) => ({
+            root: {
+              minWidth: 120, // equal width
+              color: active === label ? 'black' : 'white', // text color
+              backgroundColor:
+                active === label ? 'white' : theme.colors.blue[5], // bg color
+            },
+          })}
+          onClick={() => setActive(label)}
+        >
+          {label}
+        </Button>
+      ))}
+    </div>
+
+
+
 
         <p className="mt-4 text-lg text-center font-semibold max-w-xl">
           Buy, Rent or Sell properties easily
         </p>
 
         {/* Search field  */}
-        <div className="mt-6 flex gap-2 bg-white p-2 rounded-lg">
-          <input
-            type="text"
-            placeholder="Search location..."
-            className="px-4 py-2 outline-none text-black"
-          />
-          <button className="bg-blue-600 px-6 py-2 font-semibold rounded text-black">
-            Search
-          </button>
+        <div className="flex bg-black/60 w-[70]">
+         <Input className='px-4 m-5' variant="filled" size="md" radius="xs"  placeholder="Input component" />
+
         </div>
       </div>
 

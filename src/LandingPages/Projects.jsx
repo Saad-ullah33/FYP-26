@@ -5,9 +5,16 @@ import { IconArrowLeft, IconArrowRight, IconBuildingCommunity } from '@tabler/ic
 
  export const Projects = () => {
   return (
-    <div className='w-full max-w-7xl px-4 py-6 bg-blue-400 rounded-xl shadow-lg ml-14 my-10'>
+    <div className='w-full max-w-7xl px-4 py-6 bg-blue-400 rounded-xl shadow-lg ml-14 my-10 overflow-x-hidden'>
+
         <div className='text-3xl font-bold mb-3'>Trending</div>
-<Carousel slideSize="22%" slideGap="md" emblaOptions={{ loop: true }}>
+<Carousel  slideSize="33%"  slideGap="md"  breakpoints={[
+    { maxWidth: 'md', slideSize: '90%' },
+    { maxWidth: 'lg', slideSize: '45%' },
+    { maxWidth: 'xl', slideSize: '22%' },
+  ]}
+  emblaOptions={{ loop: true }}
+>
   {projects.map((project, index) => (
     <Carousel.Slide key={index}>
 

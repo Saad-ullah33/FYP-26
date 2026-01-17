@@ -147,4 +147,17 @@
   }
   /* Add more entries similarly until 50+ */
 ];
+export const PartnersInFaisalabad = [
+  "Hadi Estate",
+  "Master Estate Agency",
+  "Eman Property Center",
+  "Samad Estate",
+  "Pakistan Estate Linkers & Developers",
+  "Faisalabad Realtors",
+  "Real Estate",
+  "Linkers",
+  "Premier Developers",
+
+];
+
 export default projects;
