@@ -13,9 +13,9 @@ const HomePage = () => {
         <BuildSmart/>
         <Explore/>
         <Partners/>
+        <Projects/>
         <Blog/>
 
-        <Projects/>
     </div>
   )
 }
