@@ -12,9 +12,9 @@ const HomePage = () => {
         <BuildSmart/>
 
         <Explore/>
+        <Projects/>
         <Blog/>
 
-        <Projects/>
     </div>
   )
 }

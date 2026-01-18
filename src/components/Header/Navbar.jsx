@@ -14,46 +14,64 @@ const Navbar = () => {
     { name: "Become a Seller", url: "/become-seller" },
     { name: "LogIn", url: "/login" },
   ];
-    const leftLinks = urls.slice(0, 6);
-  const rightLinks = urls.slice(6);
 
-   const location = useLocation();
+  const leftLinks = urls.slice(0, 6);
+  const rightLinks = urls.slice(6);
+  const location = useLocation();
+
   return (
-       <div className="flex justify-between h-full gap-5 text-mine-shaft-300 items-center px-6">
+    <div className="flex justify-between h-full gap-5 text-mine-shaft-300 items-center px-6">
 
       {/* LEFT LINKS */}
-      <div className="flex gap-5 mx-9 px-9">
-        {leftLinks.map((link, index) => (
-          <Link key={index} 
-           className={`
-  border-t-[3px] h-full flex items-center px-1
-  ${location.pathname === link.url 
-    ? "border-white text-white" 
-    : "border-transparent text-gray-800"}
-`}
- to={link.url}>
-            {link.name}
-          </Link>
-        ))}
+      <div className="flex gap-5 mx-9 px-9 h-full">
+        {leftLinks.map((link, index) => {
+          const isActive = location.pathname === link.url;
+          return (
+            <Link key={index} to={link.url}
+              className={`
+                relative h-full flex items-center px-1 border-b-[3px] 
+                ${isActive ? "border-white text-white" : "border-transparent text-gray-800"}
+              `}
+            >
+              {link.name}
+              
+              {/* THE PULSE DOT: Only shows if active */}
+              {isActive && (
+                <div className="absolute bottom-[-10px] left-0 w-full flex justify-center">
+                  <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+                </div>
+              )}
+            </Link>
+          )
+        })}
       </div>
 
       {/* RIGHT LINKS */}
-      <div className="flex gap-5 mx-2">
-        {rightLinks.map((link, index) => (
-          <Link key={index} 
-          className={`
-  border-t-[3px] h-full flex items-center px-1
-  ${location.pathname === link.url 
-    ? "border-white text-white" 
-    : "border-transparent text-gray-800"}
-`} to={link.url}>
-            {link.name}
-          </Link>
-        ))}
+      <div className="flex gap-5 mx-2 h-full">
+        {rightLinks.map((link, index) => {
+          const isActive = location.pathname === link.url;
+          return (
+            <Link key={index} to={link.url}
+              className={`
+                relative h-full flex items-center px-1 border-b-[3px] 
+                ${isActive ? "border-white text-white" : "border-transparent text-gray-800"}
+              `}
+            >
+              {link.name}
+
+              {/* THE PULSE DOT: Only shows if active */}
+              {isActive && (
+                <div className="absolute bottom-[-10px] left-0 w-full flex justify-center">
+                  <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+                </div>
+              )}
+            </Link>
+          )
+        })}
       </div>
 
     </div>
   )
 }
 
-export default Navbar
+export default Navbar 
