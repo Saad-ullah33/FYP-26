@@ -19,7 +19,7 @@ import { IconArrowLeft, IconArrowRight, IconBuildingCommunity } from '@tabler/ic
     <Carousel.Slide key={index}>
 
 <div className="flex justify-center">
-  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 w-80 md:w-96 h-auto overflow-hidden flex flex-col">
+  <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 w-80 md:w-96 h-auto overflow-hidden flex flex-col cursor-pointer">
     
     {/* Large cover image */}
     <img

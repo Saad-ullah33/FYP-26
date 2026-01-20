@@ -6,7 +6,6 @@ const Navbar = () => {
     { name: "Home", url: "/" },
     { name: "Property Finder", url: "/property-finder" },
     { name: "Smart Build", url: "/smart-build" },
-    { name: "Auctions", url: "/auctions" },
     { name: "Maps", url: "/maps" },
     { name: "More", url: "/more" },
     { name: "Search", url: "/search" },
