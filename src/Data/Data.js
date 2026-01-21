@@ -1,3 +1,5 @@
+import { IconMapPin } from "@tabler/icons-react";
+
  const projects=[
   {
     "name": "Grand Central Mall",
@@ -147,7 +149,7 @@
   }
   /* Add more entries similarly until 50+ */
 ];
-export const PartnersInFaisalabad = [
+ const PartnersInFaisalabad = [
   "Hadi Estate",
   "Master Estate Agency",
   "Eman Property Center",
@@ -160,4 +162,6 @@ export const PartnersInFaisalabad = [
 
 ];
 
-export default projects;
+
+export default  projects;;
+export { PartnersInFaisalabad };
