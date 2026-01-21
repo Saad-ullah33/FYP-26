@@ -2,7 +2,7 @@ import React from 'react'
 
 const SmartCalculator = () => {
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 sm:p-10 border border-gray-100">
+    <div className="bg-white rounded-xl shadow-lg p-6 sm:p-10 border border-gray-100 mb-20">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
             
             {/* City Selection */}

@@ -1,5 +1,7 @@
 import React from 'react'
 import SmartCalculator from '../SmartBuild/SmartCalculator'
+import PopularCal from '../SmartBuild/PopularCal'
+import BuilderProfiles from '../SmartBuild/BuilderProfiles'
 
 const Smartbuild = () => {
   return (
@@ -9,6 +11,8 @@ const Smartbuild = () => {
       <span className='flex justify-center mb-[170px]'>Use our Smart Build Calculator to get a quick estimate of required building materials along with their costs.</span>
       </div>
       <SmartCalculator/>
+      <PopularCal/>
+      <BuilderProfiles/>
     </div>
   )
 }
