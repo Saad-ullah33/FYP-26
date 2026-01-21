@@ -11,7 +11,7 @@ const DreamProp = () => {
       
       {/* Image */}
       <img
-        src="/fsd.png"
+        src="/home.jpg"
         alt="Faisalabad"
         className="w-full h-full object-cover"
       />

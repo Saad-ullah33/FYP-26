@@ -6,7 +6,7 @@ export const Partners = () => {
   return (
    
     <div className='mt-20 pb-5'>
-        <div className='text-4xl font-semibold text-center mb-8 text-mine-shaft-100'> Our <span className='text-bright-sun-400'>Trusted</span> Patners</div>
+        <div className='text-4xl font-semibold text-center mb-8 text-mine-shaft-100'> Our <span className='text-bright-sun-400'>Trusted</span> Partners</div>
         <Marquee pauseOnHover={true}>
             {PartnersInFaisalabad.map((company, index) => (
   <div
