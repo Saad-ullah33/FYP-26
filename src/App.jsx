@@ -2,6 +2,7 @@ import React from 'react';
 import {  MantineProvider } from '@mantine/core';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './Pages/HomePage';
+import Smartbuild from './Pages/Smartbuild';
 import Header from './components/Header/Header';
 import Footer from './components/Footer';
 import '@mantine/core/styles.css';
@@ -21,6 +22,7 @@ function App() {
 
     <Routes>
       <Route path='*' element={<HomePage/>} />
+      <Route path='/Smartbuild' element={<Smartbuild/>} />
     </Routes>
     <Footer/>
      </BrowserRouter>
