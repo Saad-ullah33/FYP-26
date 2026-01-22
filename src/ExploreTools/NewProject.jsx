@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Carousel } from '@mantine/carousel';
 import React from 'react';
 import { propertyCategories } from '../Data/propertyCategories';
@@ -102,7 +103,6 @@ export const NewProject = () => {
     ))}
   </Carousel>
 </div>
-
     </>
   );
-};
+}
