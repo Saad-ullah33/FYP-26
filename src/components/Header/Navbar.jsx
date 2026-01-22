@@ -5,9 +5,13 @@ const Navbar = () => {
   let urls = [
     { name: "Home", url: "/" },
     { name: "Property Finder", url: "/property-finder" },
+<<<<<<< HEAD
     { name: "Smart Build", url: "/Smartbuild" },
     { name: "Auctions", url: "/auctions" },
    
+=======
+    { name: "Smart Build", url: "/smart-build" },
+>>>>>>> 6e8c5617bd9172a94d9c3e721d80354e502d7745
     { name: "Maps", url: "/maps" },
     { name: "More", url: "/more" },
     { name: "Search", url: "/search" },
