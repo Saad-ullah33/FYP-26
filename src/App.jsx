@@ -24,6 +24,10 @@ function App() {
       <Route path='/Smart-build' element={<Smartbuild/>} />
       <Route path='/add-property' element={<AddProperty/>} />
       <Route path='/new-project' element={<NewProject/>} />
+  {/* <Route path="/construction-cost" element={<ConstructionCost />} />
+  <Route path="/area-guides" element={<AreaGuides />} />
+  <Route path="/property-index" element={<PropertyIndex />} />
+  <Route path="/plot-finder" element={<PlotFinder />} /> */}
     </Routes>
     <Footer/>
      </BrowserRouter>
