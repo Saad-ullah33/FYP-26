@@ -1,0 +1,15 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  width="28"
+  height="28"
+  fill="#7AD0C9"
+  className="text-[#7AD0C9]"
+>
+  <path d="M5 6h2v2H5z" />
+  <path d="M5 10h2v2H5z" />
+  <path d="M9 6h2v2H9z" />
+  <path d="M9 10h2v2H9z" />
+  <path d="M21 14h-1.5v-2.5a1 1 0 00-1-1h-5.167a1 1 0 00-1 1V14H11a1 1 0 00-1 1v6a1 1 0 001 1h10a1 1 0 001-1v-6a1 1 0 00-1-1zm-7.167-2H18v2h-4.167zm6.417 8.25h-8.5v-4.5h8.5z" />
+  <path d="M9 20.25H4a.25.25 0 01-.25-.25V4A.25.25 0 014 3.75h8a.25.25 0 01.25.25v5H14V4a2 2 0 00-2-2H4a2 2 0 00-2 2v16a2 2 0 002 2h5z" />
+</svg>

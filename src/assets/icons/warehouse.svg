@@ -1,0 +1,13 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  width="28"
+  height="28"
+  fill="#FAB0A2"
+  className="text-[#FAB0A2]"
+>
+  <path d="M14.134 14h6.681v2h-6.681z" />
+  <path d="M14.134 17h6.681v2h-6.681z" />
+  <path d="M14.134 20h6.681v2h-6.681z" />
+  <path d="M12 20.25H4.934v-9.334L12 6.107l7.066 4.809v1.074h1.75v-2L12 3.99l-8.816 6V22H12z" />
+</svg>

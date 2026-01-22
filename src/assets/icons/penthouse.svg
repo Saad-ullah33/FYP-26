@@ -1,0 +1,14 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  width="28"
+  height="28"
+  fill="#7AD0C9"
+  className="text-[#7AD0C9]"
+>
+  <path d="M18 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2zm.25 18.25H13.5V19h-3v1.25H5.75V10h12.5zm0-14.891H9v1.335h9.25V8.25H5.75V6.694H7V5.359H5.75V3.75h12.5z" />
+  <path d="M8.75 11.45h1.7v1.7h-1.7z" />
+  <path d="M13.15 11.45h1.7v1.7h-1.7z" />
+  <path d="M8.75 14.85h1.7v1.7h-1.7z" />
+  <path d="M13.15 14.85h1.7v1.7h-1.7z" />
+</svg>
