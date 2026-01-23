@@ -7,6 +7,7 @@ const Navbar = () => {
     { name: "Property Finder", url: "/property-finder" },
     { name: "Auctions", url: "/auctions" },
     { name: "Smart Build", url: "/smart-build" },
+    { name: "Auction", url: "/auction" },
     { name: "Maps", url: "/maps" },
     { name: "More", url: "/more" },
     { name: "Search", url: "/search" },
