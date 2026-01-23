@@ -8,7 +8,6 @@ import Footer from './components/Footer';
 import '@mantine/core/styles.css';
 import '@mantine/carousel/styles.css';
 import AddProperty from './PostProperty/AddProperty';
-import { Auction } from './Auction/Auction';
 
 function App() {
 
@@ -26,7 +25,6 @@ function App() {
       <Route path='*' element={<HomePage/>} />
       <Route path='/Smart-build' element={<Smartbuild/>} />
       <Route path='/add-property' element={<AddProperty/>} />
-      <Route path="/auction" element={<Auction />} />
     </Routes>
     <Footer/>
      </BrowserRouter>
