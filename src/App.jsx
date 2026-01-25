@@ -9,6 +9,7 @@ import '@mantine/core/styles.css';
 import '@mantine/carousel/styles.css';
 import AddProperty from './PostProperty/AddProperty';
 import { NewProject } from './ExploreTools/NewProject';
+import Flats from './ExploreTools/ExCatogires/Flats';
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
       <Route path='/Smart-build' element={<Smartbuild/>} />
       <Route path='/add-property' element={<AddProperty/>} />
       <Route path='/new-project' element={<NewProject/>} />
+      <Route path='/flats' element={<Flats/>} />
   {/* <Route path="/construction-cost" element={<ConstructionCost />} />
   <Route path="/area-guides" element={<AreaGuides />} />
   <Route path="/property-index" element={<PropertyIndex />} />

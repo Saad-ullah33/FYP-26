@@ -4,7 +4,7 @@ const boulevardImg = 'FlatPhotos/boulevard.jpg';
 const callImg = 'FlatPhotos/call.svg';
 const messageImg = 'FlatPhotos/message.svg';
 const whatsappImg = 'FlatPhotos/whats.svg'; 
-const flatImg = 'FlatPhotos/flat.svg'; 
+// const flatImg = 'FlatPhotos/flat.svg'; 
 
 const Flats = () => {
   return (

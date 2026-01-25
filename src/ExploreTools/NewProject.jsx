@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { Carousel } from '@mantine/carousel';
 import React from 'react';
 import { propertyCategories } from '../Data/propertyCategories';
@@ -42,7 +42,7 @@ export const NewProject = () => {
           {propertyCategories.map((cat) => (
             <Carousel.Slide key={cat.id}>
               <Link
-                to={`/projects/${cat.slug}`}
+                to={`/${cat.slug}`}
                 className="flex flex-col items-center justify-center gap-2 p-4 border rounded-xl bg-white hover:shadow-xl transition-all duration-300"
               >
                 <img src={cat.icon} className="w-10 h-10" alt={cat.name} />
