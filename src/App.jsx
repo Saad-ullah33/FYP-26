@@ -27,6 +27,7 @@ function App() {
       <Route path='/add-property' element={<AddProperty/>} />
       <Route path='/new-project' element={<NewProject/>} />
       <Route path='/flats' element={<Flats/>} />
+      <Route path='/admin/dashboard' element={<AdminDashboard/>} />
   {/* <Route path="/construction-cost" element={<ConstructionCost />} />
   <Route path="/area-guides" element={<AreaGuides />} />
   <Route path="/property-index" element={<PropertyIndex />} />
