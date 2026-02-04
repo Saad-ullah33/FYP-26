@@ -1,8 +1,20 @@
 {
-  "name": "project",
-  "private": true,
+  "name": "mahad",
   "version": "0.0.0",
+  "private": true,
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "homepage": "https://github.com/Saad-ullah33/FYP-26#readme",
+  "bugs": {
+    "url": "https://github.com/Saad-ullah33/FYP-26/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Saad-ullah33/FYP-26.git"
+  },
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "eslint.config.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -18,6 +30,7 @@
     "@tabler/icons-react": "^3.36.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-fast-marquee": "^1.6.5",

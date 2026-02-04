@@ -6,6 +6,7 @@ import { Projects } from '../LandingPages/Projects'
 import { Partners } from '../LandingPages/Partners'
 import { AuctionBanner } from '../LandingPages/AuctionBanner'
 import ExplorePage from '../LandingPages/ExplorePage'
+import AdminDashboard from '../Admin/AdminDashboard'
 
 const HomePage = () => {
   return (
@@ -17,6 +18,8 @@ const HomePage = () => {
         <Partners/>
         <Projects/>
         <Blog/>
+        {/* <AdminDashboard/> */}
+
 
     </div>
   )

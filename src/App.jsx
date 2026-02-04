@@ -2,6 +2,7 @@ import React from 'react';
 import {  MantineProvider } from '@mantine/core';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './Pages/HomePage';
+import AdminDashboard from './Admin/AdminDashboard';
 import Smartbuild from './Pages/Smartbuild';
 import Header from './components/Header/Header';
 import Footer from './components/Footer';
