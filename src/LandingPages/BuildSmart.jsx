@@ -5,7 +5,7 @@ const BuildSmart = () => {
     <div>
             
       {/* --- HERO SECTION --- */}
-      <header className="h-screen flex flex-col items-center justify-center from-slate-900 to-slate-800  px-6 text-center mt-10 ">
+      <header className="h-screen flex flex-col items-center justify-center from-slate-900 to-slate-800  px-6 text-center  ">
         <div className="max-w-3xl space-y-6">
           <h1 className="text-5xl text-blue-500 font-bold ">
             Build Smarter, <br />

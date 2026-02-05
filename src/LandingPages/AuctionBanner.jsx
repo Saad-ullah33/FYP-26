@@ -4,15 +4,15 @@ import React from 'react'
 
 export const AuctionBanner = () => {
   return (<>
-    <div className="bg-blue-200 text-white py-10">
-      <div className="container mx-auto px-4 text-center">
+    <div className=" text-white py-10 mt-10">
+      <div className="container mx-auto px-4 text-center mb-10">
         <h2 className="text-3xl text-black font-bold mb-4">Sell Your Property with Ease Through <span className='underline text-blue-600'>Bidding!</span></h2>
       </div>
 <div className="flex flex-col md:flex-row gap-6 justify-around text-center">
   
   {/* Card */}
-  <div className="max-w-xs p-4">
-    <div className="flex justify-center mb-2">
+  <div className="max-w-xs p-4 border border-gray-300 rounded-lg">
+    <div className="flex justify-center mb-2 ">
       <img
         className="h-10 w-10"
         src="https://res.cloudinary.com/dr3ie9gpz/image/upload/v1739352981/emehyfjsfhivhsyjsaki.webp"
@@ -46,7 +46,7 @@ export const AuctionBanner = () => {
   </div>
 
   {/* Card */}
-  <div className="max-w-xs p-4">
+  <div className="max-w-xs p-4 border border-gray-300 rounded-lg">
     <div className="flex justify-center mb-2">
       <img
         className="h-10 w-10"
@@ -67,7 +67,7 @@ export const AuctionBanner = () => {
 </div>
 
     </div>
-<Divider color='black' size={'sm'} />
+
     </>
   )
 }

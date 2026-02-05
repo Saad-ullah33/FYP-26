@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
-  let urls = [
+  const urls = [
     { name: "Home", url: "/" },
     { name: "Property Finder", url: "/property-finder" },
     { name: "Auctions", url: "/auctions" },
@@ -20,52 +20,65 @@ const Navbar = () => {
   const rightLinks = urls.slice(6);
   const location = useLocation();
 
+  // STYLE SETTINGS
+  // 1. text-base: The standard "Medium" size (16px).
+  // 2. font-bold: Keeps it readable and premium.
+  const gradientText = "bg-gradient-to-r from-blue-700 to-blue-500 text-transparent bg-clip-text font-bold text-base";
+  const simpleText = "text-gray-600 hover:text-blue-600 font-semibold text-base transition-colors";
+
   return (
-    <div className="flex justify-between h-full gap-5 text-mine-shaft-300 items-center px-6">
+    <div className="flex items-center h-full gap-6">
 
       {/* LEFT LINKS */}
-      <div className="flex gap-5 mx-9 px-9 h-full">
+      <div className="flex items-center gap-6 h-full">
         {leftLinks.map((link, index) => {
           const isActive = location.pathname === link.url;
           return (
-            <Link key={index} to={link.url}
-              className={`
-                relative h-full flex items-center px-1 border-b-[3px] 
-                ${isActive ? "border-white text-white" : "border-transparent text-gray-800"}
+            <Link 
+              key={index} 
+              to={link.url}
+              className={`relative h-full flex items-center px-1 transition-all
+                ${isActive ? "border-b-[3px] border-blue-600" : "border-b-[3px] border-transparent hover:border-blue-100"}
               `}
             >
-              {link.name}
-              
-              {/* THE PULSE DOT: Only shows if active */}
-              {isActive && (
-                <div className="absolute bottom-[-10px] left-0 w-full flex justify-center">
-                  <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
-                </div>
-              )}
+              <span className={isActive ? gradientText : simpleText}>
+                {link.name}
+              </span>
             </Link>
           )
         })}
       </div>
 
+      {/* SEPARATOR */}
+      <div className="h-6 w-[1.5px] bg-gray-200 hidden md:block"></div>
+
       {/* RIGHT LINKS */}
-      <div className="flex gap-5 mx-2 h-full">
+      <div className="flex items-center gap-6 h-full">
         {rightLinks.map((link, index) => {
           const isActive = location.pathname === link.url;
+          
+          // LOGIN BUTTON - Adjusted to match medium text
+          if (link.name === "LogIn") {
+             return (
+               <Link key={index} to={link.url} className="ml-2">
+                 <button className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                   Log In
+                 </button>
+               </Link>
+             )
+          }
+
           return (
-            <Link key={index} to={link.url}
-              className={`
-                relative h-full flex items-center px-1 border-b-[3px] 
-                ${isActive ? "border-white text-white" : "border-transparent text-gray-800"}
+            <Link 
+              key={index} 
+              to={link.url}
+              className={`relative h-full flex items-center px-1 transition-all
+                ${isActive ? "border-b-[3px] border-blue-600" : "border-b-[3px] border-transparent hover:border-blue-100"}
               `}
             >
-              {link.name}
-
-              {/* THE PULSE DOT: Only shows if active */}
-              {isActive && (
-                <div className="absolute bottom-[-10px] left-0 w-full flex justify-center">
-                  <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
-                </div>
-              )}
+              <span className={isActive ? gradientText : simpleText}>
+                {link.name}
+              </span>
             </Link>
           )
         })}
@@ -75,4 +88,4 @@ const Navbar = () => {
   )
 }
 
-export default Navbar 
+export default Navbar
