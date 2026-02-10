@@ -11,6 +11,7 @@ import '@mantine/carousel/styles.css';
 import AddProperty from './PostProperty/AddProperty';
 import { NewProject } from './ExploreTools/NewProject';
 import Flats from './ExploreTools/ExCatogires/Flats';
+import PropertyFinder from './Pages/PropertyFinder';
 
 function App() {
 
@@ -23,6 +24,7 @@ function App() {
 
     <Routes>
       <Route path='*' element={<HomePage/>} />
+      <Route path='/property-finder' element={<PropertyFinder/>} />
       <Route path='/Smart-build' element={<Smartbuild/>} />
       <Route path='/add-property' element={<AddProperty/>} />
       <Route path='/new-project' element={<NewProject/>} />
