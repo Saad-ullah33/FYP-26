@@ -1,253 +1,293 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 const AddProperty = () => {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
-    type: "",
-    price: "",
-    location: "",
     description: "",
-    image: null,
-    contact: "",
+    price: "",
+    purpose: "",
+    propertyType: "",
+    city: "",
+    area: "",
+    address: "",
+    images: [], // store multiple images
   });
 
   const [errors, setErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
-  // Handle input change
+  // Handle text input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: "" });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  // Handle image
+  // Handle image selection (max 4)
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, image: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
+    const files = Array.from(e.target.files).slice(0, 4); // max 4
+    setFormData({ ...formData, images: files });
+
+    // Generate previews
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previews);
   };
 
-  // Validation
+  // Simple validation
   const validateForm = () => {
-    let newErrors = {};
-
-    if (!formData.title) newErrors.title = "Title is required";
-    if (!formData.type) newErrors.type = "Property type is required";
-    if (!formData.price || formData.price <= 0)
-      newErrors.price = "Enter valid price";
-    if (!formData.location) newErrors.location = "Location is required";
-    if (!formData.contact || formData.contact.length < 10)
-      newErrors.contact = "Enter valid contact number";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    let err = {};
+    if (!formData.title) err.title = "Title required";
+    if (!formData.price || formData.price <= 0) err.price = "Valid price required";
+    if (!formData.purpose) err.purpose = "Purpose required";
+    if (!formData.propertyType) err.propertyType = "Property type required";
+    if (!formData.city) err.city = "City required";
+    if (!formData.area) err.area = "Area required";
+    if (!formData.address) err.address = "Address required";
+    if (formData.images.length === 0) err.images = "At least one image required";
+    setErrors(err);
+    return Object.keys(err).length === 0;
   };
 
-  // NEXT → Preview
+  // Move to step 2
   const handleNext = (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    setStep(2);
+    if (validateForm()) setStep(2);
   };
 
-  // FINAL SUBMIT
-  const handleFinalSubmit = () => {
-    console.log("Submitted Property:", formData);
-    alert("Property submitted successfully (Frontend only)");
-  };
+  // Submit data to backend
+const handleSubmit = async () => {
+  if (loading) return; // prevent multiple clicks
+  setLoading(true);
 
-  // EDIT
-  const handleEdit = () => {
+  try {
+    const data = new FormData();
+    data.append(
+      "property",
+      new Blob([JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        purpose: formData.purpose,
+        propertyType: formData.propertyType,
+        city: formData.city,
+        area: formData.area,
+        address: formData.address,
+      })], { type: "application/json" })
+    );
+    formData.images.forEach(img => data.append("images", img));
+
+    await axios.post("http://localhost:8080/api/properties/create", data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+
+    alert("Property submitted successfully!");
+    setFormData({
+      title: "", description: "", price: "", purpose: "",
+      propertyType: "", city: "", area: "", address: "", images: []
+    });
+    setImagePreviews([]);
     setStep(1);
-  };
+
+  } catch (err) {
+    console.error("Error uploading property:", err);
+    alert("Property submission failed.");
+  } finally {
+    setLoading(false); // enable button again
+  }
+};
+
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex justify-center items-center px-4">
+      <div className="bg-white w-full max-w-5xl p-10 rounded-3xl shadow-2xl">
 
-        {/* ================= FORM STEP ================= */}
+        {/* STEP 1 */}
         {step === 1 && (
           <>
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              Sell Your Property
-            </h2>
-
+            <h2 className="text-4xl font-bold text-center mb-10">🏠 Add New Property</h2>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               <div className="md:col-span-2">
+                <label className="font-semibold">Property Title</label>
                 <input
-                  type="text"
                   name="title"
-                  placeholder="Property Title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full border p-3 rounded-lg"
+                  className="w-full mt-2 border rounded-xl p-3"
+                  placeholder="Luxury House in DHA"
                 />
                 {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
               </div>
 
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="w-full border p-3 rounded-lg"
-              >
-                <option value="">Select Property Type</option>
-                <option value="House">House</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Plot">Plot</option>
-              </select>
-              {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
-
-              <input
-                type="number"
-                name="price"
-                placeholder="Price (PKR)"
-                value={formData.price}
-                onChange={handleChange}
-                className="w-full border p-3 rounded-lg"
-              />
-              {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
-
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full border p-3 rounded-lg"
-              />
-              {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
-
-              <input
-                type="text"
-                name="contact"
-                placeholder="Contact Number"
-                value={formData.contact}
-                onChange={handleChange}
-                className="w-full border p-3 rounded-lg"
-              />
-              {errors.contact && <p className="text-red-500 text-sm">{errors.contact}</p>}
-
-              <div className="md:col-span-2">
-                <textarea
-                  name="description"
-                  placeholder="Property Description"
-                  value={formData.description}
+              <div>
+                <label className="font-semibold">Purpose</label>
+                <select
+                  name="purpose"
+                  value={formData.purpose}
                   onChange={handleChange}
-                  rows="4"
-                  className="w-full border p-3 rounded-lg"
+                  className="w-full mt-2 border rounded-xl p-3"
+                >
+                  <option value="">Select</option>
+                  <option value="SALE">Sale</option>
+                  <option value="RENT">Rent</option>
+                </select>
+                {errors.purpose && <p className="text-red-500 text-sm">{errors.purpose}</p>}
+              </div>
+
+              <div>
+                <label className="font-semibold">Property Type</label>
+                <select
+                  name="propertyType"
+                  value={formData.propertyType}
+                  onChange={handleChange}
+                  className="w-full mt-2 border rounded-xl p-3"
+                >
+                  <option value="">Select</option>
+                  <option value="HOUSE">House</option>
+                  <option value="APARTMENT">Apartment</option>
+                  <option value="PLOT">Plot</option>
+                </select>
+                {errors.propertyType && <p className="text-red-500 text-sm">{errors.propertyType}</p>}
+              </div>
+
+              <div>
+                <label className="font-semibold">Price (PKR)</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full mt-2 border rounded-xl p-3"
                 />
+                {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
+              </div>
+
+              <div>
+                <label className="font-semibold">City</label>
+                <input
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full mt-2 border rounded-xl p-3"
+                />
+                {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
+              </div>
+
+              <div>
+                <label className="font-semibold">Area</label>
+                <input
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  className="w-full mt-2 border rounded-xl p-3"
+                />
+                {errors.area && <p className="text-red-500 text-sm">{errors.area}</p>}
               </div>
 
               <div className="md:col-span-2">
+                <label className="font-semibold">Full Address</label>
+                <input
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full mt-2 border rounded-xl p-3"
+                />
+                {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="font-semibold">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full mt-2 border rounded-xl p-3"
+                />
+              </div>
+
+              {/* Images */}
+              <div className="md:col-span-2">
+                <label className="font-semibold">Property Images (max 4)</label>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageChange}
-                  className="w-full border p-3 rounded-lg"
+                  className="w-full mt-2"
                 />
+                {errors.images && <p className="text-red-500 text-sm">{errors.images}</p>}
+                <div className="flex gap-2 mt-2">
+                  {imagePreviews.map((src, idx) => (
+                    <img key={idx} src={src} alt="preview" className="w-20 h-20 object-cover rounded-xl" />
+                  ))}
+                </div>
               </div>
 
               <div className="md:col-span-2">
                 <button
                   onClick={handleNext}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg"
                 >
-                  Next
+                  Preview Property →
                 </button>
               </div>
             </form>
           </>
         )}
 
-        {/* ================= PREVIEW STEP ================= */}
-{step === 2 && (
-  <>
-    <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-      Preview Property
-    </h2>
+        {/* STEP 2 */}
+        {step === 2 && (
+          <>
+            <h2 className="text-4xl font-bold text-center mb-8">👀 Property Preview</h2>
 
-    <div className="border rounded-xl p-6 bg-gray-50 space-y-6">
+            {imagePreviews.length > 0 && (
+              <div className="flex gap-2 mb-6">
+                {imagePreviews.map((src, idx) => (
+                  <img key={idx} src={src} alt="preview" className="w-32 h-32 object-cover rounded-xl" />
+                ))}
+              </div>
+            )}
 
-      {/* Image Section */}
-      {imagePreview && (
-        <div className="w-full">
-          <img
-            src={imagePreview}
-            alt="Property Preview"
-            className="w-full h-64 object-cover rounded-lg shadow"
-          />
-        </div>
-      )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+              <p><b>Title:</b> {formData.title}</p>
+              <p><b>Purpose:</b> {formData.purpose}</p>
+              <p><b>Type:</b> {formData.propertyType}</p>
+              <p className="text-green-600"><b>Price:</b> PKR {formData.price}</p>
+              <p><b>City:</b> {formData.city}</p>
+              <p><b>Area:</b> {formData.area}</p>
+              <p className="md:col-span-2"><b>Address:</b> {formData.address}</p>
+            </div>
 
-      {/* Property Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <p className="mt-6 text-gray-700">{formData.description}</p>
 
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="text-sm text-gray-500">Property Title</p>
-          <p className="font-semibold text-lg">{formData.title}</p>
-        </div>
+            <div className="flex gap-4 mt-10">
+              <button
+                onClick={() => setStep(1)}
+                className="w-full bg-gray-700 text-white py-4 rounded-xl font-bold"
+              >
+                Edit
+              </button>
+              <button
+  type="button"                 // make sure it is NOT "submit" to prevent form default submit
+  onClick={handleSubmit}
+  disabled={loading}             // prevent double clicks
+  className={`w-full py-4 rounded-xl font-bold 
+              ${loading ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} 
+              text-white`}
+>
+  {loading ? "Saving..." : "Submit Property"}
+</button>
 
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="text-sm text-gray-500">Property Type</p>
-          <p className="font-semibold text-lg">{formData.type}</p>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="text-sm text-gray-500">Price</p>
-          <p className="font-semibold text-lg text-green-600">
-            PKR {formData.price}
-          </p>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="text-sm text-gray-500">Location</p>
-          <p className="font-semibold text-lg">{formData.location}</p>
-        </div>
-
-        <div className="border rounded-lg p-4 bg-white">
-          <p className="text-sm text-gray-500">Contact</p>
-          <p className="font-semibold text-lg">{formData.contact}</p>
-        </div>
-
-      </div>
-
-      {/* Description */}
-      <div className="border rounded-lg p-4 bg-white">
-        <p className="text-sm text-gray-500 mb-1">Description</p>
-        <p className="text-gray-700 leading-relaxed">
-          {formData.description || "No description provided"}
-        </p>
-      </div>
-
-    </div>
-
-    {/* Buttons */}
-    <div className="flex gap-4 mt-8">
-      <button
-        onClick={handleEdit}
-        className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-semibold transition"
-      >
-        Edit
-      </button>
-
-      <button
-        onClick={handleFinalSubmit}
-        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
-      >
-        Submit Property
-      </button>
-    </div>
-  </>
-)}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
-}
+};
+
 export default AddProperty;
