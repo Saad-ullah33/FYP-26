@@ -14,7 +14,7 @@ const Header = () => {
         
         {/* LOGO (Dark Blue to match the theme) */}
         <div className="text-2xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 cursor-pointer">
-          DreamProp
+          PropSight
         </div>
 
         {/* NAVBAR */}
