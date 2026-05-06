@@ -13,7 +13,7 @@ const HomePage = () => {
     <div className="overflow-x-hidden">
         <DreamProp/>
         <AuctionBanner/>
-        <BuildSmart/>
+        {/* <BuildSmart/> */}
         <ExplorePage/>
         <Partners/>
         <Projects/>

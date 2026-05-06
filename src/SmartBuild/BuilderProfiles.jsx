@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// --- Extended Data with Portfolio Images & Contact Info ---
+// --- Extended Data with Portfolio Images & Contact Info (PFPs removed) ---
 const builders = [
   {
     id: 1,
@@ -9,7 +9,6 @@ const builders = [
     experience: "12 Years",
     projectsCompleted: 45,
     specialty: "Residential Complexes",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
     rating: 4.9,
     phone: "+923001234567",
     whatsapp: "+923001234567",
@@ -27,7 +26,6 @@ const builders = [
     experience: "8 Years",
     projectsCompleted: 32,
     specialty: "Commercial High-rises",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
     rating: 4.8,
     phone: "+923007654321",
     whatsapp: "+923007654321",
@@ -45,7 +43,6 @@ const builders = [
     experience: "15 Years",
     projectsCompleted: 60,
     specialty: "Smart Homes & Villas",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
     rating: 5.0,
     phone: "+923331122334",
     whatsapp: "+923331122334",
@@ -63,7 +60,6 @@ const builders = [
     experience: "6 Years",
     projectsCompleted: 24,
     specialty: "Eco-friendly Structures",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
     rating: 4.7,
     phone: "+923218899776",
     whatsapp: "+923218899776",
@@ -81,7 +77,6 @@ const builders = [
     experience: "10 Years",
     projectsCompleted: 38,
     specialty: "Industrial Warehouses",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
     rating: 4.9,
     phone: "+923456677889",
     whatsapp: "+923456677889",
@@ -118,24 +113,17 @@ const BuilderProfiles = () => {
                {/* Decorative Background Blob */}
                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-50 opacity-50 blur-2xl"></div>
 
-               <div className="flex items-center gap-6 relative z-10">
-                <img 
-                  className="h-24 w-24 rounded-2xl object-cover shadow-md border-2 border-white" 
-                  src={selectedBuilder.image} 
-                  alt={selectedBuilder.name} 
-                />
-                <div>
-                  <h2 className="text-3xl font-extrabold text-slate-800">{selectedBuilder.name}</h2>
-                  <p className="text-blue-600 font-medium flex items-center gap-1 mt-1">
-                    {selectedBuilder.specialty}
-                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full ml-2">Verified</span>
-                  </p>
-                  <div className="flex items-center text-slate-500 text-sm mt-2">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {selectedBuilder.city}
-                  </div>
-                </div>
-              </div>
+               <div className="relative z-10">
+                 <h2 className="text-3xl font-extrabold text-slate-800">{selectedBuilder.name}</h2>
+                 <p className="text-blue-600 font-medium flex items-center gap-1 mt-1">
+                   {selectedBuilder.specialty}
+                   <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full ml-2">Verified</span>
+                 </p>
+                 <div className="flex items-center text-slate-500 text-sm mt-2">
+                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                   {selectedBuilder.city}
+                 </div>
+               </div>
 
               {/* Stats */}
               <div className="mt-6 sm:mt-0 flex gap-4 relative z-10">
@@ -206,22 +194,15 @@ const BuilderProfiles = () => {
             key={builder.id} 
             className="bg-white rounded-3xl p-6 shadow-xl shadow-blue-100/50 border border-blue-100 flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
           >
-            {/* Top Row: Avatar + Name + Badge */}
+            {/* Top Row: Name + Badge + Rating */}
             <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <img 
-                  className="h-16 w-16 rounded-2xl object-cover shadow-sm border border-slate-100" 
-                  src={builder.image} 
-                  alt={builder.name} 
-                />
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800 leading-tight">{builder.name}</h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-xs font-medium text-blue-500 uppercase tracking-wide">Verified</span>
-                  </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 leading-tight">{builder.name}</h3>
+                <div className="flex items-center gap-1 mt-1">
+                  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs font-medium text-blue-500 uppercase tracking-wide">Verified</span>
                 </div>
               </div>
               
