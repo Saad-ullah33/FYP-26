@@ -12,6 +12,7 @@ import AddProperty from './PostProperty/AddProperty';
 import { NewProject } from './ExploreTools/NewProject';
 import Flats from './ExploreTools/ExCatogires/Flats';
 import PropertyFinder from './Pages/PropertyFinder';
+import Auction from  './Pages/Auction/Auction';
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
       <Route path='/new-project' element={<NewProject/>} />
       <Route path='/flats' element={<Flats/>} />
       <Route path='/admin/dashboard' element={<AdminDashboard/>} />
+      <Route path='/auction' element={<Auction/>} />
   {/* <Route path="/construction-cost" element={<ConstructionCost />} />
   <Route path="/area-guides" element={<AreaGuides />} />
   <Route path="/property-index" element={<PropertyIndex />} />
