@@ -1,108 +1,228 @@
+import React, { useEffect } from "react";
+import { Carousel } from "@mantine/carousel";
+import { Link } from "react-router-dom";
 
-import { Carousel } from '@mantine/carousel';
-import React from 'react';
-import { propertyCategories } from '../Data/propertyCategories';
-import { Link } from 'react-router-dom';
-import { IconChevronLeft, IconChevronRight, IconBuildingCommunity } from '@tabler/icons-react';
-import projects from '../Data/Data';
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconMapPin,
+  IconArrowRight,
+  IconStarFilled,
+  IconBuildingSkyscraper,
+  IconClock,
+} from "@tabler/icons-react";
+
+// DATA IMPORT
+import {
+  trendingProjects,
+  featuredProjects,
+  comingProjects,
+} from "../Data/projects";
 
 export const NewProject = () => {
-  return (
-    <>
-      {/* Category Carousel */}
-      <div className="w-full px-6 py-8 bg-blue-50 rounded-2xl shadow-lg my-10">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-          Browse New Projects by Category
-        </h2>
 
-        <Carousel
-          slideSize="22%"
-          slideGap="md"
-          align="start"
-          loop={false}
-          breakpoints={[
-            { maxWidth: 'xl', slideSize: '22%' },
-            { maxWidth: 'lg', slideSize: '30%' },
-            { maxWidth: 'md', slideSize: '45%' },
-            { maxWidth: 'sm', slideSize: '70%' },
-          ]}
-          className="w-full"
-          styles={{
-            control: {
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              backgroundColor: '#7AD0C9',
-              '&[data-inactive]': { display: 'none' },
-            },
-          }}
-          nextControlIcon={<IconChevronRight size={24} />}
-          previousControlIcon={<IconChevronLeft size={24} />}
-        >
-          {propertyCategories.map((cat) => (
-            <Carousel.Slide key={cat.id}>
-              <Link
-                to={`/${cat.slug}`}
-                className="flex flex-col items-center justify-center gap-2 p-4 border rounded-xl bg-white hover:shadow-xl transition-all duration-300"
-              >
-                <img src={cat.icon} className="w-10 h-10" alt={cat.name} />
-                <span className="text-sm font-medium text-gray-700 text-center">{cat.name}</span>
-              </Link>
-            </Carousel.Slide>
-          ))}
-        </Carousel>
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
+
+  // COMMON CARD
+  const renderProjectCard = (project, badge, badgeColor) => (
+    <div className="bg-white rounded-[28px] overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+
+      <div className="relative overflow-hidden">
+        <img
+          src={project.image}
+          alt={project.title}
+          className="w-full h-64 object-cover group-hover:scale-110 transition-all duration-700"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+
+        <div className={`absolute top-4 left-4 ${badgeColor} text-white text-xs font-semibold px-4 py-2 rounded-full backdrop-blur-md shadow-lg`}>
+          {badge}
+        </div>
+
+        <div className="absolute bottom-4 left-4">
+          <p className="text-white text-2xl font-bold">
+            {project.price}
+          </p>
+        </div>
       </div>
 
-      {/* Trending/New Projects Carousel */}
-<div className="my-10 bg-blue-50 px-4 py-6 rounded-2xl">
-  <h2 className="text-2xl font-bold mb-6 text-gray-800 text-start">
-    Discover New Projects
-  </h2>
+      <div className="p-6">
 
-  <Carousel
-    slideSize="33%"
-    slideGap="md"
-    breakpoints={[
-      { maxWidth: 'xl', slideSize: '25%' },
-      { maxWidth: 'lg', slideSize: '30%' },
-      { maxWidth: 'md', slideSize: '50%' },
-      { maxWidth: 'sm', slideSize: '90%' },
-    ]}
-    emblaOptions={{ loop: true }}
-  >
-    {projects.map((project, index) => (
-      <Carousel.Slide key={index}>
-        <div className="flex justify-center px-2 py-4">
-          <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 w-72 md:w-80 lg:w-96 h-[380px] flex flex-col cursor-pointer overflow-hidden">
-            
-            {/* Large cover image */}
-            <img
-              src={`/trending/${project.name}.jpg`}
-              alt={project.name}
-              className="w-full h-44 md:h-48 object-cover rounded-t-xl"
-            />
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 line-clamp-1">
+              {project.title}
+            </h2>
 
-            {/* Project info */}
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 truncate">
-                {project.name}
-              </h3>
-              <div className="flex items-center gap-2 mt-1">
-                <IconBuildingCommunity className="text-gray-500" size={18} />
-                <p className="text-sm text-gray-500">
-                  {project.city}, {project.area}
-                </p>
-              </div>
-              <p className="text-yellow-600 font-semibold mt-2">
-                {project.price.min} - {project.price.max} {project.currency}
+            <div className="flex items-center gap-2 text-gray-500 mt-2">
+              <IconMapPin size={17} />
+              <p className="text-sm">
+                {project.area}, {project.city}
               </p>
             </div>
           </div>
+
+          <div className="bg-cyan-50 p-2 rounded-xl">
+            <IconBuildingSkyscraper size={22} className="text-cyan-700" />
+          </div>
         </div>
-      </Carousel.Slide>
-    ))}
-  </Carousel>
-</div>
-    </>
+
+        <div className="mt-5 flex items-center justify-between">
+
+          <div>
+            <p className="text-xs text-gray-400">Developer</p>
+            <p className="text-sm font-semibold text-gray-700">
+              {project.developer}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
+            <IconStarFilled size={14} className="text-yellow-500" />
+            <span className="text-xs font-semibold text-gray-700">
+              Premium
+            </span>
+          </div>
+        </div>
+
+        <Link
+          to={`/project/${project.id}`}
+          className="mt-6 flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white py-3 rounded-2xl font-semibold transition-all duration-300"
+        >
+          View Details
+          <IconArrowRight size={18} />
+        </Link>
+
+      </div>
+    </div>
   );
-}
+
+  return (
+    <div className="bg-[#f4f8fb] min-h-screen px-4 md:px-8 py-8">
+
+      {/* HERO SECTION */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 rounded-[35px] p-10 md:p-16 text-white shadow-2xl mb-14">
+
+        <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+
+        <div className="relative z-10">
+
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <IconClock size={16} />
+            Faisalabad Premium Projects
+          </div>
+
+          <h1 className="text-4xl md:text-6xl font-black leading-tight max-w-4xl">
+            Explore Faisalabad’s
+            <span className="block text-cyan-200">
+              Largest Property Projects
+            </span>
+          </h1>
+
+          <p className="mt-6 text-gray-100 max-w-2xl text-base md:text-lg leading-relaxed">
+            Discover trending, featured, and upcoming residential and commercial projects designed for modern living and high-return investments.
+          </p>
+
+          <Link
+            to="/projects"
+            className="mt-8 inline-flex bg-white text-blue-700 px-7 py-4 rounded-2xl font-bold items-center gap-3 hover:scale-105 transition-all duration-300 shadow-xl"
+          >
+            Explore Projects
+            <IconArrowRight size={20} />
+          </Link>
+
+        </div>
+      </div>
+
+      {/* SECTIONS */}
+      {[
+        {
+          title: "Trending Projects",
+          desc: "Most popular projects in Faisalabad",
+          data: trendingProjects,
+          badge: "Trending",
+          color: "bg-cyan-600",
+        },
+        {
+          title: "Featured Projects",
+          desc: "Premium investment opportunities",
+          data: featuredProjects,
+          badge: "Featured",
+          color: "bg-purple-600",
+        },
+        {
+          title: "Coming Soon",
+          desc: "Upcoming mega projects",
+          data: comingProjects,
+          badge: "Coming Soon",
+          color: "bg-orange-500",
+        },
+      ].map((section, index) => (
+        <div
+          key={index}
+          className="bg-white rounded-[30px] shadow-lg p-6 md:p-8 mb-12 border border-gray-100"
+        >
+
+          <div className="flex items-center justify-between mb-8">
+
+            <div>
+              <h2 className="text-3xl font-bold text-gray-800">
+                {section.title}
+              </h2>
+
+              <p className="text-gray-500 mt-2 text-sm">
+                {section.desc}
+              </p>
+            </div>
+
+            <Link
+              to="/projects"
+              className="hidden md:flex items-center gap-2 text-cyan-700 font-semibold hover:gap-3 transition-all"
+            >
+              View All
+              <IconArrowRight size={18} />
+            </Link>
+
+          </div>
+
+          <Carousel
+            slideSize="33.333333%"
+            slideGap="lg"
+            align="start"
+            emblaOptions={{ loop: true }}
+            breakpoints={[
+              { maxWidth: "lg", slideSize: "50%" },
+              { maxWidth: "md", slideSize: "70%" },
+              { maxWidth: "sm", slideSize: "100%" },
+            ]}
+            styles={{
+              control: {
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                backgroundColor: "#0891b2",
+                color: "white",
+                border: "none",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+              },
+            }}
+            nextControlIcon={<IconChevronRight size={24} />}
+            previousControlIcon={<IconChevronLeft size={24} />}
+          >
+            {section.data.map((project) => (
+              <Carousel.Slide key={project.id}>
+                {renderProjectCard(project, section.badge, section.color)}
+              </Carousel.Slide>
+            ))}
+          </Carousel>
+
+        </div>
+      ))}
+    </div>
+  );
+};
