@@ -216,9 +216,9 @@ const AddProperty = () => {
     }
   };
 
-  // =========================
+  
   // STATS CARD
-  // =========================
+  
   const stats = useMemo(() => {
     return [
       {

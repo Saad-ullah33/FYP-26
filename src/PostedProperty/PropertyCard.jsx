@@ -1,55 +1,165 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import api from "../utils/api";
 
-const PropertyCard = ({ property, formatPrice }) => {
+const PropertyCard = ({
+  property = {},
+  formatPrice,
+  isSelected,
+  onCompare,
+  aiTag,
+}) => {
+
+  const [score, setScore] = useState(null);
   const [imgError, setImgError] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [index, setIndex] = useState(0);
 
-  const images = property.images || [];
+  const images = property.images || property.photos || [];
 
-  // Slider logic if first image fails
+  const normalizeToArray = (data) => {
+    if (!data) return [];
+    return Array.isArray(data) ? data : [data];
+  };
+
+  const imageArray = normalizeToArray(images);
+
+  const getImageUrl = (img) => {
+    if (!img) return "https://via.placeholder.com/400";
+
+    if (typeof img === "string") return img;
+
+    return (
+      img.cloudinary_src ||
+      img.url ||
+      img.imageUrl ||
+      img.secure_url ||
+      "https://via.placeholder.com/400"
+    );
+  };
+
+  const mainImage =
+    imageArray.length > 0
+      ? getImageUrl(imageArray[index])
+      : "https://via.placeholder.com/400";
+
+  const nextImg = () => {
+    if (index < imageArray.length - 1) setIndex(index + 1);
+  };
+
+  const prevImg = () => {
+    if (index > 0) setIndex(index - 1);
+  };
+
+  const locationText = [
+    property.area,
+    property.city?.name || property.city,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  // ✅ AI SCORE API (FIXED)
   useEffect(() => {
-    if (imgError && images.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % images.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [imgError, images.length]);
+    const fetchScore = async () => {
+      try {
+        const res = await api.get(`/properties/${property.id}/score`);
+        setScore(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
 
-  const getImageUrl = (img) => (typeof img === 'string' ? img : img.cloudinary_src);
+    if (property?.id) fetchScore();
+  }, [property?.id]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 overflow-hidden transition-all group cursor-pointer">
-      <div className="relative h-48 overflow-hidden">
-        {!imgError ? (
-          <img
-            src={images.length > 0 ? getImageUrl(images[0]) : 'https://via.placeholder.com/300'}
-            alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <img
-            src={getImageUrl(images[currentIndex])}
-            alt={`${property.title} - ${currentIndex + 1}`}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
+    <div className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition">
+
+      {/* IMAGE SECTION */}
+      <div className="relative h-56 overflow-hidden">
+
+        <img
+          src={imgError ? "https://via.placeholder.com/400" : mainImage}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+
+        {/* overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+        {/* AI SCORE BADGE (FIXED POSITION) */}
+        {score && (
+          <div className="absolute top-3 left-3 z-10">
+            <span
+              className={`px-3 py-1 text-xs font-bold rounded-full text-white ${
+                score.score >= 85
+                  ? "bg-green-600"
+                  : score.score >= 70
+                  ? "bg-blue-600"
+                  : score.score >= 50
+                  ? "bg-yellow-500"
+                  : "bg-red-600"
+              }`}
+            >
+              AI {score.score} • {score.label}
+            </span>
+          </div>
         )}
-        <span className="absolute top-3 right-3 bg-white/90 text-xs font-bold px-2 py-1 rounded">
-          {property.propertyType}
-        </span>
+
+        {/* COMPARE BUTTON */}
+        <button
+          onClick={() => onCompare(property)}
+          className={`absolute top-3 right-3 px-2 py-1 text-xs rounded-full ${
+            isSelected
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700"
+          }`}
+        >
+          Compare
+        </button>
+
+        {/* CAROUSEL BUTTONS */}
+        {imageArray.length > 1 && (
+          <>
+            <button
+              onClick={prevImg}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <button
+              onClick={nextImg}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </>
+        )}
+
+        {/* PRICE */}
+        <div className="absolute bottom-3 left-3 text-white font-bold text-lg">
+          PKR {formatPrice?.(property.price || 0)}
+        </div>
       </div>
-      <div className="p-5">
-        <h3 className="text-lg font-bold text-slate-800 truncate">{property.title}</h3>
-        <p className="text-sm text-slate-500 mb-4">{property.colony}, {property.area}</p>
-        <div className="flex gap-3 text-xs font-medium text-slate-600 mb-4">
-          <span className="bg-slate-100 px-2 py-1 rounded">{property.beds} Beds</span>
-          <span className="bg-slate-100 px-2 py-1 rounded">{property.size}</span>
-        </div>
-        <div className="pt-3 border-t flex justify-between items-center">
-          <span className="text-lg font-extrabold text-blue-900">PKR {formatPrice(property.price)}</span>
-          <span className="text-blue-600">View &rarr;</span>
-        </div>
+
+      {/* CONTENT */}
+      <div className="p-4">
+
+        <h3 className="font-bold text-gray-800 line-clamp-1">
+          {property.title || property.address}
+        </h3>
+
+        <p className="text-sm text-gray-500">
+          📍 {locationText}
+        </p>
+
+        {/* AI REASON */}
+        {score && (
+          <p className="text-[11px] text-gray-400 mt-1">
+            {score.reason}
+          </p>
+        )}
+
       </div>
     </div>
   );

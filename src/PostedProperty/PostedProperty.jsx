@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import PropertyCard from "./PropertyCard";
+import SmartLocationSelect from "./SmartLocationSelect";
+import { FAISALABAD_LOCATIONS } from "../constants/faisalabadLocations";
 
 const PostedProperty = () => {
   const navigate = useNavigate();
@@ -11,6 +13,28 @@ const PostedProperty = () => {
     type: "All",
   });
 
+
+const [compareList, setCompareList] = useState([]);
+const [wishlist, setWishlist] = useState([]);
+
+const handleCompare = (property) => {
+  setCompareList((prev) => {
+    const exists = prev.find((p) => p.id === property.id);
+    if (exists) return prev.filter((p) => p.id !== property.id);
+    if (prev.length < 3) return [...prev, property];
+    return prev;
+  });
+};
+
+const handleWishlist = (property) => {
+  setWishlist((prev) => {
+    const exists = prev.find((p) => p.id === property.id);
+    if (exists) return prev.filter((p) => p.id !== property.id);
+    return [...prev, property];
+  });
+};
+
+
   const [allProperties, setAllProperties] = useState([]);
   const [results, setResults] = useState(null);
   const [initialResults, setInitialResults] = useState([]);
@@ -18,32 +42,33 @@ const PostedProperty = () => {
 
   const FIXED_CITY = "Faisalabad";
 
-  const allowedAreas = [
-    "Lyallpur Town", "Madina Town", "Jinnah Town", "Iqbal Town",
-    "Chak Jhumra Town", "Jaranwala Town", "Samundri Town", "Tandlianwala Town",
-    "Faisalabad City", "Faisalabad Sadar", "Chak Jhumra", "Jaranwala",
-    "Samundri", "Tandlianwala", "D Ground", "People Colony No 1",
-    "People Colony No 2", "Canal Road", "Susan Road", "Wapda City",
-    "FDA City", "Citi Housing", "Gulberg", "Samanabad", "Millat Town",
-    "Satiana Road", "Jaranwala Road", "Samundari Road", "Jhang Road",
-  ];
-
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         setLoading(true);
 
-        const res = await axios.get(
-          "http://localhost:8080/api/properties/getAllProperties"
-        );
+        const res = await api.get("/properties/getAllProperties");
 
-        const props = res.data || [];
-        setAllProperties(props);
+        const props = Array.isArray(res.data)
+          ? res.data
+          : res.data?.data || [];
 
-        const shuffled = [...props].sort(() => 0.5 - Math.random());
+        const normalized = props.map((p) => ({
+          ...p,
+          imageUrl:
+            p.images?.[0]?.cloudinary_src ||
+            p.image?.cloudinary_src ||
+            p.photoUrl ||
+            p.url ||
+            null,
+        }));
+
+        setAllProperties(normalized);
+
+        const shuffled = [...normalized].sort(() => 0.5 - Math.random());
         setInitialResults(shuffled.slice(0, 6));
       } catch (err) {
-        console.log("Error fetching properties:", err);
+        console.log("ERROR:", err.response?.data || err.message);
       } finally {
         setLoading(false);
       }
@@ -52,18 +77,21 @@ const PostedProperty = () => {
     fetchProperties();
   }, []);
 
-  // 🔥 NAVIGATION FUNCTION
   const openProperty = (id) => {
+    if (!id) return;
     navigate(`/property/${id}`);
   };
 
   const handleSearch = () => {
-    const filtered = allProperties.filter(
-      (p) =>
-        p.city?.name === FIXED_CITY &&
+    const filtered = allProperties.filter((p) => {
+      if (!p) return false;
+
+      return (
+        (p.city?.name || p.city) === FIXED_CITY &&
         (filters.area === "" || p.area === filters.area) &&
         (filters.type === "All" || p.propertyType === filters.type)
-    );
+      );
+    });
 
     setResults(filtered);
   };
@@ -83,129 +111,146 @@ const PostedProperty = () => {
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        {/* FILTERS */}
+        {/* LEFT FILTER PANEL */}
         <div className="lg:col-span-3">
-          <div className="bg-white p-6 rounded-2xl shadow">
 
-            <h2 className="text-xl font-bold mb-4">
-              Properties in {FIXED_CITY}
+          <div className="bg-white rounded-2xl shadow-lg border p-6 sticky top-24">
+
+            <h2 className="text-lg font-bold text-gray-800">
+              Search Properties
             </h2>
 
-            {/* AREA */}
-            <label className="text-sm font-bold">Area</label>
-            <select
-              value={filters.area}
-              onChange={(e) =>
-                setFilters({ ...filters, area: e.target.value })
-              }
-              className="w-full border p-3 rounded mt-2 mb-4"
-            >
-              <option value="">All Areas</option>
-              {allowedAreas.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
+            <p className="text-sm text-gray-500 mt-1">
+              Faisalabad Verified Locations Only
+            </p>
 
-            {/* TYPE */}
-            <label className="text-sm font-bold">Type</label>
-            <div className="flex flex-wrap gap-2 mt-2 mb-4">
-              {["All", "HOUSE", "APARTMENT", "PLOT", "SHOP"].map(
-                (type) => (
-                  <button
-                    key={type}
-                    onClick={() =>
-                      setFilters({ ...filters, type })
-                    }
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      filters.type === type
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                )
-              )}
+            <div className="mt-6 space-y-4">
+
+              {/* CITY */}
+              <div>
+                <label className="text-sm font-medium text-gray-600">
+                  City
+                </label>
+
+                <input
+                  value="Faisalabad"
+                  disabled
+                  className="w-full mt-1 px-3 py-2 border rounded-lg bg-gray-100 text-gray-600"
+                />
+              </div>
+
+              {/* LOCATION */}
+              <div>
+                <label className="text-sm font-medium text-gray-600">
+                  Location / Area
+                </label>
+
+                <SmartLocationSelect
+                  value={filters.area}
+                  options={FAISALABAD_LOCATIONS}
+                  onChange={(val) =>
+                    setFilters({ ...filters, area: val })
+                  }
+                />
+              </div>
+
+              {/* TYPE */}
+              <div>
+                <label className="text-sm font-medium text-gray-600">
+                  Property Type
+                </label>
+
+                <select
+                  value={filters.type}
+                  onChange={(e) =>
+                    setFilters({ ...filters, type: e.target.value })
+                  }
+                  className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="All">All Types</option>
+                  <option value="HOUSE">House</option>
+                  <option value="FLAT">Flat</option>
+                  <option value="APARTMENT">Apartment</option>
+                  <option value="COMMERCIAL">Commercial</option>
+                  <option value="INDUSTRIAL">Industrial</option>
+                  <option value="AGRICULTURE">Agriculture</option>
+                </select>
+              </div>
+
+              {/* BUTTONS */}
+              <div className="pt-2 space-y-2">
+
+                <button
+                  onClick={handleSearch}
+                  className="w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white py-2.5 rounded-lg font-semibold hover:shadow-lg transition"
+                >
+                  Search Properties
+                </button>
+
+                <button
+                  onClick={handleReset}
+                  className="w-full text-sm text-gray-600 hover:text-blue-600"
+                >
+                  Reset Filters
+                </button>
+
+              </div>
+
             </div>
-
-            <button
-              onClick={handleSearch}
-              className="w-full bg-black text-white py-3 rounded-xl"
-            >
-              Search
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="w-full text-blue-600 mt-2"
-            >
-              Reset
-            </button>
           </div>
         </div>
 
-        {/* RESULTS */}
+        {/* RIGHT RESULTS PANEL */}
         <div className="lg:col-span-9">
 
-          {loading && (
-            <p className="text-center text-lg">Loading...</p>
-          )}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Featured Properties
+            </h2>
 
-          {/* INITIAL */}
-          {!loading && !results && (
-            <>
-              <h2 className="text-2xl font-bold mb-6">
-                Featured Properties
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {initialResults.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => openProperty(p.id)}
-                    className="cursor-pointer"
-                  >
-                    <PropertyCard
-                      property={p}
-                      formatPrice={formatPrice}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* NO RESULTS */}
-          {results && results.length === 0 && (
-            <p className="text-center text-gray-500">
-              No Properties Found
+            <p className="text-sm text-gray-500">
+              Handpicked listings in Faisalabad
             </p>
+          </div>
+
+          {loading && (
+            <div className="text-center py-10 text-gray-500">
+              Loading properties...
+            </div>
           )}
 
-          {/* RESULTS */}
-          {results && results.length > 0 && (
-            <>
-              <h2 className="text-2xl font-bold mb-6">
-                Search Results
-              </h2>
+          {!loading && !results && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {initialResults.map((p, index) => (
+                <div
+                  key={p?.id || index}
+                  onClick={() => openProperty(p?.id)}
+                  className="cursor-pointer hover:scale-[1.02] transition"
+                >
+                  <PropertyCard property={p} formatPrice={formatPrice} />
+                </div>
+              ))}
+            </div>
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {results.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => openProperty(p.id)}
-                    className="cursor-pointer"
-                  >
-                    <PropertyCard
-                      property={p}
-                      formatPrice={formatPrice}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
+          {results && results.length === 0 && (
+            <div className="text-center py-10 text-gray-500">
+              No Properties Found
+            </div>
+          )}
+
+          {results && results.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {results.map((p, index) => (
+                <div
+                  key={p?.id || index}
+                  onClick={() => openProperty(p?.id)}
+                  className="cursor-pointer hover:scale-[1.02] transition"
+                >
+                  <PropertyCard property={p} formatPrice={formatPrice} />
+                </div>
+              ))}
+            </div>
           )}
 
         </div>

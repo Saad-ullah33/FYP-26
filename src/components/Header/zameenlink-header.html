@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZameenLink – Header</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #0f0f0f;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    background: #0d1a0f;
+    border-bottom: 1px solid rgba(0, 210, 100, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+  }
+
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  /* ── LOGO ── */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logo-wordmark {
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-wordmark .z { color: #2ecc71; }
+  .logo-wordmark .l { color: #2e8fff; }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  nav a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.72);
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    transition: color 0.18s, background 0.18s;
+    white-space: nowrap;
+  }
+
+  nav a:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+  }
+
+  nav a.active {
+    color: #2ecc71;
+  }
+
+  /* ── SEARCH ── */
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 0 14px;
+    gap: 8px;
+    height: 40px;
+    min-width: 200px;
+    flex: 1;
+    max-width: 280px;
+    transition: border-color 0.18s;
+  }
+
+  .search-wrap:focus-within {
+    border-color: rgba(46,204,113,0.5);
+  }
+
+  .search-wrap svg { flex-shrink: 0; opacity: 0.5; }
+
+  .search-wrap input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    width: 100%;
+  }
+
+  .search-wrap input::placeholder { color: rgba(255,255,255,0.35); }
+
+  /* ── ACTIONS ── */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid rgba(46,204,113,0.45);
+    color: #2ecc71;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.45rem 1.1rem;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+  }
+
+  .btn-outline:hover {
+    background: rgba(46,204,113,0.08);
+    border-color: #2ecc71;
+  }
+
+  .btn-solid {
+    background: linear-gradient(135deg, #1a9e4e 0%, #2e8fff 100%);
+    border: none;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.48rem 1.2rem;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: opacity 0.18s, transform 0.12s;
+  }
+
+  .btn-solid:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* ── HERO PREVIEW ── */
+  .hero {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 1.2rem;
+  }
+
+  .hero h1 span { color: #2ecc71; }
+
+  .hero p {
+    color: rgba(255,255,255,0.55);
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { display: none; }
+    .search-wrap { display: none; }
+    .btn-outline { display: none; }
+    .header-inner { justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+
+    <!-- Logo -->
+    <a href="#" class="logo">
+      <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldG" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2ecc71"/>
+            <stop offset="100%" stop-color="#1a5fa8"/>
+          </linearGradient>
+          <linearGradient id="houseG" x1="20" y1="15" x2="70" y2="55" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#33e87a"/>
+            <stop offset="100%" stop-color="#27ae60"/>
+          </linearGradient>
+        </defs>
+        <!-- Shield -->
+        <path d="M50 5 L88 22 L88 52 C88 72 68 88 50 96 C32 88 12 72 12 52 L12 22 Z"
+              fill="url(#shieldG)" opacity="0.92"/>
+        <!-- House -->
+        <polygon points="50,18 72,36 72,58 28,58 28,36" fill="url(#houseG)"/>
+        <!-- Roof window -->
+        <rect x="43" y="40" width="14" height="13" rx="1.5" fill="#0d1a0f" opacity="0.7"/>
+        <line x1="50" y1="40" x2="50" y2="53" stroke="#0d1a0f" stroke-width="1.5" opacity="0.5"/>
+        <line x1="43" y1="46.5" x2="57" y2="46.5" stroke="#0d1a0f" stroke-width="1.5" opacity="0.5"/>
+        <!-- Location pin -->
+        <circle cx="50" cy="74" r="6" fill="#fff" opacity="0.92"/>
+        <circle cx="50" cy="74" r="2.5" fill="#1a5fa8"/>
+        <path d="M50 80 L50 86" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+        <!-- Network dots -->
+        <circle cx="20" cy="48" r="4" fill="#2ecc71" opacity="0.85"/>
+        <line x1="24" y1="48" x2="28" y2="52" stroke="#2ecc71" stroke-width="1.8" opacity="0.6"/>
+        <circle cx="80" cy="42" r="3.5" fill="#2ecc71" opacity="0.75"/>
+        <line x1="76.5" y1="44" x2="72" y2="46" stroke="#2ecc71" stroke-width="1.8" opacity="0.6"/>
+        <circle cx="50" cy="12" r="3" fill="#2ecc71" opacity="0.6"/>
+      </svg>
+
+      <div class="logo-text">
+        <span class="logo-wordmark">
+          <span class="z">Zameen</span><span class="l">Link</span>
+        </span>
+      </div>
+    </a>
+
+    <!-- Nav -->
+    <nav>
+      <a href="#" class="active">Buy</a>
+      <a href="#">Rent</a>
+      <a href="#">Sell</a>
+      <a href="#">Projects</a>
+      <a href="#">Agents</a>
+    </nav>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="Search city, area or project…">
+    </div>
+
+    <!-- Actions -->
+    <div class="header-actions">
+      <button class="btn-outline">Login</button>
+      <button class="btn-solid">Post Property</button>
+    </div>
+
+  </div>
+</header>
+
+<!-- Hero preview so the header has context -->
+<div class="hero">
+  <h1>Find Your <span>Dream Property</span><br>Across Pakistan</h1>
+  <p>Connecting buyers, sellers, and agents with the best real estate listings nationwide.</p>
+</div>
+
+</body>
+</html>

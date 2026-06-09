@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-
-// ICONS
 import {
   FaHome,
   FaBuilding,
@@ -14,34 +12,26 @@ import {
 } from "react-icons/fa";
 
 const Navbar = () => {
-  const urls = [
-    { name: "Home", url: "/" },
-    { name: "Property Finder", url: "/property-finder" },
-    { name: "Smart Build", url: "/smart-build" },
-    { name: "Auctions", url: "/auctions" },
-    { name: "Maps", url: "/maps" },
-    { name: "More", url: "#" },
-    { name: "Search", url: "/search" },
-    { name: "Buy/Rent", url: "/buy-rent" },
-    { name: "Become a Seller", url: "/become-seller" },
-    { name: "LogIn", url: "/login" },
-  ];
-
-  const leftLinks = urls.slice(0, 6);
-  const rightLinks = urls.slice(6);
-
   const location = useLocation();
   const navigate = useNavigate();
 
   const [types, setTypes] = useState([]);
   const [open, setOpen] = useState(false);
 
-  const gradientText =
-    "bg-gradient-to-r from-blue-700 to-blue-500 text-transparent bg-clip-text font-bold text-base";
-  const simpleText =
-    "text-gray-600 hover:text-blue-600 font-semibold text-base transition-colors";
+  const urls = [
+    { name: "Home", url: "/" },
+    { name: "Property Finder", url: "/property-finder" },
+    { name: "Smart Build", url: "/smart-build" },
+    { name: "Auction", url: "/auction" },
+    { name: "Maps", url: "/maps" }
+  ];
 
-  // FETCH ENUM TYPES
+  const gradientText =
+    "bg-gradient-to-r from-blue-700 to-blue-500 text-transparent bg-clip-text font-bold";
+
+  const simpleText =
+    "text-gray-600 hover:text-blue-600 font-semibold transition-colors";
+
   useEffect(() => {
     const fetchTypes = async () => {
       try {
@@ -50,19 +40,13 @@ const Navbar = () => {
         );
         setTypes(res.data || []);
       } catch (err) {
-        console.log("PropertyType fetch error", err);
+        console.log(err);
       }
     };
 
     fetchTypes();
   }, []);
 
-  const handleTypeClick = (type) => {
-    setOpen(false);
-    navigate(`/properties/type/${type}`);
-  };
-
-  // ICON MAPPER
   const getTypeIcon = (type) => {
     switch (type) {
       case "HOUSE":
@@ -80,7 +64,6 @@ const Navbar = () => {
       case "FARMHOUSE":
         return <FaTree />;
       case "COMMERCIAL":
-      case "OFFICES":
         return <FaCity />;
       default:
         return <FaBuilding />;
@@ -88,141 +71,55 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex items-center h-full gap-6">
+    <div className="flex items-center gap-6">
 
-      {/* LEFT LINKS */}
-      <div className="flex items-center gap-6 h-full">
-        {leftLinks.map((link, index) => {
-          const isActive = location.pathname === link.url;
+      {/* LINKS */}
+      {urls.map((link, index) => (
+        <Link
+          key={index}
+          to={link.url}
+          className={
+            location.pathname === link.url ? gradientText : simpleText
+          }
+        >
+          {link.name}
+        </Link>
+      ))}
 
-          if (link.name === "More") {
-            return (
+      {/* MORE */}
+      <div
+        className="relative"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <span className="cursor-pointer text-gray-600 font-semibold hover:text-blue-600">
+          More
+        </span>
+
+        {open && (
+          <div className="absolute top-8 left-0 w-72 bg-white shadow-xl rounded-xl border z-50">
+
+            <div className="p-3 border-b text-sm font-semibold text-gray-700">
+              Property Types
+            </div>
+
+            {types.map((type) => (
               <div
-                key={index}
-                className="relative h-full flex items-center px-1"
-                onMouseEnter={() => setOpen(true)}
-                onMouseLeave={() => setOpen(false)}
+                key={type}
+                onClick={() => navigate(`/properties/type/${type}`)}
+                className="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer transition"
               >
-                <span className="text-gray-600 hover:text-blue-600 font-semibold text-base cursor-pointer">
-                  More
-                </span>
-
-
-                {open && (
-                  <div className="absolute top-10 left-0 w-72 bg-white shadow-2xl rounded-xl border z-50 overflow-hidden">
-
-                    {/* HEADER */}
-                    <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-white">
-                      <p className="text-sm font-semibold text-gray-700">
-                        Property Types
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Select category to filter properties
-                      </p>
-                    </div>
-
-                    {/* GRID CONTENT */}
-                    {types.length === 0 ? (
-                      <p className="p-4 text-sm text-gray-500">Loading...</p>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-1 p-2 max-h-80 overflow-y-auto">
-
-                        {types.map((type) => (
-                          <div
-                            key={type}
-                            onClick={() => handleTypeClick(type)}
-                            className="flex items-center gap-3 p-3 rounded-lg cursor-pointer
-                       hover:bg-blue-50 hover:shadow-sm transition-all"
-                          >
-
-                            {/* ICON BOX */}
-                            <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 text-lg">
-                              {getTypeIcon(type)}
-                            </div>
-
-                            {/* TEXT */}
-                            <div className="flex flex-col">
-                              <span className="text-gray-800 font-medium leading-tight">
-                                {type.charAt(0) + type.slice(1).toLowerCase()}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                View {type.toLowerCase()} listings
-                              </span>
-                            </div>
-
-                          </div>
-                        ))}
-
-                      </div>
-                    )}
-
-                    {/* FOOTER */}
-                    <div className="px-4 py-2 border-t bg-gray-50">
-                      <p className="text-xs text-gray-500">
-                        Total Types: {types.length}
-                      </p>
-                    </div>
-
-                  </div>
-                )}
+                <div className="text-blue-600">{getTypeIcon(type)}</div>
+                <div>
+                  <p className="font-medium">{type}</p>
+                  <p className="text-xs text-gray-400">
+                    View {type.toLowerCase()} listings
+                  </p>
+                </div>
               </div>
-            );
-          }
-
-          return (
-            <Link
-              key={index}
-              to={link.url}
-              className={`relative h-full flex items-center px-1 transition-all
-                ${isActive
-                  ? "border-b-[3px] border-blue-600"
-                  : "border-b-[3px] border-transparent hover:border-blue-100"
-                }
-              `}
-            >
-              <span className={isActive ? gradientText : simpleText}>
-                {link.name}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* SEPARATOR */}
-      <div className="h-6 w-[1.5px] bg-gray-200 hidden md:block"></div>
-
-      {/* RIGHT LINKS */}
-      <div className="flex items-center gap-6 h-full">
-        {rightLinks.map((link, index) => {
-          const isActive = location.pathname === link.url;
-
-          if (link.name === "LogIn") {
-            return (
-              <Link key={index} to={link.url} className="ml-2">
-                <button className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                  Log In
-                </button>
-              </Link>
-            );
-          }
-
-          return (
-            <Link
-              key={index}
-              to={link.url}
-              className={`relative h-full flex items-center px-1 transition-all
-                ${isActive
-                  ? "border-b-[3px] border-blue-600"
-                  : "border-b-[3px] border-transparent hover:border-blue-100"
-                }
-              `}
-            >
-              <span className={isActive ? gradientText : simpleText}>
-                {link.name}
-              </span>
-            </Link>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

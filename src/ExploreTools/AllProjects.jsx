@@ -36,7 +36,7 @@ const dummyProjects = [
   },
 ];
 
-export const AllProjects = () => {
+  export const AllProjects = () => {
   return (
     <div className="min-h-screen bg-[#f4f8fb] px-6 py-10">
 
@@ -99,3 +99,4 @@ export const AllProjects = () => {
     </div>
   );
 };
+export default AllProjects;
