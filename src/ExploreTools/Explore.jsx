@@ -43,7 +43,7 @@ export const Explore = () => {
 
           {/* CARD 2: Construction Cost */}
           <Link
-            to="/construction-cost"
+            to="/smart-build"
             className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
             {/* Soft Pastel Blue Icon Backdrop */}
