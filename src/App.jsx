@@ -99,9 +99,9 @@ const AppContent = () => {
         <Route
           path="/Smart-build"
           element={
-            <AuthRoute>
+            // <AuthRoute>
+            // </AuthRoute>
               <Smartbuild />
-            </AuthRoute>
           }
         />
         <Route
