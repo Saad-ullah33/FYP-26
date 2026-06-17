@@ -7,6 +7,7 @@ import { Partners } from '../LandingPages/Partners'
 import { AuctionBanner } from '../LandingPages/AuctionBanner'
 import ExplorePage from '../LandingPages/ExplorePage'
 import  { HomeCta } from '../LandingPages/HomeCta'
+import  { Faq } from '../LandingPages/Faq'
 import AdminDashboard from '../Admin/AdminDashboard'
 
 const HomePage = () => {
@@ -20,6 +21,7 @@ const HomePage = () => {
         <HomeCta/>
         <Projects/>
         <Blog/>
+        <Faq/>
         {/* <AdminDashboard/> */}
 
 

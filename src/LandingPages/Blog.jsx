@@ -1,20 +1,135 @@
-import React from 'react'
+import React from 'react';
+import { IconArrowRight } from '@tabler/icons-react';
 
 const Blog = () => {
-  return (
-    <div>
-       {/* --- BLOGS SECTION --- */}
-      <section className=" mx-auto py-20 px-6">
-        <h2 className="text-4xl font-bold text-center text-slate-900 mb-12">Latest Insights</h2>     
-        <div className="grid grid-cols-3  gap-8">      
-            <div  className="bg-blue-500 p-6 rounded-2xl shadow-lg hover:shadow-xl transition hover:-translate-y-2 border border-slate-100">
-              <span className="text-sm font-semibold text-white">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ratione mollitia rerum, in ullam alias consequuntur? Vitae nesciunt eligendi debitis earum magni dolorum. Sed!</span>           
-              <div><button className="text-white font-bold hover:underline">Read Article →</button></div>
-            </div>       
-        </div>
-      </section>
-    </div>
-  )
-}
+  // Curated mock data specifically tailored to PropSightAi's features
+  const articles = [
+    {
+      title: "How AI-Powered Price Predictions are Reshaping Real Estate in Pakistan",
+      category: "AI Valuation",
+      date: "June 15, 2026",
+      readTime: "5 min read",
+      excerpt: "Discover how machine learning models utilize historical transaction data and local geographic trends to estimate property values with unprecedented accuracy in Islamabad and Lahore.",
+      image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80",
+      author: "Dr. Asim Malik",
+    },
+    {
+      title: "The Rise of Digital Property Auctions: Tips for First-Time Bidders",
+      category: "Online Bidding",
+      date: "June 10, 2026",
+      readTime: "4 min read",
+      excerpt: "Navigating digital real estate auctions can be daunting. Learn the strategic bidding frameworks, verify listing details, and safely secure competitive prices.",
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80",
+      author: "Sara Khan",
+    },
+    {
+      title: "Smart Construction Materials: Lowering Costs with Sustainable Inputs",
+      category: "Smart Build",
+      date: "June 05, 2026",
+      readTime: "6 min read",
+      excerpt: "With rising bricks and cement indexes, builders are turning to eco-friendly alternative materials. Explore structural engineering insights to estimate your cost indexes.",
+      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
+      author: "Engr. Raza Ali",
+    },
+  ];
 
-export default Blog
+  return (
+    // Alternating pure white container with a thin top dividing line
+    <div className='py-20 bg-white border-t border-slate-100'>
+      <div className='px-6 md:px-12 lg:px-20 max-w-[1600px] mx-auto'>
+        
+        {/* ── SECTION HEADER ── */}
+        <div className='flex justify-between items-end mb-10'>
+          <div className='space-y-2'>
+            <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider block">
+              Exclusive Insights
+            </span>
+            <h2 className='text-3xl font-extrabold text-slate-900 tracking-tight'>
+              Trending Articles & Guides
+            </h2>
+          </div>
+          
+          <button className="hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm hover:gap-3.5 transition-all duration-200 cursor-pointer">
+             See All Articles <IconArrowRight size={16} />
+          </button>
+        </div>
+
+        {/* ── RESPONSIVE 3-COLUMN CARD GRID ── */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+          {articles.map((post, index) => (
+            
+            // CARD CONTAINER
+            <div 
+              key={index} 
+              className="group flex flex-col bg-white border border-slate-100 hover:border-slate-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full"
+            >
+              
+              {/* Image Section */}
+              <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                
+                {/* Floating Pastel Category Tag */}
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-blue-600 text-[10px] font-extrabold px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm border border-slate-100/40">
+                  {post.category}
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-6 flex flex-col justify-between flex-grow">
+                
+                <div>
+                  {/* Date & Metadata with clean inline SVG clock to prevent dependency crashes */}
+                  <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{post.date}</span>
+                    <span className="mx-1">•</span>
+                    <span>{post.readTime}</span>
+                  </div>
+
+                  {/* Title (Bounded to exactly 2 lines for uniform card alignments) */}
+                  <h3 className="text-lg font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-snug">
+                    {post.title}
+                  </h3>
+
+                  {/* Excerpt (Bounded to exactly 3 lines for uniform card alignments) */}
+                  <p className="text-slate-500 text-sm leading-relaxed mt-2.5 line-clamp-3">
+                    {post.excerpt}
+                  </p>
+                </div>
+
+                {/* ── CARD BOTTOM AUTHOR FOOTER ── */}
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    {/* Circle Initial Avatar */}
+                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-extrabold flex items-center justify-center text-xs shadow-inner">
+                      {post.author[0]}
+                    </div>
+                    <span className="text-xs font-bold text-slate-700">{post.author}</span>
+                  </div>
+
+                  {/* Sliding CTA Arrow */}
+                  <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-all duration-200">
+                    <IconArrowRight size={15} />
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// Double-export pattern guarantees that both default and named imports work safely
+export { Blog };
+export default Blog;
