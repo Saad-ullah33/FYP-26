@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
+import { 
+  IconArrowLeft, 
+  IconMapPin, 
+  IconBuildingSkyscraper, 
+  IconRosetteDiscountCheckFilled, 
+  IconStarFilled, 
+  IconPhone, 
+  IconBrandWhatsapp,
+  IconBriefcase,
+  IconPhoto,
+  IconHelmet
+} from '@tabler/icons-react';
 
-// --- Extended Data with Portfolio Images & Contact Info (PFPs removed) ---
+// --- Mock Data ---
 const builders = [
   {
     id: 1,
@@ -92,82 +104,102 @@ const builders = [
 const BuilderProfiles = () => {
   const [selectedBuilder, setSelectedBuilder] = useState(null);
 
-  // --- 1. Detail View Component (Portfolio) ---
+  // --- VIEW 1: Detail View (Holographic Blue Theme) ---
   if (selectedBuilder) {
     return (
-      <div className="min-h-screen bg-blue-50 py-10 px-4 sm:px-6 lg:px-8 font-sans">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full max-w-4xl mx-auto mb-20 transition-all duration-300 text-left">
+        
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-100/80 border border-slate-100 overflow-hidden">
           
-          {/* Back Button */}
-          <button 
-            onClick={() => setSelectedBuilder(null)}
-            className="mb-6 flex items-center text-blue-700 font-semibold hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors w-fit"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            Back to Builders
-          </button>
-
-          {/* Profile Card Header */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-blue-100/50 border border-blue-100 overflow-hidden mb-8">
-            <div className="p-8 sm:flex sm:items-start sm:justify-between bg-white relative overflow-hidden">
-               {/* Decorative Background Blob */}
-               <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-50 opacity-50 blur-2xl"></div>
-
-               <div className="relative z-10">
-                 <h2 className="text-3xl font-extrabold text-slate-800">{selectedBuilder.name}</h2>
-                 <p className="text-blue-600 font-medium flex items-center gap-1 mt-1">
-                   {selectedBuilder.specialty}
-                   <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full ml-2">Verified</span>
-                 </p>
-                 <div className="flex items-center text-slate-500 text-sm mt-2">
-                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                   {selectedBuilder.city}
-                 </div>
-               </div>
-
-              {/* Stats */}
-              <div className="mt-6 sm:mt-0 flex gap-4 relative z-10">
-                <div className="text-center px-4 py-2 bg-blue-50 rounded-xl">
-                    <span className="block text-xl font-bold text-slate-800">{selectedBuilder.rating}</span>
-                    <span className="text-xs text-slate-500 font-bold uppercase">Rating</span>
+          {/* Holographic Header Section */}
+          <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-600 p-8 md:p-10 text-white relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "16px 14px" }}></div>
+            
+            <button 
+              onClick={() => setSelectedBuilder(null)}
+              className="relative z-10 text-blue-100 hover:text-white text-xs font-bold uppercase tracking-wider mb-5 flex items-center gap-1.5 transition-all duration-200 hover:-translate-x-1 cursor-pointer"
+            >
+              <IconArrowLeft size={14} /> Back to Builders
+            </button>
+            
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">{selectedBuilder.name}</h2>
+                  <IconRosetteDiscountCheckFilled size={28} className="text-emerald-400" />
                 </div>
-                <div className="text-center px-4 py-2 bg-blue-50 rounded-xl">
-                    <span className="block text-xl font-bold text-slate-800">{selectedBuilder.projectsCompleted}</span>
-                    <span className="text-xs text-slate-500 font-bold uppercase">Projects</span>
-                </div>
+                <p className="text-blue-100/90 text-sm font-medium flex items-center gap-2 mt-2">
+                  <IconMapPin size={16} className="text-cyan-400" />
+                  {selectedBuilder.city} Region
+                  <span className="opacity-50">|</span>
+                  <IconBuildingSkyscraper size={16} className="text-cyan-400" />
+                  {selectedBuilder.specialty}
+                </p>
               </div>
-            </div>
-
-            {/* About Section */}
-            <div className="px-8 pb-8">
-              <h3 className="text-lg font-bold text-slate-800 mb-2">About the Builder</h3>
-              <p className="text-slate-600 leading-relaxed">{selectedBuilder.about}</p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="bg-slate-50 px-8 py-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
-              <button className="flex-1 flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                Call Now
-              </button>
-              <button className="flex-1 flex justify-center items-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-green-200">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                WhatsApp
-              </button>
             </div>
           </div>
 
-          {/* Portfolio Grid */}
-          <h3 className="text-2xl font-bold text-slate-800 mb-6 px-2">Recent Projects</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {selectedBuilder.portfolio.map((img, index) => (
-              <div key={index} className="group relative aspect-video rounded-2xl overflow-hidden shadow-md border border-blue-50">
-                 <img src={img} alt="Project" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                   <span className="text-white font-medium text-sm">View Details</span>
-                 </div>
+          {/* Floating Stats Card */}
+          <div className="px-8 md:px-10 -mt-8 relative z-20">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 flex flex-wrap justify-between items-center gap-4 divide-x divide-slate-100">
+              
+              <div className="flex-1 text-center sm:text-left px-2">
+                <p className="text-slate-400 text-[11px] font-extrabold uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">
+                  <IconStarFilled size={12} className="text-yellow-400" /> Client Rating
+                </p>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900">{selectedBuilder.rating}<span className="text-sm text-slate-400 font-bold">/5.0</span></h3>
               </div>
-            ))}
+
+              <div className="flex-1 text-center sm:text-left px-2 sm:px-6">
+                <p className="text-slate-400 text-[11px] font-extrabold uppercase tracking-widest mb-1">Projects Done</p>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-blue-600">{selectedBuilder.projectsCompleted}</h3>
+              </div>
+
+              <div className="flex-1 text-center sm:text-right px-2">
+                <p className="text-slate-400 text-[11px] font-extrabold uppercase tracking-widest mb-1">Experience</p>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-slate-900">{selectedBuilder.experience}</h3>
+              </div>
+
+            </div>
+          </div>
+
+          {/* About Section */}
+          <div className="p-8 md:p-10">
+            <h3 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+              <IconBriefcase size={20} className="text-slate-400" /> About the Builder
+            </h3>
+            <p className="text-slate-600 leading-relaxed font-medium">
+              {selectedBuilder.about}
+            </p>
+          </div>
+
+          {/* Portfolio Grid */}
+          <div className="px-8 md:px-10 pb-8">
+            <h3 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-6 flex items-center gap-2">
+              <IconPhoto size={20} className="text-slate-400" /> Recent Projects
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {selectedBuilder.portfolio.map((img, index) => (
+                <div key={index} className="group relative aspect-video rounded-xl overflow-hidden shadow-sm border border-slate-100 cursor-pointer">
+                  <img src={img} alt="Project work" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-in-out" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <span className="text-white font-bold text-sm tracking-wide">View Image</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="bg-slate-50 p-6 md:p-8 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+            <button className="flex-1 flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-3.5 px-6 rounded-xl font-extrabold shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+              <IconPhone size={20} />
+              Call Directly
+            </button>
+            <button className="flex-1 flex justify-center items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-6 rounded-xl font-extrabold shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+              <IconBrandWhatsapp size={20} />
+              WhatsApp Message
+            </button>
           </div>
 
         </div>
@@ -175,76 +207,75 @@ const BuilderProfiles = () => {
     );
   }
 
-  // --- 2. Main Grid View (Default) ---
+  // --- VIEW 2: Main Grid View (Sleek Card Theme) ---
   return (
-    <div className="min-h-screen bg-blue-50 py-16 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="w-full max-w-6xl mx-auto px-4 py-10 mb-10 text-left">
       
       {/* Header Section */}
-      <div className="max-w-7xl mx-auto mb-16 text-center">
-        <h2 className="text-3xl font-extrabold text-slate-800 sm:text-4xl tracking-tight">Verified Builders</h2>
-        <p className="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">
-          Top-rated professionals vetted by <span className="text-blue-600 font-semibold">PropSight AI</span>.
-        </p>
+      <div className="flex items-center gap-3 mb-8 px-2">
+        <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl">
+          <IconHelmet size={28} />
+        </div>
+        <div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">Verified Builders</h2>
+          <p className="text-slate-500 text-sm font-semibold">Top-rated professionals vetted by PropSight AI.</p>
+        </div>
       </div>
 
       {/* Grid Layout */}
-      <div className="max-w-7xl mx-auto grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {builders.map((builder) => (
           <div 
             key={builder.id} 
-            className="bg-white rounded-3xl p-6 shadow-xl shadow-blue-100/50 border border-blue-100 flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
+            className="bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-100/80 border border-slate-100 hover:border-blue-200 hover:shadow-blue-500/10 flex flex-col justify-between group hover:-translate-y-1 transition-all duration-300"
           >
             {/* Top Row: Name + Badge + Rating */}
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold text-slate-800 leading-tight">{builder.name}</h3>
-                <div className="flex items-center gap-1 mt-1">
-                  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-xs font-medium text-blue-500 uppercase tracking-wide">Verified</span>
+                <h3 className="text-xl font-extrabold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{builder.name}</h3>
+                <div className="flex items-center gap-1 mt-1.5">
+                  <IconRosetteDiscountCheckFilled size={16} className="text-emerald-500" />
+                  <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md">Verified</span>
                 </div>
               </div>
               
               {/* Rating Pill */}
-              <div className="bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                <span className="text-slate-700 text-sm font-bold flex items-center gap-1">
-                  <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                  {builder.rating}
-                </span>
+              <div className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
+                <IconStarFilled size={14} className="text-yellow-400" />
+                <span className="text-slate-700 text-sm font-extrabold">{builder.rating}</span>
               </div>
             </div>
 
             {/* Specialty & Location */}
-            <div className="mb-6 space-y-2">
-              <div className="flex items-center text-sm text-slate-500">
-                <svg className="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+            <div className="mb-6 space-y-2.5 border-b border-slate-100 pb-6">
+              <div className="flex items-center text-sm font-semibold text-slate-500 gap-2">
+                <IconBuildingSkyscraper size={18} className="text-slate-400" />
                 {builder.specialty}
               </div>
-              <div className="flex items-center text-sm text-slate-500">
-                <svg className="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <div className="flex items-center text-sm font-semibold text-slate-500 gap-2">
+                <IconMapPin size={18} className="text-slate-400" />
                 {builder.city}
               </div>
             </div>
 
-            {/* Metrics */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-blue-50/50 rounded-2xl p-4 text-center border border-blue-50">
-                <span className="block text-2xl font-bold text-slate-800">{builder.projectsCompleted}</span>
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Projects</span>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <span className="block text-xl font-extrabold text-slate-900">{builder.projectsCompleted}</span>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Projects</span>
               </div>
-              <div className="bg-blue-50/50 rounded-2xl p-4 text-center border border-blue-50">
-                <span className="block text-2xl font-bold text-slate-800">{builder.experience}</span>
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Experience</span>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <span className="block text-xl font-extrabold text-slate-900">{builder.experience}</span>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Experience</span>
               </div>
             </div>
 
             {/* View Portfolio Button */}
             <button 
               onClick={() => setSelectedBuilder(builder)}
-              className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-slate-900 hover:bg-blue-700 transition-colors duration-200"
+              className="w-full bg-slate-50 group-hover:bg-blue-600 text-slate-600 group-hover:text-white py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2"
             >
-              View Portfolio
+              View Full Profile
             </button>
             
           </div>
