@@ -6,6 +6,7 @@ import { Projects } from '../LandingPages/Projects'
 import { Partners } from '../LandingPages/Partners'
 import { AuctionBanner } from '../LandingPages/AuctionBanner'
 import ExplorePage from '../LandingPages/ExplorePage'
+import  { HomeCta } from '../LandingPages/HomeCta'
 import AdminDashboard from '../Admin/AdminDashboard'
 
 const HomePage = () => {
@@ -16,6 +17,7 @@ const HomePage = () => {
         {/* <BuildSmart/> */}
         <ExplorePage/>
         <Partners/>
+        <HomeCta/>
         <Projects/>
         <Blog/>
         {/* <AdminDashboard/> */}
