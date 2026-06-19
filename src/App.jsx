@@ -12,6 +12,7 @@ import {
 import HomePage from "./Pages/HomePage";
 import AdminDashboard from "./Admin/AdminDashboard";
 import Smartbuild from "./Pages/Smartbuild";
+import CalculatorResult from "./SmartBuild/CalculatorResult";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer";
 import AddProperty from "./PostProperty/AddProperty";
@@ -96,14 +97,13 @@ const AppContent = () => {
         <Route path="/property/:id" element={<PropertyDetail />} />
 
         {/* USER + AUTH */}
-        <Route
-          path="/Smart-build"
-          element={
-            // <AuthRoute>
-            // </AuthRoute>
-              <Smartbuild />
-          }
-        />
+        
+        {/* Smart Build Routes */}
+        <Route path="/smart-build">
+          <Route index element={<Smartbuild />} />
+          <Route path="calculator-result" element={<CalculatorResult />} />
+        </Route>
+
         <Route
           path="/add-property"
           element={
