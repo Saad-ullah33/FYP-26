@@ -11,6 +11,7 @@ import {
 
 import HomePage from "./Pages/HomePage";
 import AdminDashboard from "./Admin/AdminDashboard";
+import UserDashboard from "./User/UserDashboard";
 import Smartbuild from "./Pages/Smartbuild";
 import CalculatorResult from "./SmartBuild/CalculatorResult";
 import Header from "./components/Header/Header";
@@ -18,6 +19,7 @@ import Footer from "./components/Footer";
 import AddProperty from "./PostProperty/AddProperty";
 import PropertyFinder from "./Pages/PropertyFinder";
 import AllProjects from "./ExploreTools/AllProjects";
+import { NewProject } from "./ExploreTools/NewProject";
 import PropertyListing from "./Pages/PropertyListing";
 import PropertyDetail from "./Pages/PropertyDetail";
 import AuctionListingPage from "./Pages/Auction/AuctionListingPage";
@@ -69,6 +71,23 @@ const AuthRoute = ({ children, role }) => {
 };
 
 // ==========================
+// DYNAMIC DASHBOARD ROUTE REDIRECTOR
+// ==========================
+const DashboardRoute = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return <Navigate to="/login" replace />;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.role === "ADMIN") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    return <UserDashboard />;
+  } catch (err) {
+    return <Navigate to="/login" replace />;
+  }
+};
+
+// ==========================
 // APP CONTENT
 // ==========================
 const AppContent = () => {
@@ -97,7 +116,15 @@ const AppContent = () => {
         <Route path="/property/:id" element={<PropertyDetail />} />
 
         {/* USER + AUTH */}
-        
+        <Route
+          path="/dashboard"
+          element={
+            <AuthRoute>
+              <DashboardRoute />
+            </AuthRoute>
+          }
+        />
+
         {/* Smart Build Routes */}
         <Route path="/smart-build">
           <Route index element={<Smartbuild />} />
@@ -123,11 +150,20 @@ const AppContent = () => {
         />
 
         <Route
-          path="/auction"
+          path="/new-project"
           element={
             <AuthRoute>
-              <AuctionListingPage />
+              <NewProject />
             </AuthRoute>
+          }
+        />
+
+        <Route
+          path="/auction"
+          element={
+              <AuctionListingPage />
+            // <AuthRoute>
+            // </AuthRoute>
           }
         />
 

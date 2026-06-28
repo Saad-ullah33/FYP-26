@@ -107,38 +107,40 @@ const Header = () => {
               {openProfile && (
                 <div className="absolute right-0 mt-3 w-52 bg-white shadow-xl rounded-xl border overflow-hidden">
 
-                  <button
-                    onClick={() => {
-                      setOpenProfile(false);
-                      navigate("/profile");
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
-                  >
-                    <User size={16} />
-                    My Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      setOpenProfile(false);
-                      navigate("/dashboard");
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
-                  >
-                    <User size={16} />
-                    Dashboard
-                  </button>
-
-
-                  {user.role === "ADMIN" && (
+                  {user.role === "ADMIN" ? (
                     <button
                       onClick={() => {
                         setOpenProfile(false);
                         navigate("/admin/dashboard");
                       }}
-                      className="w-full px-4 py-2 hover:bg-gray-100 text-sm text-purple-600"
+                      className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm text-blue-600 font-semibold"
                     >
+                      <User size={16} />
                       Admin Panel
                     </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setOpenProfile(false);
+                          navigate("/dashboard?tab=profile");
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
+                        <User size={16} />
+                        My Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenProfile(false);
+                          navigate("/dashboard");
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
+                        <User size={16} />
+                        Dashboard
+                      </button>
+                    </>
                   )}
 
                   <div className="border-t" />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 import {
   FaHome,
   FaBuilding,
@@ -15,17 +16,27 @@ import {
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [types, setTypes] = useState([]);
   const [open, setOpen] = useState(false);
 
-  const urls = [
+  const baseUrls = [
     { name: "Home", url: "/" },
     { name: "Property Finder", url: "/property-finder" },
     { name: "Smart Build", url: "/smart-build" },
     { name: "Auction", url: "/auction" },
     { name: "Maps", url: "/maps" }
   ];
+
+  const urls = [...baseUrls];
+  if (user) {
+    if (user.role === "ADMIN") {
+      urls.push({ name: "Admin Panel", url: "/admin/dashboard" });
+    } else {
+      urls.push({ name: "Dashboard", url: "/dashboard" });
+    }
+  }
 
   // Matched to the exact royal blue of your brand logo and login button
   // Added whitespace-nowrap to guarantee single-line vertical alignment
