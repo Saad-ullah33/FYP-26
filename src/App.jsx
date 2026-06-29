@@ -32,6 +32,8 @@ import { logout } from "./utils/auth";
 import Map from "./Pages/Map/Map";
 import PlotDetail from "./Pages/Map/PlotDetail";
 import SearchResults from "./Pages/SearchResults";
+import PropertyIndex from "./Pages/PropertyIndex";
+import AreaGuides from "./Pages/AreaGuides";
 
 // ==========================
 // AUTO LOGOUT HOOK
@@ -101,6 +103,10 @@ const AppContent = () => {
     location.pathname === "/login" ||
     location.pathname === "/signup";
 
+  const hideFooter =
+    hideLayout ||
+    location.pathname === "/map";
+
   useAutoLogout();
 
   return (
@@ -117,6 +123,8 @@ const AppContent = () => {
 
         <Route path="/" element={<HomePage />} />
         <Route path="/property-finder" element={<PropertyFinder />} />
+        <Route path="/property-index" element={<PropertyIndex />} />
+        <Route path="/area-guides" element={<AreaGuides />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
         <Route path="/verify-deed" element={<DeedVerification />} />
 
@@ -138,6 +146,7 @@ const AppContent = () => {
         <Route path="/map">
           <Route index element={<Map />} />
         </Route>
+        <Route path="/plot-finder" element={<Map />} />
         <Route path="/plot-detail/:colonyId/:plotId" element={<PlotDetail />} />
         <Route path="/search-results" element={<SearchResults />} />
 
@@ -217,7 +226,7 @@ const AppContent = () => {
 
       </Routes>
 
-      {!hideLayout && <Footer />}
+      {!hideFooter && <Footer />}
     </>
   );
 };

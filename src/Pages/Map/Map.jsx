@@ -17,8 +17,8 @@ import {
   Building,
   CheckCircle,
   HelpCircle,
-  BadgeAlert,
-  Coins
+  Coins,
+  ArrowLeft
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
@@ -56,13 +56,15 @@ const Map = () => {
   const faisalabadCenter = [31.418715, 73.079109];
 
   // State
-  const [toggledColonies, setToggledColonies] = useState({
-    "fda-city": true,
-    "wapda-city": true,
-    "eden-valley": true,
-    "peoples-colony": true,
-    "madina-town": true
+  // Programmatic toggles setup for all colonies (Senior Developer Best Practice)
+  const [toggledColonies, setToggledColonies] = useState(() => {
+    const toggles = {};
+    colonies.forEach((c) => {
+      toggles[c.id] = true;
+    });
+    return toggles;
   });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // 'all', 'developed', 'under-development'
   const [selectedColony, setSelectedColony] = useState(null);
@@ -70,11 +72,14 @@ const Map = () => {
   const [hoveredPlot, setHoveredPlot] = useState(null);
   const [mapZoom, setMapZoom] = useState(13);
 
+  // Advanced GIS plot status filter
+  const [plotFilter, setPlotFilter] = useState("all"); // 'all', 'available', 'sold', 'reserved'
+
   // Global Layer Controls
   const [showBoundaries, setShowBoundaries] = useState(true);
   const [showPlots, setShowPlots] = useState(true);
   const [showBlueprint, setShowBlueprint] = useState(true);
-  const [blueprintOpacity, setBlueprintOpacity] = useState(0.55);
+  const [blueprintOpacity, setBlueprintOpacity] = useState(0.4);
 
   // Focus properties
   const [focusCenter, setFocusCenter] = useState(null);
@@ -98,6 +103,16 @@ const Map = () => {
     }));
   };
 
+  // Toggle all colonies on/off (Show All / Hide All Switch)
+  const toggleAllColonies = () => {
+    const allToggled = Object.values(toggledColonies).every((v) => v === true);
+    const nextToggles = {};
+    colonies.forEach((c) => {
+      nextToggles[c.id] = !allToggled;
+    });
+    setToggledColonies(nextToggles);
+  };
+
   // Fly to colony center
   const focusColony = (colony) => {
     setSelectedColony(colony);
@@ -106,34 +121,46 @@ const Map = () => {
     setFocusZoom(colony.zoom);
   };
 
-  // Color helper for plots based on availability status
+  // Live Inventory Statistics Scanner (Helper)
+  const getColonyStats = (colony) => {
+    if (!colony || !colony.plots) return null;
+    const stats = { total: colony.plots.length, available: 0, sold: 0, reserved: 0 };
+    colony.plots.forEach((p) => {
+      if (p.status === "available") stats.available++;
+      else if (p.status === "sold") stats.sold++;
+      else if (p.status === "reserved") stats.reserved++;
+    });
+    return stats;
+  };
+
+  // Color helper for plots based on availability status (Adjusted for Light Theme Map)
   const getPlotStyle = (status, isHovered, isSelected) => {
-    let baseColor = "#9ca3af"; // Default gray
+    let baseColor = "#4b5563"; // Dark gray border for light theme
     let baseFill = "#9ca3af";
-    let opacity = 0.35;
-    let weight = 1.2;
+    let opacity = 0.4;
+    let weight = 1.0;
 
     if (status === "available") {
-      baseColor = "#10b981"; // Green
-      baseFill = "#10b981";
-      opacity = 0.4;
-    } else if (status === "sold") {
-      baseColor = "#ef4444"; // Red
-      baseFill = "#ef4444";
-      opacity = 0.5;
-    } else if (status === "reserved") {
-      baseColor = "#f59e0b"; // Yellow/Amber
-      baseFill = "#f59e0b";
+      baseColor = "#047857"; // Forest green border
+      baseFill = "#10b981"; // Emerald fill
       opacity = 0.45;
+    } else if (status === "sold") {
+      baseColor = "#b91c1c"; // Dark red border
+      baseFill = "#f87171"; // Rose fill
+      opacity = 0.55;
+    } else if (status === "reserved") {
+      baseColor = "#b45309"; // Dark amber border
+      baseFill = "#fbbf24"; // Amber fill
+      opacity = 0.5;
     }
 
     if (isHovered) {
-      opacity = 0.75;
-      weight = 2;
+      opacity = 0.8;
+      weight = 1.8;
     }
 
     if (isSelected) {
-      baseColor = "#ffffff";
+      baseColor = "#2563eb"; // Bold Blue border for selected plot on light map
       weight = 2.5;
       opacity = 0.85;
     }
@@ -148,9 +175,9 @@ const Map = () => {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-slate-950 font-sans">
+    <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden bg-slate-50 font-sans">
       
-      {/* 1. MAP CANVAS (FULL BLEED) */}
+      {/* 1. MAP CANVAS (LIGHT THEME VOYAGER OVERLAY) */}
       <MapContainer
         center={faisalabadCenter}
         zoom={13}
@@ -158,11 +185,11 @@ const Map = () => {
         maxZoom={18}
         scrollWheelZoom={true}
         className="w-full h-full z-0"
-        zoomControl={false} // Disable default zoom controls to position them customly
+        zoomControl={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
         />
 
         <MapController 
@@ -185,7 +212,7 @@ const Map = () => {
                 color: colony.color,
                 fillColor: colony.color,
                 fillOpacity: isSelected ? 0.08 : 0.03,
-                weight: isSelected ? 2.5 : 1.5,
+                weight: isSelected ? 3.0 : 1.8,
                 dashArray: isSelected ? "4, 6" : "2, 4"
               }}
               eventHandlers={{
@@ -193,8 +220,8 @@ const Map = () => {
               }}
             >
               <Tooltip sticky>
-                <div className="font-semibold text-slate-900">{colony.name}</div>
-                <div className="text-xs text-slate-600">{colony.developmentStatus}</div>
+                <div className="font-semibold text-slate-800">{colony.name}</div>
+                <div className="text-xs text-slate-500">{colony.developmentStatus}</div>
               </Tooltip>
             </Polygon>
           );
@@ -214,12 +241,15 @@ const Map = () => {
           );
         })}
 
-        {/* PLOT CUTTING GRID OVERLAYS (Vector) */}
-        {/* Render plots ONLY if zoom level is high enough (>= 14) and toggled on */}
+        {/* PLOT CUTTING GRID OVERLAYS */}
         {showPlots && mapZoom >= 14 && colonies.map((colony) => {
           if (!toggledColonies[colony.id] || !colony.plots) return null;
 
-          return colony.plots.map((plot) => {
+          const filteredPlots = colony.plots.filter((plot) => 
+            plot.status === "available"
+          );
+
+          return filteredPlots.map((plot) => {
             const isHovered = hoveredPlot?.id === plot.id;
             const isSelected = selectedPlot?.id === plot.id;
 
@@ -234,13 +264,12 @@ const Map = () => {
                   click: (e) => {
                     setSelectedPlot(plot);
                     setSelectedColony(colony);
-                    // Open a popup at click location
                     L.DomEvent.stopPropagation(e);
                   }
                 }}
               >
                 <Tooltip sticky>
-                  <div className="p-1 text-slate-900">
+                  <div className="p-1 text-slate-850">
                     <p className="font-bold text-xs">{plot.block} | {plot.number}</p>
                     <p className="text-xs">Status: <span className="capitalize font-semibold">{plot.status}</span></p>
                     <p className="text-xs font-bold text-blue-600">{plot.price}</p>
@@ -252,72 +281,82 @@ const Map = () => {
         })}
       </MapContainer>
 
-      {/* 2. GLASSMORPHIC CONTROL SIDEBAR (TOP LEFT) */}
-      <div className="absolute top-4 left-4 bottom-4 w-96 z-[1000] flex flex-col gap-4 bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-5 text-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+      {/* 2. LIGHT GLASSMORPHIC SIDEBAR PANEL */}
+      <div className="absolute top-4 left-4 bottom-4 w-96 z-[1000] flex flex-col gap-3.5 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-5 text-slate-800 shadow-xl overflow-hidden">
         
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/20">
-              <MapPin className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Faisalabad GIS Map</h1>
-              <p className="text-[11px] text-slate-400 font-light">Interactive Property & Plot Locator</p>
+        {/* Sidebar Header */}
+        <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-200">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="group inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 transition font-extrabold text-xs self-start"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-400 group-hover:text-blue-600" />
+            Go Back
+          </button>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-base font-extrabold tracking-tight text-slate-900">Faisalabad GIS Map</h1>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Interactive Plot Locator</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Global Layer Controls */}
-        <div className="bg-slate-900/65 border border-slate-800/80 rounded-xl p-3 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium px-1">
-            <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-blue-400" /> Layer Overlays</span>
-            <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">Zoom: {mapZoom}</span>
+        {/* Layer Controls Console */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
+            <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-blue-600" /> Layer Overlays</span>
+            <span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">Zoom: {mapZoom}</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <button 
               onClick={() => setShowBoundaries(!showBoundaries)} 
-              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all cursor-pointer ${
                 showBoundaries 
-                  ? "bg-blue-600/10 border-blue-500/40 text-blue-300" 
-                  : "bg-slate-950/50 border-slate-800/80 text-slate-500 hover:text-slate-300"
+                  ? "bg-blue-50 border-blue-200 text-blue-650 font-bold shadow-sm" 
+                  : "bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"
               }`}
             >
               <Eye className="w-4 h-4 mb-1" />
-              <span className="text-[9px] font-medium font-sans">Boundaries</span>
+              <span className="text-[9px] font-sans">Boundaries</span>
             </button>
 
             <button 
               onClick={() => setShowPlots(!showPlots)} 
-              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all cursor-pointer ${
                 showPlots 
-                  ? "bg-blue-600/10 border-blue-500/40 text-blue-300" 
-                  : "bg-slate-950/50 border-slate-800/80 text-slate-500 hover:text-slate-300"
+                  ? "bg-blue-50 border-blue-200 text-blue-650 font-bold shadow-sm" 
+                  : "bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"
               }`}
             >
               <Grid className="w-4 h-4 mb-1" />
-              <span className="text-[9px] font-medium font-sans">Plot Cutting</span>
+              <span className="text-[9px] font-sans">Plot Grid</span>
             </button>
 
             <button 
               onClick={() => setShowBlueprint(!showBlueprint)} 
-              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+              className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all cursor-pointer ${
                 showBlueprint 
-                  ? "bg-blue-600/10 border-blue-500/40 text-blue-300" 
-                  : "bg-slate-950/50 border-slate-800/80 text-slate-500 hover:text-slate-300"
+                  ? "bg-blue-50 border-blue-200 text-blue-650 font-bold shadow-sm" 
+                  : "bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"
               }`}
             >
               <ImageIcon className="w-4 h-4 mb-1" />
-              <span className="text-[9px] font-medium font-sans">Blueprints</span>
+              <span className="text-[9px] font-sans">Blueprints</span>
             </button>
           </div>
 
           {/* Blueprint Opacity Control */}
           {showBlueprint && (
-            <div className="pt-2 border-t border-slate-800/50 flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[10px] text-slate-400">
-                <span className="flex items-center gap-1"><Sliders className="w-3 h-3" /> Blueprint Opacity</span>
+            <div className="pt-2 border-t border-slate-200/50 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <span className="flex items-center gap-1 font-medium"><Sliders className="w-3 h-3 text-slate-400" /> Layout Opacity</span>
                 <span>{Math.round(blueprintOpacity * 100)}%</span>
               </div>
               <input 
@@ -327,59 +366,84 @@ const Map = () => {
                 step="0.05" 
                 value={blueprintOpacity} 
                 onChange={(e) => setBlueprintOpacity(parseFloat(e.target.value))}
-                className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
             </div>
           )}
 
           {mapZoom < 14 && showPlots && (
-            <div className="bg-blue-950/30 border border-blue-900/30 rounded-lg p-2 flex items-start gap-2">
-              <Info className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-              <p className="text-[10px] text-blue-300 leading-tight">
-                <strong>Plot Cuttings hidden.</strong> Zoom in closer (Zoom level 14+) to view detailed vector plot maps.
+            <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-2 flex items-start gap-2">
+              <Info className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-blue-700 leading-tight">
+                <strong>Plot grid is currently hidden.</strong> Please zoom in closer (Zoom 14+) to view detailed vector plots.
               </p>
             </div>
           )}
         </div>
 
-        {/* Search & Filters */}
+        {/* GIS Legend & Plot Filters */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
+            <span className="flex items-center gap-1.5"><Grid className="w-3.5 h-3.5 text-blue-600" /> Plot Display Status</span>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center justify-between text-xs font-bold text-emerald-800">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Displaying Available Plots Only</span>
+            </div>
+            <span className="text-[10px] bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-700">Active</span>
+          </div>
+        </div>
+
+        {/* Search Input and Filter */}
         <div className="flex flex-col gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search colonies (e.g. FDA, Wapda)..."
+              placeholder="Search colonies (e.g. FDA, City, Wapda)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900/60 border border-slate-800/80 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/60 transition-all"
+              className="w-full bg-slate-50 border border-slate-250 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-1.5 p-1 bg-slate-900/60 border border-slate-800/80 rounded-xl text-[10px]">
+          {/* Development Status Filter */}
+          <div className="flex gap-1.5 p-1 bg-slate-100/80 border border-slate-200 rounded-xl text-[10px]">
             <button 
               onClick={() => setFilterStatus("all")}
-              className={`flex-1 py-1 rounded-lg transition-all ${filterStatus === "all" ? "bg-blue-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+              className={`flex-1 py-1 rounded-lg transition-all cursor-pointer font-bold ${filterStatus === "all" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
             >
               All
             </button>
             <button 
               onClick={() => setFilterStatus("developed")}
-              className={`flex-1 py-1 rounded-lg transition-all ${filterStatus === "developed" ? "bg-blue-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+              className={`flex-1 py-1 rounded-lg transition-all cursor-pointer font-bold ${filterStatus === "developed" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
             >
               Developed
             </button>
             <button 
               onClick={() => setFilterStatus("under-development")}
-              className={`flex-1 py-1 rounded-lg transition-all ${filterStatus === "under-development" ? "bg-blue-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+              className={`flex-1 py-1 rounded-lg transition-all cursor-pointer font-bold ${filterStatus === "under-development" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
             >
               Under Dev.
             </button>
           </div>
         </div>
 
-        {/* Colonies Scroll List */}
-        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        {/* Colonies Header Switch */}
+        <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1 mt-1 shrink-0">
+          <span>Colonies List ({filteredColonies.length})</span>
+          <button
+            onClick={toggleAllColonies}
+            className="text-[10px] text-blue-650 hover:text-blue-700 font-black cursor-pointer"
+          >
+            {Object.values(toggledColonies).every((v) => v === true) ? "Hide All Boundaries" : "Show All Boundaries"}
+          </button>
+        </div>
+
+        {/* Scroll list with layout overflow protection */}
+        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           {filteredColonies.length > 0 ? (
             filteredColonies.map((colony) => {
               const isToggled = toggledColonies[colony.id];
@@ -391,32 +455,32 @@ const Map = () => {
                   onClick={() => focusColony(colony)}
                   className={`group relative flex flex-col p-3 rounded-xl border transition-all cursor-pointer ${
                     isSelected 
-                      ? "bg-slate-900 border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.15)]" 
-                      : "bg-slate-950/40 hover:bg-slate-900/40 border-slate-800/60 hover:border-slate-800"
+                      ? "bg-blue-50/40 border-blue-500/40 shadow-sm" 
+                      : "bg-slate-50/60 hover:bg-slate-100/50 border-slate-200/60 hover:border-slate-200"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-2.5">
                       <div 
                         className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
                         style={{ backgroundColor: colony.color }}
                       />
                       <div>
-                        <h3 className="text-xs font-bold text-slate-100 group-hover:text-blue-400 transition-colors">{colony.name}</h3>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{colony.approvalStatus}</p>
+                        <h3 className="text-xs font-bold text-slate-800 group-hover:text-blue-650 transition-colors">{colony.name}</h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{colony.approvalStatus}</p>
                       </div>
                     </div>
 
-                    {/* Toggle Button */}
+                    {/* Boundary Toggle Eye Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleColony(colony.id);
                       }}
-                      className={`p-1.5 rounded-lg border transition-all ${
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                         isToggled 
-                          ? "bg-blue-600/10 border-blue-500/30 text-blue-400 hover:bg-blue-600/20" 
-                          : "bg-slate-900 border-slate-800 text-slate-600 hover:text-slate-400"
+                          ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100/80" 
+                          : "bg-white border-slate-200 text-slate-450 hover:text-slate-600"
                       }`}
                     >
                       {isToggled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -424,16 +488,16 @@ const Map = () => {
                   </div>
 
                   {/* Badges */}
-                  <div className="flex items-center gap-1.5 mt-2.5">
-                    <span className={`text-[8px] font-semibold px-2 py-0.5 rounded-full ${
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full ${
                       colony.developmentStatus === "Fully Developed"
-                        ? "bg-emerald-950/60 text-emerald-400 border border-emerald-900/40"
-                        : "bg-amber-950/60 text-amber-400 border border-amber-900/40"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                        : "bg-amber-50 text-amber-700 border border-amber-100"
                     }`}>
                       {colony.developmentStatus}
                     </span>
                     {colony.blueprint && (
-                      <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-blue-950/60 text-blue-400 border border-blue-900/40 flex items-center gap-0.5">
+                      <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-0.5">
                         <ImageIcon className="w-2 h-2" /> Layout Plan
                       </span>
                     )}
@@ -442,79 +506,87 @@ const Map = () => {
               );
             })
           ) : (
-            <div className="text-center py-8 text-xs text-slate-500">
+            <div className="text-center py-8 text-xs text-slate-400">
               No colonies match search criteria.
             </div>
           )}
         </div>
+
+        {/* GIS Instructions help banner at bottom of sidebar (integrated cleanly) */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-start gap-2 shrink-0">
+          <Info className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-[9px] text-slate-500 leading-tight">
+            Click on any boundary or list item to center the camera. Zoom in past level 14 to display specific plots and availability details.
+          </p>
+        </div>
+
       </div>
 
-      {/* 3. FLOATING DETAIL CARDS (BOTTOM RIGHT) */}
+      {/* 3. LIGHT DETAILED INFORMATION TILES (BOTTOM RIGHT) */}
       <div className="absolute bottom-4 right-4 z-[1000] w-96 flex flex-col gap-3">
         
-        {/* Plot Detail Card */}
+        {/* Plot Details overlay Card */}
         {selectedPlot && (
-          <div className="bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-5 text-slate-100 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-600/20 text-blue-400 rounded-lg">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
                   <Grid className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-100">{selectedPlot.number}</h2>
-                  <p className="text-[10px] text-slate-400">{selectedPlot.block}</p>
+                  <h2 className="text-sm font-extrabold text-slate-900">{selectedPlot.number}</h2>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{selectedPlot.block}</p>
                 </div>
               </div>
               
-              {/* Close Button */}
               <button 
                 onClick={() => setSelectedPlot(null)}
-                className="text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 <EyeOff className="w-4 h-4" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 py-3 text-xs">
-              <div className="bg-slate-900/60 border border-slate-800/50 rounded-xl p-2.5">
-                <span className="text-[10px] text-slate-500 block">Plot Size</span>
-                <span className="font-semibold text-slate-200 mt-0.5 block">{selectedPlot.size}</span>
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+                <span className="text-[10px] text-slate-450 block font-semibold">Plot Size</span>
+                <span className="font-extrabold text-slate-800 mt-0.5 block">{selectedPlot.size}</span>
               </div>
 
-              <div className="bg-slate-900/60 border border-slate-800/50 rounded-xl p-2.5">
-                <span className="text-[10px] text-slate-500 block">Est. Market Price</span>
-                <span className="font-semibold text-blue-400 mt-0.5 block flex items-center gap-1">
-                  <Coins className="w-3.5 h-3.5" /> {selectedPlot.price}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+                <span className="text-[10px] text-slate-450 block font-semibold">Est. Market Value</span>
+                <span className="font-black text-blue-600 mt-0.5 block flex items-center gap-1">
+                  <Coins className="w-3.5 h-3.5 text-yellow-600" /> {selectedPlot.price}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+            <div className="flex items-center justify-between pt-2.5 border-t border-slate-200">
               <div className="flex items-center gap-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${
                   selectedPlot.status === "available" 
                     ? "bg-emerald-500 animate-pulse" 
                     : selectedPlot.status === "sold" 
-                    ? "bg-red-500" 
+                    ? "bg-rose-500" 
                     : "bg-amber-500"
                 }`} />
-                <span className="text-xs capitalize font-medium text-slate-300">
-                  {selectedPlot.status === "available" ? "Available for Purchase" : selectedPlot.status === "sold" ? "Sold / Occupied" : "Reserved / Token Paid"}
+                <span className="text-[11px] font-bold text-slate-600 capitalize">
+                  {selectedPlot.status === "available" ? "Ready to Purchase" : selectedPlot.status === "sold" ? "Sold / Registered" : "Reserved / Token Paid"}
                 </span>
               </div>
 
               {selectedPlot.status === "available" && (
                 <button 
                   onClick={() => navigate(`/plot-detail/${selectedColony.id}/${selectedPlot.id}`)}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-lg shadow-blue-600/10"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md shadow-blue-500/10 cursor-pointer"
                 >
-                  Buy Now / Details <ChevronRight className="w-3.5 h-3.5" />
+                  Buy Now <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               )}
               {selectedPlot.status === "sold" && (
                 <button 
                   onClick={() => navigate(`/plot-detail/${selectedColony.id}/${selectedPlot.id}`)}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-lg"
+                  className="bg-slate-850 hover:bg-slate-900 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer"
                 >
                   Verify Deed <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -522,7 +594,7 @@ const Map = () => {
               {selectedPlot.status === "reserved" && (
                 <button 
                   onClick={() => navigate(`/plot-detail/${selectedColony.id}/${selectedPlot.id}`)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 border border-slate-700"
+                  className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer"
                 >
                   View Details <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -531,78 +603,96 @@ const Map = () => {
           </div>
         )}
 
-        {/* Colony Overview Card */}
+        {/* Colony Details overlay Card with dynamic Stats Scanner */}
         {selectedColony && !selectedPlot && (
-          <div className="bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-5 text-slate-100 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
-              <div className="flex items-center gap-2">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+            
+            {/* Colony Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
                 <div 
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: selectedColony.color }}
                 />
-                <h2 className="text-sm font-bold text-slate-100">{selectedColony.name} Details</h2>
+                <h2 className="text-sm font-extrabold text-slate-900">{selectedColony.name} Details</h2>
               </div>
 
               <button 
                 onClick={() => setSelectedColony(null)}
-                className="text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
               >
                 <EyeOff className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="py-3 text-xs leading-relaxed text-slate-300">
+            {/* Description */}
+            <div className="py-3 text-[11px] leading-relaxed text-slate-600 border-b border-slate-100 mb-3">
               <p>{selectedColony.description}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pb-3 text-[10px]">
-              <div className="bg-slate-900/60 border border-slate-800/50 rounded-xl p-2.5 flex items-center gap-2">
-                <Building className="w-4 h-4 text-indigo-400" />
+            <div className="grid grid-cols-2 gap-3 pb-3 text-[10px] font-bold">
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex items-center gap-2">
+                <Building className="w-4 h-4 text-indigo-500" />
                 <div>
-                  <span className="text-slate-500 block">Status</span>
-                  <span className="font-semibold text-slate-200 mt-0.5 block">{selectedColony.developmentStatus}</span>
+                  <span className="text-slate-450 block font-semibold text-[8px] uppercase tracking-wider">Status</span>
+                  <span className="font-extrabold text-slate-700 mt-0.5 block">{selectedColony.developmentStatus}</span>
                 </div>
               </div>
-              <div className="bg-slate-900/60 border border-slate-800/50 rounded-xl p-2.5 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
                 <div>
-                  <span className="text-slate-500 block">Approval</span>
-                  <span className="font-semibold text-slate-200 mt-0.5 block">{selectedColony.approvalStatus}</span>
+                  <span className="text-slate-450 block font-semibold text-[8px] uppercase tracking-wider">Approval</span>
+                  <span className="font-extrabold text-slate-700 mt-0.5 block">{selectedColony.approvalStatus}</span>
                 </div>
               </div>
             </div>
 
+            {/* GIS Inventory Stats Card */}
             {selectedColony.plots && (
-              <div className="pt-2 border-t border-slate-800/60 text-[10px] text-slate-400 flex items-center justify-between">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-2 mb-3">
+                <span className="text-[9px] text-slate-450 uppercase font-black block tracking-wider">Plot Inventory Stats</span>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold">
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/60 text-emerald-650 font-black shadow-sm">
+                    <span className="block text-sm font-black">{getColonyStats(selectedColony)?.available}</span>
+                    <span className="text-[8px] text-slate-400 font-medium block mt-0.5">Available</span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/60 text-rose-650 font-black shadow-sm">
+                    <span className="block text-sm font-black">{getColonyStats(selectedColony)?.sold}</span>
+                    <span className="text-[8px] text-slate-400 font-medium block mt-0.5">Sold</span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/60 text-amber-650 font-black shadow-sm">
+                    <span className="block text-sm font-black">{getColonyStats(selectedColony)?.reserved}</span>
+                    <span className="text-[8px] text-slate-400 font-medium block mt-0.5">Reserved</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedColony.plots && (
+              <div className="pt-2 text-[10px] text-slate-500 font-medium flex items-center justify-between">
                 <span>Total Plots Modeled: <strong>{selectedColony.plots.length}</strong></span>
-                <span className="text-blue-400 font-medium">Zoom in to view plot grid</span>
+                <span className="text-blue-600 font-bold">Zoom in to view plot grid</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* 4. MAP UTILITIES: ZOOM CONTROLS (TOP RIGHT) */}
+      {/* 4. ZOOM UTILITIES: RESET BUTTON (TOP RIGHT) */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-1.5">
         <button 
           onClick={() => {
-            // Reset to Center
+            // Reset map viewport to Faisalabad Clock Tower center
             setFocusCenter(faisalabadCenter);
             setFocusZoom(13);
             setSelectedColony(null);
             setSelectedPlot(null);
           }}
           title="Reset to Faisalabad Center"
-          className="p-2.5 bg-slate-950/85 backdrop-blur-xl border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white rounded-xl shadow-lg transition-all"
+          className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 rounded-xl shadow-lg transition-all cursor-pointer"
         >
           <Crosshair className="w-4 h-4" />
         </button>
-      </div>
-
-      {/* Map instructions help banner */}
-      <div className="absolute bottom-4 left-4 z-[1000] hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-950/70 backdrop-blur-md border border-slate-800/50 rounded-lg text-[10px] text-slate-400 shadow-lg">
-        <Info className="w-3.5 h-3.5 text-blue-400" />
-        <span>Click on any colony name or boundary to focus. Zoom in closer to view plot numbers and availability.</span>
       </div>
 
     </div>

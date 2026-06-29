@@ -163,9 +163,9 @@ export const MOCK_AUCTIONS = [
   {
     id: 5,
     title: "Premium Residential Plot (Upcoming)",
-    location: "Citi Housing",
-    address: "Phase 1, Executive Block, Citi Housing, Faisalabad",
-    description: "An exceptional opportunity to bid on a premium 1 Kanal plot in the Executive Block of Citi Housing. Fully developed block with underground electrification, theme parks, high-end schools, and international dining nearby. Auction starts next week.",
+    location: "City Housing",
+    address: "Phase 1, Executive Block, City Housing, Faisalabad",
+    description: "An exceptional opportunity to bid on a premium 1 Kanal plot in the Executive Block of City Housing. Fully developed block with underground electrification, theme parks, high-end schools, and international dining nearby. Auction starts next week.",
     startPrice: 38000000,
     currentBid: 38000000,
     bidIncrement: 500000,
@@ -181,9 +181,9 @@ export const MOCK_AUCTIONS = [
     bathrooms: 0,
     features: ["Underground Electrification", "Corner Lot Option", "Sewerage Completed", "Park Facing", "Immediate Possession"],
     owner: {
-      name: "Citi Land Developers",
+      name: "City Land Developers",
       phone: "+92 315 5556677",
-      email: "info@citidevelopers.com",
+      email: "info@citydevelopers.com",
       rating: 4.9,
       verified: true
     },

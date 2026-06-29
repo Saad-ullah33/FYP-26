@@ -48,7 +48,7 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full h-20 bg-white/70 backdrop-blur-md shadow-sm border-b border-white/30">
+    <header className="sticky top-0 z-[1050] w-full h-20 bg-white/70 backdrop-blur-md shadow-sm border-b border-white/30">
       <div className="grid grid-cols-3 items-center h-full px-8 max-w-screen-2xl mx-auto">
 
         {/* LOGO */}

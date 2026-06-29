@@ -18,7 +18,7 @@ const faisalabadLocations = [
   "Jaranwala Town", "Samundri Town", "Tandlianwala Town", "Faisalabad City",
   "Faisalabad Sadar", "Chak Jhumra", "Jaranwala", "Samundri", "Tandlianwala",
   "D Ground", "People Colony No 1", "People Colony No 2", "Canal Road",
-  "Susan Road", "Wapda City", "FDA City", "Citi Housing", "Gulberg",
+  "Susan Road", "Wapda City", "FDA City", "City Housing", "Gulberg",
   "Samanabad", "Millat Town", "Satiana Road", "Jaranwala Road", "Samundari Road",
   "Jhang Road", "Sargodha Road", "Sheikhupura Road", "Eden Gardens",
   "Eden Valley", "Kohinoor City", "Batala Colony", "Civil Lines", "Officers Colony",

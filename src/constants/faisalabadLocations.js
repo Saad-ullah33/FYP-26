@@ -25,7 +25,7 @@ export const FAISALABAD_LOCATIONS = [
   "Susan Road",
   "Wapda City",
   "FDA City",
-  "Citi Housing",
+  "City Housing",
   "Gulberg",
   "Samanabad",
   "Millat Town",
