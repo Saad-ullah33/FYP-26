@@ -26,7 +26,7 @@ const Navbar = () => {
     { name: "Property Finder", url: "/property-finder" },
     { name: "Smart Build", url: "/smart-build" },
     { name: "Auction", url: "/auction" },
-    { name: "Maps", url: "/maps" }
+    { name: "Map", url: "/map" }
   ];
 
   const urls = [...baseUrls];

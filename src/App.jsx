@@ -28,6 +28,7 @@ import Login from "./Pages/auth/Login";
 import Signup from "./Pages/auth/Signup";
 
 import { logout } from "./utils/auth";
+import Map from "./Pages/Map/Map";
 
 // ==========================
 // AUTO LOGOUT HOOK
@@ -129,6 +130,9 @@ const AppContent = () => {
         <Route path="/smart-build">
           <Route index element={<Smartbuild />} />
           <Route path="calculator-result" element={<CalculatorResult />} />
+        </Route>
+        <Route path="/map">
+          <Route index element={<Map />} />
         </Route>
 
         <Route
