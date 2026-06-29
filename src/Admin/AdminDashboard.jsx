@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getQRUrls, createDeed, initializeDeeds } from '../utils/deedService';
+import { QRCodeSVG } from 'qrcode.react';
+import { Copy, ExternalLink } from 'lucide-react';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -61,8 +64,14 @@ const AdminDashboard = () => {
 
   const [trustDeeds, setTrustDeeds] = useState([
     { id: 201, propertyId: 101, owner: 'Ali Khan', documentId: 'TD-9921-PB', registryOffice: 'Faisalabad West', status: 'Pending', uploadDate: '2026-06-26', verifiedAt: null },
-    { id: 202, propertyId: 103, owner: 'Usman Ghani', documentId: 'TD-8812-IS', registryOffice: 'Islamabad HQ', status: 'Verified', uploadDate: '2026-06-25', verifiedAt: '2026-06-26 14:30', qrCode: 'PROPSIGHT-VERIFIED-202' },
+    { id: 202, propertyId: 102, owner: 'Sarah Ahmed', documentId: 'TD-8812-IS', registryOffice: 'Lahore Registry Office', status: 'Verified', uploadDate: '2026-06-25', verifiedAt: '2026-06-26 14:30', qrCode: 'TD-102-8812' },
   ]);
+
+  const [qrModal, setQrModal] = useState({ isOpen: false, deedId: '', urls: {} });
+
+  useEffect(() => {
+    initializeDeeds();
+  }, []);
 
   const [modelSettings, setModelSettings] = useState({
     learningRate: 0.001,
@@ -188,12 +197,29 @@ const AdminDashboard = () => {
       type: 'info',
       onConfirm: () => {
         const timeNow = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        
+        // Register certified deed details in mock database
+        const mockDeedData = {
+          propertyId: deed.propertyId,
+          title: deed.propertyId === 101 ? "5 Marla Modern House" : "Commercial Plaza Shop",
+          location: deed.propertyId === 101 ? "Giga Mall, Islamabad" : "Saddar, Rawalpindi",
+          price: deed.propertyId === 101 ? "1.8 Crore" : "95 Lakhs",
+          buyerName: deed.owner,
+          buyerEmail: deed.owner === 'Ali Khan' ? 'ali.khan@gmail.com' : 'usman.g@outlook.com',
+          buyerCNIC: deed.owner === 'Ali Khan' ? '37405-1234567-9' : '37405-9988776-5',
+          sellerName: deed.propertyId === 101 ? 'Kamran Shah' : 'Zainab Bibi',
+          sellerEmail: deed.propertyId === 101 ? 'kamran@gmail.com' : 'zainab.b@hotmail.com',
+          sellerCNIC: deed.propertyId === 101 ? '37405-7654321-3' : '37405-2233445-6',
+          registryOffice: deed.registryOffice
+        };
+        const createdDeed = createDeed(mockDeedData);
+
         setTrustDeeds(prev => prev.map(d => 
           d.id === deedId ? { 
             ...d, 
             status: 'Verified', 
             verifiedAt: timeNow,
-            qrCode: `PROPSIGHT-VERIFIED-${deedId}-${Math.floor(1000 + Math.random() * 9000)}` 
+            qrCode: createdDeed.deedId
           } : d
         ));
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -859,17 +885,23 @@ const AdminDashboard = () => {
                               Verify & Seal Title
                             </button>
                           ) : (
-                            <div className="flex items-center gap-3 bg-[#111c30]/80 px-3.5 py-2 rounded-xl border border-[#1b2b48]/75 shadow-lg relative overflow-hidden group">
+                            <button
+                              onClick={() => {
+                                const urls = getQRUrls(item.qrCode || "TD-102-8812");
+                                setQrModal({ isOpen: true, deedId: item.qrCode || "TD-102-8812", urls });
+                              }}
+                              className="flex items-center gap-3 bg-[#111c30]/80 hover:bg-[#15233d] px-3.5 py-2 rounded-xl border border-[#1b2b48]/75 hover:border-blue-500/50 shadow-lg relative overflow-hidden group transition-all text-left cursor-pointer"
+                            >
                               <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none" />
                               {/* Simple Simulated QR Icon block */}
                               <div className="w-8 h-8 bg-white p-0.5 rounded border border-slate-100 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                                <span className="text-[5px] text-black font-mono font-bold leading-none break-all">{item.qrCode.substring(0, 16)}</span>
+                                <span className="text-[5px] text-black font-mono font-bold leading-none break-all">QR-CODE</span>
                               </div>
-                              <div className="text-left">
-                                <p className="text-[8px] text-emerald-400 font-extrabold tracking-wider leading-none">CERTIFIED SECURE</p>
-                                <span className="text-[9px] font-mono text-slate-350 mt-1 block font-bold leading-none">{item.qrCode}</span>
+                              <div className="text-left font-sans">
+                                <p className="text-[8px] text-emerald-400 font-extrabold tracking-wider leading-none">VIEW QR KEYS</p>
+                                <span className="text-[9px] font-mono text-slate-350 mt-1 block font-bold leading-none">{item.qrCode || "TD-102-8812"}</span>
                               </div>
-                            </div>
+                            </button>
                           )}
                         </div>
                       </td>
@@ -1000,6 +1032,92 @@ const AdminDashboard = () => {
               >
                 {confirmModal.confirmText}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Viewer Modal */}
+      {qrModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-[#040810]/75 backdrop-blur-sm transition-opacity"
+            onClick={() => setQrModal({ isOpen: false, deedId: '', urls: {} })}
+          />
+          
+          {/* Modal Box */}
+          <div className="relative bg-[#0e1626] rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-[#1e2d4a] animate-in fade-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh] z-10">
+            <div className="flex justify-between items-center border-b border-[#1e2d4a]/60 pb-4 mb-5">
+              <div>
+                <h3 className="text-md font-bold text-white tracking-tight flex items-center gap-2">
+                  <QrCode className="text-amber-500 animate-pulse" size={20} />
+                  TrustDeed Cryptographic QR Keyring
+                </h3>
+                <p className="text-[10px] text-slate-400 mt-1">Generated keys for Deed ID: <span className="font-mono text-blue-400 font-bold">{qrModal.deedId}</span></p>
+              </div>
+              <button 
+                onClick={() => setQrModal({ isOpen: false, deedId: '', urls: {} })}
+                className="p-1 hover:bg-[#16243d] rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(qrModal.urls).map(([role, url]) => (
+                <div key={role} className="bg-[#121c2e]/60 border border-[#1c2e4f]/50 p-4 rounded-xl flex flex-col items-center relative overflow-hidden group">
+                  {/* Role indicator */}
+                  <span className={`absolute top-2 right-2 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border ${
+                    role === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                    role === 'buyer' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
+                    role === 'seller' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                  }`}>
+                    {role}
+                  </span>
+
+                  <a 
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-white p-2.5 rounded-xl mb-3 shadow-lg group-hover:scale-105 transition-transform duration-300 mt-3 cursor-pointer block"
+                    title="Click to verify deed directly in new tab"
+                  >
+                    <QRCodeSVG value={url} size={110} />
+                  </a>
+
+                  <h4 className="text-xs font-bold text-slate-200 capitalize mb-1">{role} Access QR</h4>
+                  <p className="text-[9px] text-slate-400 text-center mb-4 leading-normal px-2">
+                    {role === 'admin' && 'Allows land registrar to audit & verify official logs.'}
+                    {role === 'buyer' && 'Digital possession deed of property ownership.'}
+                    {role === 'seller' && 'Official receipt of sale and tax registry.'}
+                    {role === 'public' && 'Public scan board. Masked GDPR data.'}
+                  </p>
+
+                  <div className="flex gap-2 w-full mt-auto pt-2 border-t border-[#1a2947]/40">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(url);
+                        alert(`${role.toUpperCase()} link copied!`);
+                      }}
+                      className="flex-1 py-2 bg-[#16243d] hover:bg-[#203457] text-slate-350 hover:text-white rounded-lg border border-[#21375d] text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Copy size={11} />
+                      Copy Link
+                    </button>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer text-center"
+                    >
+                      <ExternalLink size={11} />
+                      Verify Link
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -24,10 +24,15 @@ import {
   ExternalLink,
   MapPin,
   Sparkles,
-  LogOut
+  LogOut,
+  QrCode,
+  Calendar,
+  Copy
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getQRUrls, getDeeds } from '../utils/deedService';
+import { QRCodeSVG } from 'qrcode.react';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -208,6 +213,7 @@ const UserDashboard = () => {
             <SidebarItem icon={Heart} text="Saved Properties" active={activeTab === 'Saved Properties'} onClick={() => setActiveTab('Saved Properties')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Calculator} text="Smart Build" active={activeTab === 'Smart Build'} onClick={() => setActiveTab('Smart Build')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Gavel} text="Auctions" active={activeTab === 'Auctions'} onClick={() => setActiveTab('Auctions')} isOpen={isSidebarOpen} />
+            <SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
             
             <div className={`mt-6 mb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
               Account Settings
@@ -252,10 +258,13 @@ const UserDashboard = () => {
               {activeTab === 'Saved Properties' && <Heart className="text-blue-600" />}
               {activeTab === 'Smart Build' && <Calculator className="text-blue-600" />}
               {activeTab === 'Auctions' && <Gavel className="text-blue-600" />}
+              {activeTab === 'Deeds' && <QrCode className="text-blue-600" />}
               {activeTab === 'Profile' && <User className="text-blue-600" />}
-              {activeTab}
+              {activeTab === 'Deeds' ? "Digital Deeds" : activeTab}
             </h2>
-            <p className="text-slate-500 text-sm mt-1">Manage listings, appraisal histories, bids, and profile credentials.</p>
+            <p className="text-slate-500 text-sm mt-1">
+              {activeTab === 'Deeds' ? "Verify, manage, and download digital land registry deeds and QR seals." : "Manage listings, appraisal histories, bids, and profile credentials."}
+            </p>
           </div>
           
           <div className="flex items-center gap-3.5 self-start sm:self-center">
@@ -840,6 +849,186 @@ const UserDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* ================= TAB: DIGITAL DEEDS ================= */}
+        {activeTab === 'Deeds' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Demo User Switcher Badge */}
+            <div className="bg-blue-50 border border-blue-100 p-4.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h4 className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                  <Sparkles size={16} className="text-blue-600 animate-pulse" />
+                  Presentation Sandbox Profile Switcher
+                </h4>
+                <p className="text-xs text-blue-700 mt-0.5">Switch profiles below to simulate different dashboard views for Buyers & Sellers.</p>
+              </div>
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-sm shrink-0">
+                <span className="text-[10px] text-slate-500 font-extrabold uppercase">Testing As:</span>
+                <select
+                  value={profileForm.fullName}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    let email = "demo@fyp.com";
+                    if (name === "Ali Khan") email = "ali.khan@gmail.com";
+                    if (name === "Sarah Ahmed") email = "sarah.ahmed@yahoo.com";
+                    setProfileForm({
+                      ...profileForm,
+                      fullName: name,
+                      email: email
+                    });
+                  }}
+                  className="text-xs font-bold text-slate-700 outline-none border-none cursor-pointer bg-transparent"
+                >
+                  <option value="Saad Ullah">Saad Ullah (No Deeds Yet)</option>
+                  <option value="Ali Khan">Ali Khan (Buyer & Seller)</option>
+                  <option value="Sarah Ahmed">Sarah Ahmed (Buyer)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* List Deeds */}
+            <div className="grid grid-cols-1 gap-6">
+              {(() => {
+                const deeds = getDeeds();
+                const userDeeds = deeds.filter(
+                  (d) => d.buyerName === profileForm.fullName || d.sellerName === profileForm.fullName
+                );
+
+                if (userDeeds.length === 0) {
+                  return (
+                    <div className="bg-white border border-slate-150 rounded-2xl p-10 text-center shadow-sm">
+                      <QrCode className="w-16 h-16 text-slate-350 mx-auto mb-4" />
+                      <h4 className="text-base font-bold text-slate-800">No Deeds Found for {profileForm.fullName}</h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                        This profile does not have any certified property purchase or sale transaction history. Select 'Ali Khan' or 'Sarah Ahmed' from the Sandbox Switcher above to test the verified deeds view!
+                      </p>
+                    </div>
+                  );
+                }
+
+                return userDeeds.map((deed) => {
+                  const isBuyer = deed.buyerName === profileForm.fullName;
+                  const role = isBuyer ? "buyer" : "seller";
+                  const urls = getQRUrls(deed.deedId);
+                  const personalUrl = urls[role];
+                  const publicUrl = urls["public"];
+
+                  return (
+                    <div key={deed.deedId} className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row gap-6 relative overflow-hidden">
+                      {/* Side Ribbon */}
+                      <div className={`absolute top-0 left-0 h-full w-1.5 ${isBuyer ? 'bg-sky-500' : 'bg-emerald-500'}`} />
+
+                      {/* Left Side: QR Code Display */}
+                      <div className="flex flex-col items-center justify-center bg-slate-50 p-5 rounded-2xl border border-slate-100 shrink-0 select-none">
+                        <a 
+                          href={personalUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm mb-3 cursor-pointer block hover:scale-105 transition-transform duration-200"
+                          title="Click to verify deed directly in new tab"
+                        >
+                          <QRCodeSVG value={personalUrl} size={110} />
+                        </a>
+                        <span className={`text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${
+                          isBuyer ? 'bg-sky-50 text-sky-600 border-sky-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        }`}>
+                          {role.toUpperCase()} DEED QR
+                        </span>
+                        <a 
+                          href={personalUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[9px] font-bold text-blue-500 hover:text-blue-600 mt-2 underline"
+                        >
+                          Verify Instantly
+                        </a>
+                      </div>
+
+                      {/* Right Side: Deed Details */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono">Registry Serial</span>
+                              <h3 className="text-base font-bold text-slate-800 mt-0.5">{deed.deedId}</h3>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-600">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Sold on {deed.soldDate}</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-xs mb-4">
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Property Title</span>
+                              <strong className="text-slate-800">{deed.title}</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Location</span>
+                              <span className="text-slate-700 font-medium">{deed.location}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Sale Value</span>
+                              <strong className="text-emerald-600 font-bold">{deed.price}</strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Buyer Name</span>
+                              <span className="text-slate-700">{deed.buyerName}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Seller Name</span>
+                              <span className="text-slate-700">{deed.sellerName}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block mb-0.5">Ledger Hash</span>
+                              <span className="text-[10px] font-mono text-slate-500 truncate block max-w-[150px]" title={deed.blockchainHash}>
+                                {deed.blockchainHash}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive Buttons */}
+                        <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                          <a
+                            href={personalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer text-center"
+                          >
+                            <ExternalLink size={13} />
+                            Open My Digital Deed
+                          </a>
+                          
+                          <a
+                            href={publicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition border border-slate-200/80 flex items-center gap-1.5 cursor-pointer text-center"
+                          >
+                            <ExternalLink size={13} />
+                            View Public QR Page
+                          </a>
+
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(personalUrl);
+                              alert("Digital Deed link copied to clipboard!");
+                            }}
+                            className="bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-semibold text-xs px-4 py-2 rounded-xl transition border border-slate-200 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Copy size={13} />
+                            Copy Link
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
           </div>
         )}
 

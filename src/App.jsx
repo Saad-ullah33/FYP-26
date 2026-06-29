@@ -26,9 +26,12 @@ import AuctionListingPage from "./Pages/Auction/AuctionListingPage";
 import AuctionDetail from "./Pages/Auction/AuctionDetail";
 import Login from "./Pages/auth/Login";
 import Signup from "./Pages/auth/Signup";
+import DeedVerification from "./Pages/DeedVerification";
 
 import { logout } from "./utils/auth";
 import Map from "./Pages/Map/Map";
+import PlotDetail from "./Pages/Map/PlotDetail";
+import SearchResults from "./Pages/SearchResults";
 
 // ==========================
 // AUTO LOGOUT HOOK
@@ -115,6 +118,7 @@ const AppContent = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/property-finder" element={<PropertyFinder />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
+        <Route path="/verify-deed" element={<DeedVerification />} />
 
         {/* USER + AUTH */}
         <Route
@@ -134,6 +138,8 @@ const AppContent = () => {
         <Route path="/map">
           <Route index element={<Map />} />
         </Route>
+        <Route path="/plot-detail/:colonyId/:plotId" element={<PlotDetail />} />
+        <Route path="/search-results" element={<SearchResults />} />
 
         <Route
           path="/add-property"

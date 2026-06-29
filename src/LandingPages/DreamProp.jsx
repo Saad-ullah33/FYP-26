@@ -1,10 +1,13 @@
 import { Button, Select, TextInput } from '@mantine/core';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IconChevronDown } from '@tabler/icons-react';
 import NodesAnimation from '../animations/NodesAnimation'; // Ensure correct folder path
 
 const DreamProp = () => {
+  const navigate = useNavigate();
   const [city, setCity] = useState('Islamabad');
+  const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('Homes');
   const [active, setActive] = useState('Buy');
   const buttons = ['Buy', 'Rent', 'Projects'];
@@ -141,6 +144,8 @@ const DreamProp = () => {
               <TextInput
                 variant="unstyled"
                 placeholder="DHA, Bahria Town, etc."
+                value={location}
+                onChange={(e) => setLocation(e.currentTarget.value)}
                 styles={{
                   input: { 
                     border: 'none',
@@ -221,6 +226,9 @@ const DreamProp = () => {
           <div className="flex justify-center mt-5">
             <Button 
               size="lg"
+              onClick={() => {
+                navigate(`/search-results?purpose=${active}&city=${city}&location=${location}&type=${propertyType}`);
+              }}
               className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 px-14 h-13 tracking-wide hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
               FIND PROPERTY
