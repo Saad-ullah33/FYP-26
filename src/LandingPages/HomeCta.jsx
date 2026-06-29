@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IconBrain, IconArrowRight, IconPlus } from '@tabler/icons-react';
+import ScrollReveal from '../components/ScrollReveal';
 
 const CtaBackground = () => {
   const canvasRef = useRef(null);
@@ -102,39 +103,20 @@ const CtaBackground = () => {
         ctx.fill();
       });
 
-      // ── DRAW CONSTELLATION LINES ──
-      for (let i = 0; i < nodeCount; i++) {
-        const nA = nodes[i];
-
-        if (mouse.x !== null && mouse.y !== null) {
-          const mdx = nA.x - mouse.x;
-          const mdy = nA.y - mouse.y;
-          const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-
-          if (mdist < mouse.radius) {
-            const mAlpha = (1 - mdist / mouse.radius) * 0.35;
-            ctx.beginPath();
-            ctx.moveTo(nA.x, nA.y);
-            ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = `rgba(56, 189, 248, ${mAlpha})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
-        }
-
-        for (let j = i + 1; j < nodeCount; j++) {
-          const nB = nodes[j];
-          const dx = nA.x - nB.x;
-          const dy = nA.y - nB.y;
+      // ── RENDER CONNECTION MESH GRAPH ──
+      ctx.lineWidth = 0.65;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < connectionDistance) {
-            const alpha = (1 - dist / connectionDistance) * 0.35;
+            const alpha = (1.0 - dist / connectionDistance) * 0.16;
+            ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
             ctx.beginPath();
-            ctx.moveTo(nA.x, nA.y);
-            ctx.lineTo(nB.x, nB.y);
-            ctx.strokeStyle = `rgba(14, 165, 233, ${alpha})`;
-            ctx.lineWidth = 0.7;
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
             ctx.stroke();
           }
         }
@@ -241,7 +223,12 @@ export const HomeCta = () => {
         </div>
 
         {/* ── LEFT COLUMN: TYPOGRAPHY (z-20 to sit on top of background) ── */}
-        <div className="relative z-20 flex flex-col items-start text-left max-w-xl space-y-4">
+        <ScrollReveal 
+          direction="left" 
+          duration={0.8} 
+          delay={0.1}
+          className="relative z-20 flex flex-col items-start text-left max-w-xl space-y-4"
+        >
           
           {/* Badge */}
           <div className="flex items-center gap-1.5 px-3.5 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-extrabold uppercase tracking-widest rounded-full">
@@ -261,10 +248,15 @@ export const HomeCta = () => {
           <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium">
             Step into the future of real estate. PropSightAi connects real-time market data, predictive valuation engines, and secure digital bidding to deliver unmatched transparency.
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* ── RIGHT COLUMN: CTAS (z-20 to sit on top of background) ── */}
-        <div className="relative z-20 flex flex-col sm:flex-row md:flex-col gap-4 w-full sm:w-auto shrink-0 min-w-[240px]">
+        <ScrollReveal 
+          direction="right" 
+          duration={0.8} 
+          delay={0.1}
+          className="relative z-20 flex flex-col sm:flex-row md:flex-col gap-4 w-full sm:w-auto shrink-0 min-w-[240px]"
+        >
           
           {/* Primary Button */}
           <button className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 px-8 py-4 h-13 text-sm tracking-wide flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer w-full">
@@ -277,7 +269,7 @@ export const HomeCta = () => {
             <IconPlus size={15} />
             <span>List Your Property</span>
           </button>
-        </div>
+        </ScrollReveal>
 
       </div>
     </div>

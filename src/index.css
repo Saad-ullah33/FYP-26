@@ -1,6 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
 *{
     margin: 0;
     padding: 0;
@@ -33,3 +45,48 @@
 
   .logo-wordmark .z { color: #2ecc71; }
   .logo-wordmark .l { color: #2e8fff; }
+
+/* ── BORDER BEAM ANIMATION ── */
+@keyframes border-beam {
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam var(--duration, 15s) linear infinite;
+}
+
+/* ── NAVBAR BOTTOM GLOW ── */
+@keyframes navbar-glow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(330%);
+  }
+}
+
+.animate-navbar-glow {
+  animation: navbar-glow 8s linear infinite;
+}
+
+/* ── BELL RING PERIODIC SHAKE ── */
+@keyframes bell-ring {
+  0%, 20%, 100% { transform: rotate(0); }
+  2% { transform: rotate(15deg); }
+  4% { transform: rotate(-10deg); }
+  6% { transform: rotate(12deg); }
+  8% { transform: rotate(-8deg); }
+  10% { transform: rotate(8deg); }
+  12% { transform: rotate(-4deg); }
+  14% { transform: rotate(2deg); }
+  16% { transform: rotate(-1deg); }
+  18% { transform: rotate(1deg); }
+}
+
+.animate-bell-ring {
+  display: inline-block;
+  transform-origin: top center;
+  animation: bell-ring 6s ease-in-out infinite;
+}

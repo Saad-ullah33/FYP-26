@@ -2,22 +2,43 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "./Navbar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { Bell, LogOut, User } from "lucide-react";
+import { Bell, LogOut, User, TrendingUp, Gavel, FileCheck } from "lucide-react";
 
 const Header = () => {
   const navigate = useNavigate();
   const { user, logout, loading } = useAuth();
 
   const [openProfile, setOpenProfile] = useState(false);
+  const [openNotifications, setOpenNotifications] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
 
-  const [notifications] = useState(3);
+  const [notificationList, setNotificationList] = useState([
+    { id: 1, text: "AI Price index update: WAPDA City ROI increased by 1.2%", time: "10m ago", type: "trend", unread: true },
+    { id: 2, text: "New bid placed on DHA Phase 8 Plot: PKR 14.5M", time: "1h ago", type: "bid", unread: true },
+    { id: 3, text: "Deed Registry verification completed for ID #XP-202", time: "5h ago", type: "deed", unread: true }
+  ]);
 
-  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  const unreadCount = notificationList.filter(n => n.unread).length;
+
+  const handleMarkAllRead = () => {
+    setNotificationList(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
+  const handleNotificationClick = (id) => {
+    setNotificationList(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+
+  // CLOSE DROPDOWNS ON OUTSIDE CLICK
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close profile menu
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpenProfile(false);
+      }
+      // Close notifications menu
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setOpenNotifications(false);
       }
     };
 
@@ -54,9 +75,21 @@ const Header = () => {
         {/* LOGO */}
         <div
           onClick={() => navigate("/")}
-          className="justify-self-start text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 cursor-pointer"
+          className="justify-self-start flex items-center gap-3 cursor-pointer group"
         >
-          PropSight
+          {/* Logo Icon with Engaging Pulse Animation */}
+          <div className="relative flex items-center justify-center">
+            <span className="absolute inline-flex h-6 w-6 rounded-full bg-blue-400 opacity-40 animate-ping" />
+            <img
+              src="/propsight-logo.png"
+              alt="PropSight Logo"
+              className="relative w-8 h-8 rounded-lg object-contain shadow-[0_0_8px_rgba(59,130,246,0.25)] group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          
+          <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-blue-600 tracking-tight">
+            PropSight
+          </span>
         </div>
 
         {/* NAVBAR */}
@@ -69,13 +102,76 @@ const Header = () => {
 
           {/* NOTIFICATIONS */}
           {user && (
-            <div className="relative cursor-pointer">
-              <Bell className="w-6 h-6 text-gray-700 hover:text-blue-600 transition" />
+            <div ref={notificationRef} className="relative">
+              <div 
+                onClick={() => setOpenNotifications(!openNotifications)} 
+                className="relative cursor-pointer hover:scale-105 transition-transform duration-200" 
+                style={{ transformOrigin: 'center' }}
+              >
+                <Bell className={`w-6 h-6 text-gray-700 hover:text-blue-600 transition ${unreadCount > 0 ? "animate-bell-ring" : ""}`} />
 
-              {notifications > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
-                  {notifications}
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-[18px] w-[18px]">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-[18px] w-[18px] bg-gradient-to-r from-red-500 to-rose-600 text-[9px] font-black text-white items-center justify-center shadow-sm border border-white/20">
+                      {unreadCount}
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              {/* NOTIFICATION DROPDOWN */}
+              {openNotifications && (
+                <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl rounded-2xl border border-slate-150 overflow-hidden z-50 animate-fade-in-up">
+                  {/* Dropdown Header */}
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <span className="font-extrabold text-sm text-slate-800">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={handleMarkAllRead}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-bold cursor-pointer"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Notification Items List */}
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                    {notificationList.length > 0 ? (
+                      notificationList.map((item) => (
+                        <div 
+                          key={item.id} 
+                          onClick={() => handleNotificationClick(item.id)}
+                          className={`p-3.5 flex gap-3 items-start hover:bg-slate-50 transition cursor-pointer text-left ${item.unread ? 'bg-blue-50/20' : ''}`}
+                        >
+                          {/* Left icon wrapper */}
+                          <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${
+                            item.type === 'trend' ? 'bg-emerald-50 text-emerald-600' :
+                            item.type === 'bid' ? 'bg-amber-50 text-amber-600' :
+                            'bg-blue-50 text-blue-600'
+                          }`}>
+                            {item.type === 'trend' && <TrendingUp size={15} />}
+                            {item.type === 'bid' && <Gavel size={15} />}
+                            {item.type === 'deed' && <FileCheck size={15} />}
+                          </div>
+                          
+                          {/* Text content */}
+                          <div className="space-y-1">
+                            <p className="text-xs text-slate-700 leading-normal font-semibold">
+                              {item.text}
+                            </p>
+                            <span className="text-[10px] text-slate-400 font-bold block">{item.time}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-slate-450 text-xs font-semibold">
+                        No notifications at this moment.
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -159,6 +255,9 @@ const Header = () => {
           )}
         </div>
       </div>
+
+      {/* Glowy Blue Bottom Border Line (Static Premium Glow) */}
+      <div className="absolute bottom-0 left-0 w-full h-[2.5px] bg-blue-500/90 shadow-[0_1.5px_8px_rgba(59,130,246,0.75)] pointer-events-none" />
     </header>
   );
 };

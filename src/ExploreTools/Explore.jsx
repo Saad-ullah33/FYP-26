@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
+import ScrollReveal from '../components/ScrollReveal';
+import BorderBeam from '../components/BorderBeam';
 
 export const Explore = () => {
   return (
@@ -8,23 +10,34 @@ export const Explore = () => {
       <div className='px-6 md:px-12 lg:px-20 max-w-[1600px] mx-auto'>
         
         {/* ── SECTION HEADER ── */}
-        <div className='space-y-2 mb-10'>
-          <h2 className='text-2xl font-extrabold text-slate-900 tracking-tight'>
-            Explore more on PropSightAi
-          </h2>
-          <p className='text-slate-500 text-sm max-w-lg'>
-            Discover specialized AI tools, analytical construction calculators, and interactive mapping systems.
-          </p>
-        </div>
+        <ScrollReveal direction="up" duration={0.8}>
+          <div className='space-y-2 mb-10'>
+            <h2 className='text-2xl font-extrabold text-slate-900 tracking-tight'>
+              Explore more on PropSightAi
+            </h2>
+            <p className='text-slate-550 text-sm max-w-lg'>
+              Discover specialized AI tools, analytical construction calculators, and interactive mapping systems.
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* ── BALANCED 5-COLUMN RESPONSIVE GRID ── */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6'>
+        <ScrollReveal 
+          cascade={true} 
+          direction="up" 
+          staggerAmount={0.08} 
+          duration={0.7}
+          className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6'
+        >
 
           {/* CARD 1: New Projects */}
           <Link
             to="/new-project"
-            className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
+            className="relative overflow-hidden flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
+            {/* Border Beam Loop */}
+            <BorderBeam size={100} duration={8} borderWidth={1.5} delay={0} />
+            
             {/* Soft Pastel Blue Icon Backdrop */}
             <div className="p-3.5 bg-blue-50/70 text-blue-600 rounded-xl group-hover:scale-110 group-hover:bg-blue-100/80 transition-all duration-300 shadow-inner shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -44,8 +57,11 @@ export const Explore = () => {
           {/* CARD 2: Construction Cost */}
           <Link
             to="/smart-build"
-            className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
+            className="relative overflow-hidden flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
+            {/* Border Beam Loop */}
+            <BorderBeam size={100} duration={8} borderWidth={1.5} delay={0} />
+
             {/* Soft Pastel Blue Icon Backdrop */}
             <div className="p-3.5 bg-blue-50/70 text-blue-600 rounded-xl group-hover:scale-110 group-hover:bg-blue-100/80 transition-all duration-300 shadow-inner shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -65,8 +81,11 @@ export const Explore = () => {
           {/* CARD 3: Area Guides */}
           <Link
             to="/area-guides"
-            className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
+            className="relative overflow-hidden flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
+            {/* Border Beam Loop */}
+            <BorderBeam size={100} duration={8} borderWidth={1.5} delay={0} />
+
             {/* Soft Pastel Blue Icon Backdrop */}
             <div className="p-3.5 bg-blue-50/70 text-blue-600 rounded-xl group-hover:scale-110 group-hover:bg-blue-100/80 transition-all duration-300 shadow-inner shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -86,8 +105,11 @@ export const Explore = () => {
           {/* CARD 4: Property Index */}
           <Link
             to="/property-index"
-            className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
+            className="relative overflow-hidden flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
+            {/* Border Beam Loop */}
+            <BorderBeam size={100} duration={8} borderWidth={1.5} delay={0} />
+
             {/* Soft Pastel Blue Icon Backdrop */}
             <div className="p-3.5 bg-blue-50/70 text-blue-600 rounded-xl group-hover:scale-110 group-hover:bg-blue-100/80 transition-all duration-300 shadow-inner shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -107,8 +129,11 @@ export const Explore = () => {
           {/* CARD 5: Plot Finder */}
           <Link
             to="/plot-finder"
-            className="flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
+            className="relative overflow-hidden flex items-center gap-4 p-5 bg-white border border-slate-100/80 hover:border-blue-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-1.5 transition-all duration-300 group"
           >
+            {/* Border Beam Loop */}
+            <BorderBeam size={100} duration={8} borderWidth={1.5} delay={0} />
+
             {/* Soft Pastel Blue Icon Backdrop */}
             <div className="p-3.5 bg-blue-50/70 text-blue-600 rounded-xl group-hover:scale-110 group-hover:bg-blue-100/80 transition-all duration-300 shadow-inner shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -126,7 +151,7 @@ export const Explore = () => {
             </div>
           </Link>
 
-        </div>
+        </ScrollReveal>
       </div>
     </div>
   );

@@ -221,7 +221,12 @@ const DeedVerification = () => {
                 {/* Certificate Content */}
                 <div className="p-6 md:p-10">
                   {/* Header Badge */}
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-6 print:border-slate-300">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.4 }}
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-6 print:border-slate-300"
+                  >
                     <div>
                       <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight print:text-slate-900">
                         TRUSTDEED RECORD
@@ -245,10 +250,15 @@ const DeedVerification = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Transaction Metadata Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+                  >
                     {/* Left: Property Info */}
                     <div className="bg-slate-950/40 p-5 rounded-2xl border border-slate-800/80 print:bg-slate-50 print:border-slate-200">
                       <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
@@ -308,10 +318,15 @@ const DeedVerification = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Parties Involved */}
-                  <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-5 mb-8 print:bg-slate-50 print:border-slate-200">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                    className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-5 mb-8 print:bg-slate-50 print:border-slate-200"
+                  >
                     <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5" />
                       Associated Parties
@@ -344,7 +359,7 @@ const DeedVerification = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Public Masking Note (If scanned by random public) */}
                   {role === "public" && (
@@ -381,7 +396,12 @@ const DeedVerification = () => {
               </div>
 
               {/* Action Buttons (Hidden in print) */}
-              <div className="mt-6 flex justify-end gap-3 print:hidden">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+                className="mt-6 flex justify-end gap-3 print:hidden"
+              >
                 <button
                   onClick={handlePrint}
                   className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-5 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition"
@@ -389,7 +409,7 @@ const DeedVerification = () => {
                   <Download className="w-4 h-4" />
                   <span>Download / Print Deed</span>
                 </button>
-              </div>
+              </motion.div>
             </motion.div>
           )}
 
@@ -436,5 +456,4 @@ const DeedVerification = () => {
     </div>
   );
 };
-
 export default DeedVerification;

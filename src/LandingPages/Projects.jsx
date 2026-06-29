@@ -9,6 +9,8 @@ import {
   IconChevronRight 
 } from '@tabler/icons-react';
 import '@mantine/carousel/styles.css';
+import ScrollReveal from '../components/ScrollReveal';
+import BorderBeam from '../components/BorderBeam';
 
 export const Projects = () => {
   // Capture the Embla API instance for custom external arrow controls
@@ -34,32 +36,35 @@ export const Projects = () => {
     <div className='w-full max-w-[1600px] mx-auto px-6 md:px-12 lg:px-20 py-16 bg-white'>
       
       {/* ── HEADER SECTION WITH CUSTOM CONTROLS ── */}
-      <div className='flex justify-between items-end mb-8 px-2'>
-        <div>
-           <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider">Exclusive</span>
-           <h2 className='text-3xl font-extrabold text-slate-900 tracking-tight mt-1'>Trending Projects</h2>
+      <ScrollReveal direction="up" duration={0.8}>
+        <div className='flex justify-between items-end mb-8 px-2'>
+          <div>
+             <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider">Exclusive</span>
+             <h2 className='text-3xl font-extrabold text-slate-900 tracking-tight mt-1'>Trending Projects</h2>
+          </div>
+          
+          {/* Custom Nav Controls: Aligned next to heading, always visible */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => embla?.scrollPrev()}
+              className="w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer"
+              aria-label="Previous slides"
+            >
+              <IconChevronLeft size={18} />
+            </button>
+            <button 
+              onClick={() => embla?.scrollNext()}
+              className="w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer"
+              aria-label="Next slides"
+            >
+              <IconChevronRight size={18} />
+            </button>
+          </div>
         </div>
-        
-        {/* Custom Nav Controls: Aligned next to heading, always visible */}
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => embla?.scrollPrev()}
-            className="w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer"
-            aria-label="Previous slides"
-          >
-            <IconChevronLeft size={18} />
-          </button>
-          <button 
-            onClick={() => embla?.scrollNext()}
-            className="w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 flex items-center justify-center transition-all duration-200 shadow-sm cursor-pointer"
-            aria-label="Next slides"
-          >
-            <IconChevronRight size={18} />
-          </button>
-        </div>
-      </div>
+      </ScrollReveal>
 
       {/* ── CAROUSEL ── */}
+      <ScrollReveal direction="up" delay={0.12} duration={0.8}>
       <Carousel
         getEmblaApi={setEmbla}
         // MATHEMATICAL PREVENTIONS against cutoff slivers: width is adjusted precisely for gaps
@@ -79,7 +84,8 @@ export const Projects = () => {
         {projects.map((project, index) => (
           <Carousel.Slide key={index}>
             <div className="p-1"> {/* Soft outer padding for shadows */}
-              <div className="bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-4 flex flex-col transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group">
+              <div className="relative overflow-hidden bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-4 flex flex-col transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group">
+                <BorderBeam size={130} duration={8} borderWidth={1.5} delay={0} />
                 
                 {/* Image Section */}
                 <div className="relative rounded-xl overflow-hidden aspect-[4/3] mb-4">
@@ -140,6 +146,7 @@ export const Projects = () => {
           </Carousel.Slide>
         ))}
       </Carousel>
+      </ScrollReveal>
 
     </div>
   );

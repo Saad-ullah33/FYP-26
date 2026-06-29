@@ -30,6 +30,7 @@ import {
   getPropertyIndexDetails,
   getLocalityList
 } from "../Data/propertyIndexData";
+import ScrollReveal from "../components/ScrollReveal";
 
 export default function PropertyIndex() {
   const navigate = useNavigate();
@@ -233,6 +234,7 @@ export default function PropertyIndex() {
         </button>
 
         {/* ── HEADER BANNER ── */}
+        <ScrollReveal direction="up" duration={0.8}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 text-white p-8 md:p-10 rounded-3xl shadow-xl shadow-blue-900/10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-indigo-650/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -261,8 +263,10 @@ export default function PropertyIndex() {
             {compareMode ? "Exit Compare Mode" : "Compare Localities"}
           </button>
         </div>
+        </ScrollReveal>
 
         {/* ── FILTER PANELS ── */}
+        <ScrollReveal direction="up" delay={0.05} duration={0.8}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
           {/* PRIMARY FILTER PANEL */}
@@ -436,9 +440,16 @@ export default function PropertyIndex() {
           )}
 
         </div>
+        </ScrollReveal>
 
         {/* ── METRICS DASHBOARD CARDS ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <ScrollReveal 
+          cascade={true} 
+          direction="up" 
+          staggerAmount={0.06} 
+          duration={0.7}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6"
+        >
           
           {/* Card 1: Avg Valuation */}
           <div className="bg-white border border-slate-200/70 p-6 rounded-2xl shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition">
@@ -544,10 +555,10 @@ export default function PropertyIndex() {
             </div>
           </div>
 
-        </div>
+        </ScrollReveal>
 
         {/* ── MAIN CHART & TIME LINE CONTROL ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <ScrollReveal direction="up" delay={0.1} duration={0.8} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
           {/* Chart Card */}
           <div className="lg:col-span-2 bg-white border border-slate-200/70 p-6 rounded-3xl shadow-sm space-y-6">
@@ -846,10 +857,10 @@ export default function PropertyIndex() {
             </div>
           </div>
 
-        </div>
+        </ScrollReveal>
 
         {/* ── LOWER SECTION: COMPARATIVE TABLES & LEADERBOARD ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <ScrollReveal direction="up" delay={0.15} duration={0.8} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Table of sizes for current location */}
           <div className="lg:col-span-6 bg-white border border-slate-200/70 p-6 rounded-3xl shadow-sm space-y-4">
@@ -983,7 +994,7 @@ export default function PropertyIndex() {
             </div>
           </div>
 
-        </div>
+        </ScrollReveal>
 
       </div>
     </div>

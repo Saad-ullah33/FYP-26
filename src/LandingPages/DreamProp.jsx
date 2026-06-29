@@ -1,242 +1,178 @@
-import { Button, Select, TextInput } from '@mantine/core';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconChevronDown } from '@tabler/icons-react';
-import NodesAnimation from '../animations/NodesAnimation'; // Ensure correct folder path
+import { ChevronDown } from 'lucide-react';
+import NodesAnimation from '../animations/NodesAnimation';
+import { motion } from 'framer-motion';
 
+// ── Native styled select (no Mantine dependency) ──────────────────────────────
+const NativeSelect = ({ label, value, onChange, options }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="flex-1 relative" ref={ref}>
+      <div
+        onClick={() => setOpen(!open)}
+        className="flex flex-col justify-center h-16 px-4 rounded-xl bg-[#0c1628] border border-slate-700/70 hover:border-blue-500/60 cursor-pointer transition-all duration-200 group"
+      >
+        <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-1">{label}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-100">{value}</span>
+          <ChevronDown
+            size={14}
+            className={`text-slate-400 group-hover:text-blue-400 transition-all duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </div>
+      {open && (
+        <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-[#080f1e] border border-slate-700/80 rounded-xl shadow-2xl shadow-black/60 overflow-hidden">
+          {options.map((opt) => (
+            <div
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                value === opt
+                  ? 'bg-blue-600 text-white font-bold'
+                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Main hero component ────────────────────────────────────────────────────────
 const DreamProp = () => {
   const navigate = useNavigate();
   const [city, setCity] = useState('Islamabad');
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('Homes');
   const [active, setActive] = useState('Buy');
-  const buttons = ['Buy', 'Rent', 'Projects'];
+  const tabs = ['Buy', 'Rent', 'Projects'];
+  const cities = ['Islamabad', 'Lahore', 'Karachi', 'Faisalabad', 'Rawalpindi', 'Multan'];
+  const types = ['Homes', 'Plots', 'Commercial'];
+
+  const handleSearch = () => {
+    if (active === 'Projects') {
+      navigate('/property-index');
+      return;
+    }
+    navigate(`/search-results?purpose=${active}&city=${city}&location=${encodeURIComponent(location)}&type=${propertyType}`);
+  };
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-slate-950">
-      
-      {/* ── LAYER 0: SPINNING INTERACTIVE NEURAL NETWORK ── */}
+
+      {/* ── LAYER 0: WORLD MAP INTERACTIVE BACKGROUND ── */}
       <NodesAnimation />
 
-      {/* ── LAYER 1: AMBIENT VECTORS & GRADIENTS ── */}
+      {/* ── LAYER 1: AMBIENT GRADIENTS ── */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
-        {/* Soft edge gradients to smoothly blend the canvas coordinates with the dark viewport */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-slate-950/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/25"></div>
-        
-        {/* Faint blue ambient glows radiating behind the search widget console */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[140px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-950/30" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-blue-600/8 rounded-full blur-[160px]" />
       </div>
 
       {/* ── LAYER 2: MAIN HERO CONTAINER ── */}
       <div className="relative flex flex-col items-center justify-center w-full max-w-5xl px-6 text-center" style={{ zIndex: 20 }}>
-        
-        {/* Header Titles */}
-        <div className="space-y-3 mb-8">
+
+        {/* Headline */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-3 mb-8"
+        >
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
             Find Your Dream Property, <br />
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 text-transparent bg-clip-text">
               Powered by PropSightAi
             </span>
           </h1>
-          <p className="text-slate-300 text-xs md:text-sm max-w-lg mx-auto font-medium">
+          <p className="text-slate-400 text-xs md:text-sm max-w-lg mx-auto font-medium">
             Analyze spatial nodes, live project listings, and smart real estate metrics.
           </p>
-        </div>
+        </motion.div>
 
-        {/* ── SEGMENTED TAB SELECTORS (Unified Glass Capsule) ── */}
-        <div className="flex gap-1.5 p-1.5 bg-black/35 backdrop-blur-md border border-white/10 rounded-full mb-6 shadow-xl">
-          {buttons.map((label) => (
-            <Button
+        {/* ── TAB SELECTOR ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="flex gap-1 p-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-full mb-6 shadow-xl"
+        >
+          {tabs.map((label) => (
+            <button
               key={label}
-              variant={active === label ? 'filled' : 'subtle'}
-              styles={() => ({
-                root: {
-                  minWidth: 110,
-                  height: 40,
-                  borderRadius: '9999px',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  letterSpacing: '0.3px',
-                  color: active === label ? '#0f172a' : 'rgba(255, 255, 255, 0.85)',
-                  backgroundColor: active === label ? '#ffffff' : 'transparent',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: active === label ? '0 4px 12px rgba(255, 255, 255, 0.15)' : 'none',
-                  '&:hover': {
-                    backgroundColor: active === label ? '#ffffff' : 'rgba(255, 255, 255, 0.08)',
-                    color: active === label ? '#0f172a' : '#ffffff',
-                  },
-                },
-              })}
               onClick={() => setActive(label)}
+              className={`min-w-[110px] h-10 px-5 rounded-full text-[13px] font-bold tracking-wide transition-all duration-200 ${
+                active === label
+                  ? 'bg-white text-slate-900 shadow-[0_4px_14px_rgba(255,255,255,0.18)]'
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
             >
               {label}
-            </Button>
+            </button>
           ))}
-        </div>
+        </motion.div>
 
-        {/* ── CONSOLE SEARCH WIDGET (Translucent Glass Board) ── */}
-        <div className="w-full bg-slate-900/35 p-5 md:p-6 rounded-2xl border border-slate-800/70 backdrop-blur-lg shadow-2xl shadow-black/50">
-          
-          {/* ── FLOATING SOLID INPUT CARDS (UX Redesigned) ── */}
+        {/* ── SEARCH CONSOLE ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full bg-slate-900/50 p-5 md:p-6 rounded-2xl border border-slate-700/60 backdrop-blur-xl shadow-2xl shadow-black/60"
+        >
           <div className="flex flex-col md:flex-row gap-3.5 w-full">
-            
-            {/* 1. CITY CARD */}
-            <div className="bg-[#0e172a] hover:bg-[#131e35] border border-slate-800/90 hover:border-slate-700/90 focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/15 flex-1 p-3 rounded-xl flex flex-col justify-center h-16 relative cursor-pointer transition-all duration-200 shadow-lg shadow-black/40 group">
-              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest text-left pl-1">
-                City
-              </span>
-              <Select 
-                variant="unstyled"
-                value={city}
-                onChange={setCity}
-                data={['Islamabad', 'Lahore', 'Karachi']}
-                rightSection={<IconChevronDown size={14} className="text-slate-400 group-hover:text-blue-400 transition-colors" />}
-                styles={{
-                  root: {
-                    position: 'relative', // Fixes the displaced chevron position
-                    width: '100%'
-                  },
-                  input: { 
-                    border: 'none',
-                    background: 'transparent',
-                    height: 'auto',
-                    minHeight: 'unset',
-                    padding: '4px 24px 0 4px', // Safe right padding for arrow
-                    fontWeight: 800, 
-                    color: '#ffffff', // High-contrast pure white
-                    fontSize: '14.5px',
-                    textAlign: 'left'
-                  },
-                  rightSection: {
-                    right: '8px',
-                    pointerEvents: 'none'
-                  },
-                  dropdown: {
-                    backgroundColor: '#090d16',
-                    border: '1px solid #1e293b',
-                    color: '#f8fafc',
-                    borderRadius: '12px'
-                  },
-                  item: {
-                    color: '#cbd5e1',
-                    fontSize: '13.5px',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    '&[data-hovered]': {
-                      backgroundColor: '#1e293b',
-                      color: '#ffffff'
-                    },
-                    '&[data-selected]': {
-                      backgroundColor: '#3b82f6',
-                      color: '#ffffff'
-                    }
-                  }
-                }}
-              />
-            </div>
 
-            {/* 2. LOCATION CARD */}
-            <div className="bg-[#0e172a] hover:bg-[#131e35] border border-slate-800/90 hover:border-slate-700/90 focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/15 flex-[2] p-3 rounded-xl flex flex-col justify-center h-16 relative cursor-pointer transition-all duration-200 shadow-lg shadow-black/40 group">
-              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest text-left pl-1">
-                Location
-              </span>
-              <TextInput
-                variant="unstyled"
+            {/* City Dropdown */}
+            <NativeSelect label="City" value={city} onChange={setCity} options={cities} />
+
+            {/* Location Text Input */}
+            <div className="flex-[2] flex flex-col justify-center h-16 px-4 rounded-xl bg-[#0c1628] border border-slate-700/70 hover:border-blue-500/60 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all duration-200">
+              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-1">Location</span>
+              <input
+                type="text"
                 placeholder="DHA, Bahria Town, etc."
                 value={location}
-                onChange={(e) => setLocation(e.currentTarget.value)}
-                styles={{
-                  input: { 
-                    border: 'none',
-                    background: 'transparent',
-                    height: 'auto',
-                    minHeight: 'unset',
-                    padding: '4px 0 0 4px',
-                    color: '#ffffff', // Pure white value
-                    fontWeight: 700,
-                    fontSize: '14.5px',
-                    textAlign: 'left',
-                    '&::placeholder': {
-                      color: '#94a3b8' // High-contrast readable gray placeholder
-                    }
-                  }
-                }}
+                onChange={(e) => setLocation(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="bg-transparent border-none outline-none text-sm font-bold text-slate-100 placeholder:text-slate-500 w-full"
               />
             </div>
 
-            {/* 3. PROPERTY TYPE CARD */}
-            <div className="bg-[#0e172a] hover:bg-[#131e35] border border-slate-800/90 hover:border-slate-700/90 focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/15 flex-1 p-3 rounded-xl flex flex-col justify-center h-16 relative cursor-pointer transition-all duration-200 shadow-lg shadow-black/40 group">
-              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest text-left pl-1">
-                Property Type
-              </span>
-              <Select 
-                variant="unstyled"
-                value={propertyType}
-                onChange={setPropertyType}
-                data={['Homes', 'Plots', 'Commercial']}
-                rightSection={<IconChevronDown size={14} className="text-slate-400 group-hover:text-blue-400 transition-colors" />}
-                styles={{
-                  root: {
-                    position: 'relative',
-                    width: '100%'
-                  },
-                  input: { 
-                    border: 'none',
-                    background: 'transparent',
-                    height: 'auto',
-                    minHeight: 'unset',
-                    padding: '4px 24px 0 4px',
-                    fontWeight: 800, 
-                    color: '#ffffff',
-                    fontSize: '14.5px',
-                    textAlign: 'left'
-                  },
-                  rightSection: {
-                    right: '8px',
-                    pointerEvents: 'none'
-                  },
-                  dropdown: {
-                    backgroundColor: '#090d16',
-                    border: '1px solid #1e293b',
-                    color: '#f8fafc',
-                    borderRadius: '12px'
-                  },
-                  item: {
-                    color: '#cbd5e1',
-                    fontSize: '13.5px',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    '&[data-hovered]': {
-                      backgroundColor: '#1e293b',
-                      color: '#ffffff'
-                    },
-                    '&[data-selected]': {
-                      backgroundColor: '#3b82f6',
-                      color: '#ffffff'
-                    }
-                  }
-                }}
-              />
-            </div>
+            {/* Property Type Dropdown (hidden for Projects tab) */}
+            {active !== 'Projects' ? (
+              <NativeSelect label="Property Type" value={propertyType} onChange={setPropertyType} options={types} />
+            ) : (
+              <div className="flex-1 flex items-center justify-center h-16 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5">
+                <span className="text-xs text-blue-400 font-semibold tracking-wide">Browse All Projects →</span>
+              </div>
+            )}
 
           </div>
 
-          {/* Premium Blue gradient CTA Button */}
+          {/* CTA Button */}
           <div className="flex justify-center mt-5">
-            <Button 
-              size="lg"
-              onClick={() => {
-                navigate(`/search-results?purpose=${active}&city=${city}&location=${location}&type=${propertyType}`);
-              }}
-              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 px-14 h-13 tracking-wide hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+            <button
+              onClick={handleSearch}
+              className="h-12 px-14 rounded-xl text-[13px] font-extrabold tracking-widest text-white transition-all duration-200 hover:scale-[1.025] hover:shadow-[0_12px_32px_rgba(37,99,235,0.5)] active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 60%, #2563eb 100%)' }}
             >
-              FIND PROPERTY
-            </Button>
+              {active === 'Projects' ? 'BROWSE PROJECTS' : 'FIND PROPERTY'}
+            </button>
           </div>
-        
-        </div>
 
+        </motion.div>
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import {
   Info
 } from "lucide-react";
 import { colonies } from "./Map/coloniesData";
+import { motion } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
@@ -257,7 +258,13 @@ export default function AreaGuides() {
         </div>
 
         {/* Scrollable Sidebar Content */}
-        <div className="p-6 space-y-8 flex-1">
+        <motion.div
+          key={selectedId}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="p-6 space-y-8 flex-1"
+        >
 
           {/* SOCIETY SUMMARY */}
           <div className="space-y-4">
@@ -472,7 +479,7 @@ export default function AreaGuides() {
             </div>
           </div>
 
-        </div>
+        </motion.div>
       </div>
 
       {/* ── RIGHT MAP SIDE (React-Leaflet) ── */}

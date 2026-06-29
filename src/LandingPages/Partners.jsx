@@ -1,13 +1,16 @@
 import React from 'react'
 import { PartnersInFaisalabad } from '../Data/Data'
 import Marquee from 'react-fast-marquee'
+import ScrollReveal from '../components/ScrollReveal';
 
 export const Partners = () => {
   return (
    
     <div className='mt-20 pb-5'>
+      <ScrollReveal direction="up" duration={0.8}>
         <div className='text-4xl font-semibold text-center mb-8 text-mine-shaft-100'> Our <span className='text-bright-sun-400'>Trusted</span> Partners</div>
-        <Marquee pauseOnHover={true}>
+      </ScrollReveal>
+      <Marquee pauseOnHover={true}>
             {PartnersInFaisalabad.map((company, index) => (
   <div
     key={index}

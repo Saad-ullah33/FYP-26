@@ -34,6 +34,8 @@ import PlotDetail from "./Pages/Map/PlotDetail";
 import SearchResults from "./Pages/SearchResults";
 import PropertyIndex from "./Pages/PropertyIndex";
 import AreaGuides from "./Pages/AreaGuides";
+import { BlogIndex } from "./Pages/BlogIndex";
+import { BlogDetail } from "./Pages/BlogDetail";
 
 // ==========================
 // AUTO LOGOUT HOOK
@@ -127,6 +129,8 @@ const AppContent = () => {
         <Route path="/area-guides" element={<AreaGuides />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
         <Route path="/verify-deed" element={<DeedVerification />} />
+        <Route path="/blogs" element={<BlogIndex />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
 
         {/* USER + AUTH */}
         <Route

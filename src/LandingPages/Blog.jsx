@@ -1,37 +1,13 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { IconArrowRight } from '@tabler/icons-react';
+import ScrollReveal from '../components/ScrollReveal';
+import BorderBeam from '../components/BorderBeam';
+import { blogArticles } from '../Data/blogData';
 
 const Blog = () => {
-  // Curated mock data specifically tailored to PropSightAi's features
-  const articles = [
-    {
-      title: "How AI-Powered Price Predictions are Reshaping Real Estate in Pakistan",
-      category: "AI Valuation",
-      date: "June 15, 2026",
-      readTime: "5 min read",
-      excerpt: "Discover how machine learning models utilize historical transaction data and local geographic trends to estimate property values with unprecedented accuracy in Islamabad and Lahore.",
-      image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80",
-      author: "Dr. Asim Malik",
-    },
-    {
-      title: "The Rise of Digital Property Auctions: Tips for First-Time Bidders",
-      category: "Online Bidding",
-      date: "June 10, 2026",
-      readTime: "4 min read",
-      excerpt: "Navigating digital real estate auctions can be daunting. Learn the strategic bidding frameworks, verify listing details, and safely secure competitive prices.",
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80",
-      author: "Sara Khan",
-    },
-    {
-      title: "Smart Construction Materials: Lowering Costs with Sustainable Inputs",
-      category: "Smart Build",
-      date: "June 05, 2026",
-      readTime: "6 min read",
-      excerpt: "With rising bricks and cement indexes, builders are turning to eco-friendly alternative materials. Explore structural engineering insights to estimate your cost indexes.",
-      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
-      author: "Engr. Raza Ali",
-    },
-  ];
+  // Use first 3 articles for the home page teaser section
+  const articles = blogArticles.slice(0, 3);
 
   return (
     // Alternating pure white container with a thin top dividing line
@@ -39,30 +15,44 @@ const Blog = () => {
       <div className='px-6 md:px-12 lg:px-20 max-w-[1600px] mx-auto'>
         
         {/* ── SECTION HEADER ── */}
-        <div className='flex justify-between items-end mb-10'>
-          <div className='space-y-2'>
-            <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider block">
-              Exclusive Insights
-            </span>
-            <h2 className='text-3xl font-extrabold text-slate-900 tracking-tight'>
-              Trending Articles & Guides
-            </h2>
+        <ScrollReveal direction="up" duration={0.8}>
+          <div className='flex justify-between items-end mb-10'>
+            <div className='space-y-2'>
+              <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider block">
+                Exclusive Insights
+              </span>
+              <h2 className='text-3xl font-extrabold text-slate-900 tracking-tight'>
+                Trending Articles & Guides
+              </h2>
+            </div>
+            
+            <Link 
+              to="/blogs" 
+              className="hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm hover:gap-3.5 transition-all duration-200 cursor-pointer"
+            >
+               See All Articles <IconArrowRight size={16} />
+            </Link>
           </div>
-          
-          <button className="hidden md:flex items-center gap-2 text-blue-600 font-bold text-sm hover:gap-3.5 transition-all duration-200 cursor-pointer">
-             See All Articles <IconArrowRight size={16} />
-          </button>
-        </div>
+        </ScrollReveal>
 
         {/* ── RESPONSIVE 3-COLUMN CARD GRID ── */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-          {articles.map((post, index) => (
+        <ScrollReveal 
+          cascade={true} 
+          direction="up" 
+          staggerAmount={0.12} 
+          duration={0.8}
+          className='grid grid-cols-1 md:grid-cols-3 gap-8'
+        >
+          {articles.map((post) => (
             
-            // CARD CONTAINER
-            <div 
-              key={index} 
-              className="group flex flex-col bg-white border border-slate-100 hover:border-slate-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full"
+            // CARD CONTAINER (Link to details view)
+            <Link 
+              key={post.id} 
+              to={`/blog/${post.id}`}
+              className="relative group flex flex-col bg-white border border-slate-100 hover:border-slate-200/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full block text-left"
             >
+              {/* Premium Border Beam animation */}
+              <BorderBeam size={160} duration={8} borderWidth={1.5} delay={0} />
               
               {/* Image Section */}
               <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
@@ -108,7 +98,7 @@ const Blog = () => {
                   <div className="flex items-center gap-2.5">
                     {/* Circle Initial Avatar */}
                     <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-extrabold flex items-center justify-center text-xs shadow-inner">
-                      {post.author[0]}
+                      {post.authorAvatar || post.author[0]}
                     </div>
                     <span className="text-xs font-bold text-slate-700">{post.author}</span>
                   </div>
@@ -120,10 +110,9 @@ const Blog = () => {
                 </div>
 
               </div>
-
-            </div>
+            </Link>
           ))}
-        </div>
+        </ScrollReveal>
 
       </div>
     </div>

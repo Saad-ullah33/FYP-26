@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ScrollReveal from '../components/ScrollReveal';
 
 const Faq = () => {
   // 7 highly specific, geographically calibrated real-estate and AI FAQs
@@ -46,20 +47,28 @@ const Faq = () => {
       <div className="px-6 md:px-12 lg:px-20 max-w-[1600px] mx-auto">
         
         {/* ── HEADER ── */}
-        <div className="text-center mb-12 space-y-2">
-          <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider block">
-            Exclusive Support
-          </span>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Find answers to common questions about our AI valuation models, plot coordinate systems, and auctions.
-          </p>
-        </div>
+        <ScrollReveal direction="up" duration={0.8}>
+          <div className="text-center mb-12 space-y-2">
+            <span className="text-blue-600 font-extrabold uppercase text-xs tracking-wider block">
+              Exclusive Support
+            </span>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-slate-550 text-sm max-w-md mx-auto">
+              Find answers to common questions about our AI valuation models, plot coordinate systems, and auctions.
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* ── SINGLE COLUMN ACCORDION STACK ── */}
-        <div className="max-w-3xl mx-auto space-y-4">
+        <ScrollReveal 
+          cascade={true} 
+          direction="up" 
+          staggerAmount={0.08} 
+          duration={0.7}
+          className="max-w-3xl mx-auto space-y-4"
+        >
           {faqData.map((item, index) => {
             const isOpen = openIndex === index;
 
@@ -107,12 +116,10 @@ const Faq = () => {
                     </p>
                   </div>
                 </div>
-
               </div>
             );
           })}
-        </div>
-
+      </ScrollReveal>
       </div>
     </div>
   );
