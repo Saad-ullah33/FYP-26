@@ -7,7 +7,16 @@ export default defineConfig({
     react(),
     nodePolyfills()
   ],
-  define: {
+define: {
     global: 'window'
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8080', // Forces explicit IPv4 loopback mapping
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })
