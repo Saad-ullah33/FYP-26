@@ -1,57 +1,141 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  getAccessToken,
+  getRefreshToken,
+  saveAccessToken,
+  saveRefreshToken,
+  removeAccessToken,
+  removeRefreshToken,
+  decodeToken,
+  isTokenExpired,
+} from "../utils/auth.js";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [auth, setAuth] = useState({
+    accessToken: null,
+    refreshToken: null,
+    user: null,
+  });
+
   const [loading, setLoading] = useState(true);
 
-  const parseToken = (token) => {
-    try {
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-
-      return {
-        email: decoded.sub,
-        role: decoded.role || "USER",
-      };
-    } catch (e) {
-      return null;
-    }
-  };
-
+  /**
+   * Initialize authentication on page refresh
+   */
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    initializeAuth();
 
-    if (token) {
-      const userData = parseToken(token);
+    window.addEventListener("storage", initializeAuth);
 
-      if (userData) {
-        setUser(userData);
-      } else {
-        localStorage.removeItem("token");
-      }
-    }
-
-    setLoading(false);
+    return () => {
+      window.removeEventListener("storage", initializeAuth);
+    };
   }, []);
 
-  const login = (token) => {
-    localStorage.setItem("token", token);
+  const initializeAuth = () => {
+    const accessToken = getAccessToken();
+    const refreshToken = getRefreshToken();
 
-    const userData = parseToken(token);
-
-    if (userData) {
-      setUser(userData);
+    if (!accessToken) {
+      setLoading(false);
+      return;
     }
+
+    if (isTokenExpired(accessToken)) {
+      logout();
+      return;
+    }
+
+    const payload = decodeToken(accessToken);
+
+    if (!payload) {
+      logout();
+      return;
+    }
+
+    setAuth({
+      accessToken,
+      refreshToken,
+      user: {
+        email: payload.sub,
+        role: payload.role,
+      },
+    });
+
+    setLoading(false);
   };
 
+  /**
+   * Login after successful authentication
+   * Pass complete backend response
+   */
+  const login = (response) => {
+    saveAccessToken(response.accessToken);
+    saveRefreshToken(response.refreshToken);
+
+    setAuth({
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+      user: {
+        email: response.email,
+        name: response.name,
+        role: response.role,
+        emailVerified: response.emailVerified,
+      },
+    });
+  };
+
+  /**
+   * Logout
+   */
   const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+    removeAccessToken();
+    removeRefreshToken();
+
+    setAuth({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+    });
+  };
+
+  /**
+   * Update access token after refresh endpoint
+   */
+  const updateAccessToken = (newAccessToken) => {
+    saveAccessToken(newAccessToken);
+
+    const payload = decodeToken(newAccessToken);
+
+    setAuth((prev) => ({
+      ...prev,
+      accessToken: newAccessToken,
+      user: {
+        ...prev.user,
+        email: payload.sub,
+        role: payload.role,
+      },
+    }));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        auth,
+        user: auth.user,
+        accessToken: auth.accessToken,
+        refreshToken: auth.refreshToken,
+        loading,
+
+        login,
+        logout,
+        updateAccessToken,
+
+        isAuthenticated: !!auth.accessToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

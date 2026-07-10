@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import axios from "axios";
+import api from "../utils/api";   // adjust path if needed
 import {
   Home,
   Building2,
@@ -180,20 +181,22 @@ const AddProperty = () => {
 
     try {
       console.log("📤 Sending Location:", JSON.stringify(formData.location)); // ← Debug
+console.log("FormData State:", formData);
 
-      const payload = {
-        title: formData.title.trim(),
-        description: formData.description?.trim() || "",
-        price: Number(formData.price),
-        purpose: formData.purpose.toUpperCase(),
-        propertyType: formData.propertyType.toUpperCase(),
-        city: { id: Number(formData.cityId) },
-        location: formData.location,           // ← Make sure no extra spaces
-        area: formData.area.trim(),
-        bedrooms: (formData.bedrooms).trim(),
-        bathrooms: (formData.bathrooms).trim(),
-        address: formData.address.trim(),
-      };
+const payload = {
+  title: formData.title.trim(),
+  description: formData.description?.trim() || "",
+  price: Number(formData.price),
+  purpose: formData.purpose.toUpperCase(),
+  propertyType: formData.propertyType.toUpperCase(),
+  cityId: Number(formData.cityId),
+  location: formData.location.trim(),
+  bedrooms: Number(formData.bedrooms),
+  area: formData.area.trim(),   
+  bathrooms: Number(formData.bathrooms),
+  address: formData.address.trim(),
+  auctionEnabled: false,
+};
 
       console.log("Full Payload:", payload);   // ← Debug
 
@@ -203,8 +206,15 @@ const AddProperty = () => {
       formData.images.forEach(img => data.append("images", img));
       console.log("FINAL LOCATION BEFORE SEND:", formData.location); // ← Final Debug
 
-      await axios.post("http://localhost:8080/api/properties/create", data);
-
+await api.post(
+    "/properties/create",
+    data,
+    {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    }
+);
       alert("✅ Property Added Successfully!");
       // reset form...
 

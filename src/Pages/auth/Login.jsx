@@ -30,11 +30,11 @@ const Login = () => {
     setError("");
   };
 
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
   e.preventDefault();
 
-  if (!form.email || !form.password) {
-    setError("Please fill all fields");
+  if (!form.email.trim() || !form.password.trim()) {
+    setError("Please enter your email and password.");
     return;
   }
 
@@ -43,32 +43,29 @@ const Login = () => {
   setSuccess("");
 
   try {
-    const res = await api.post("/auth/login", form,
-      { headers: { "Content-Type": "application/json" } }
-    );
+    const { data } = await api.post("/auth/login", form);
 
-    const token = res.data.accessToken;
+    if (!data?.accessToken || !data?.refreshToken) {
+      throw new Error("Invalid authentication response.");
+    }
 
-    if (!token) throw new Error("Token missing");
+    // Save authentication in Context + localStorage
+    login(data);
 
-    // ✅ IMPORTANT FIX (THIS UPDATES HEADER IMMEDIATELY)
-    login(token);
-
-    setSuccess("Authentication successful...");
+    setSuccess("Login successful.");
 
     setTimeout(() => {
       navigate(from, { replace: true });
-    }, 1200);
+    }, 800);
 
   } catch (err) {
-    console.warn("Backend authentication failed or offline. Logging in with Dev Mode Mock Token...", err);
-    // Dev Mode Mock JWT Token (role: USER, sub: demo@fyp.com, exp: distant future)
-    const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vQGZ5cC5jb20iLCJyb2xlIjoiVVNFUiIsImV4cCI6OTk5OTk5OTk5OX0.mock-signature";
-    login(mockToken);
-    setSuccess("Backend offline - Logged in with Dev Mode Mock Account!");
-    setTimeout(() => {
-      navigate(from, { replace: true });
-    }, 1500);
+    const message =
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      err.message ||
+      "Login failed.";
+
+    setError(message);
   } finally {
     setLoading(false);
   }
