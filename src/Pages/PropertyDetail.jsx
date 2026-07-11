@@ -26,6 +26,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+// AI INTEGRATION COMPONENTS (PHASE 3)
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,6 +57,14 @@ const PropertyDetail = () => {
   // Notification Toast
   const [toastMsg, setToastMsg] = useState("");
 
+  // ── AI ENGINE LOCAL STATES ──
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError] = useState(null);
+  const [aiData, setAiData] = useState(null);
+  const [showAiExplanation, setShowAiExplanation] = useState(false);
+  const [trendData, setTrendData] = useState([]);
+  const [trendLoading, setTrendLoading] = useState(true);
+
   const triggerToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 4000);
@@ -61,6 +72,8 @@ const PropertyDetail = () => {
 
   useEffect(() => {
     fetchProperty();
+    fetchAiValuationMetrics();
+    fetchHistoricalTrends();
   }, [id]);
 
   const formatPrice = (p) => {
@@ -73,6 +86,32 @@ const PropertyDetail = () => {
       return `${(num / 100000).toFixed(2)} Lakh`;
     }
     return num.toLocaleString();
+  };
+
+  // ── AI VALUATION METRICS FETCH PIPE ──
+  const fetchAiValuationMetrics = async () => {
+    try {
+      setAiLoading(true);
+      const res = await axios.get(`http://localhost:8080/api/predictions/${id}/explanation`);
+      setAiData(res.data);
+      setAiError(null);
+    } catch (err) {
+      setAiError("Failed to generate real-time evaluation framework.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // ── AI VALUATION HISTORICAL TRACK FETCH PIPE ──
+  const fetchHistoricalTrends = async () => {
+    try {
+      setTrendLoading(true);
+      const res = await axios.get(`http://localhost:8080/api/predictions/historical-trends/${id}`);
+      setTrendData(res.data.timeline);
+    } catch (err) {
+console.error("🔍 DEBUG AI TRAJECTORY ERROR:", err.response?.[0] || err.response || err);    } finally {
+      setTrendLoading(false);
+    }
   };
 
   const fetchProperty = async () => {
@@ -398,6 +437,32 @@ const PropertyDetail = () => {
             </p>
           </div>
 
+          {/* ── AI VALUATION TRAJECTORY HISTORICAL GRAPH (INTEGRATED) ── */}
+          <div className="bg-white p-6 border border-gray-250 rounded-3xl shadow-sm">
+            <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Clock className="text-indigo-600" size={18} /> AI Valuation Trajectory
+            </h3>
+            {trendLoading ? (
+              <div className="text-xs text-gray-400 animate-pulse py-8 text-center">Loading market trajectory metrics...</div>
+            ) : (
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" stroke="#94a3b8" style={{ fontSize: '11px', fontWeight: '600' }} />
+                    <YAxis 
+                      stroke="#94a3b8" 
+                      style={{ fontSize: '11px', fontWeight: '600' }} 
+                      tickFormatter={(v) => v >= 10000000 ? `${(v / 10000000).toFixed(1)}C` : `${(v / 100000).toFixed(0)}L`} 
+                    />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
+                    <Line type="monotone" dataKey="price" stroke="#4f46e5" strokeWidth={2.5} dot={{ fill: '#4f46e5', r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
           {/* OWNER TRUST CARD */}
           <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/30 border border-blue-100 rounded-3xl p-6 shadow-sm">
             {user ? (
@@ -463,13 +528,69 @@ const PropertyDetail = () => {
         <div className="space-y-6">
           
           {/* STICKY PRICE CARD */}
-          <div className="bg-white rounded-3xl p-6 border shadow-lg sticky top-24">
-            <span className="text-xs text-gray-400 uppercase tracking-widest font-black block">Price Range</span>
-            <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-1 tracking-tight">
-              PKR {formatPrice(property.price)}
-            </p>
+          <div className="bg-white rounded-3xl p-6 border shadow-lg sticky top-24 space-y-5">
+            <div>
+              <span className="text-xs text-gray-400 uppercase tracking-widest font-black block">Price Range</span>
+              <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-1 tracking-tight">
+                PKR {formatPrice(property.price)}
+              </p>
+            </div>
             
-            <div className="mt-6 space-y-3">
+            {/* ── AI VALUATION PREMIUM INTERACTION FRAMEWORK (INTEGRATED) ── */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white relative overflow-hidden shadow-md">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <span className="bg-indigo-500/10 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded border border-indigo-500/20 uppercase tracking-wider">
+                    PropSight AI Engine
+                  </span>
+                  <h4 className="text-slate-400 text-[11px] font-medium mt-1">Estimated Market Value</h4>
+                </div>
+                {aiData && (
+                  <span className="text-emerald-400 font-mono text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                    {aiData.confidence} Certainty
+                  </span>
+                )}
+              </div>
+
+              {aiLoading ? (
+                <div className="animate-pulse text-slate-500 text-xs py-2 font-mono">Running algorithmic matrices...</div>
+              ) : aiError ? (
+                <div className="text-red-400 text-[11px] font-mono">{aiError}</div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xl font-bold font-mono text-slate-100">
+                      PKR {formatPrice(aiData.predictedPrice)}
+                    </span>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Target Range: <span className="font-mono text-slate-300">PKR {formatPrice(aiData.priceRange?.min)} - {formatPrice(aiData.priceRange?.max)}</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => setShowAiExplanation(!showAiExplanation)}
+                    className="w-full bg-slate-800 hover:bg-slate-750 border border-slate-700 transition text-[10px] font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    {showAiExplanation ? 'Hide Valuation Audit' : 'Analyze Pricing Drivers'}
+                    <ChevronRight size={12} className={`transform transition-transform ${showAiExplanation ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {showAiExplanation && (
+                    <div className="pt-3 border-t border-slate-800 space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {Object.entries(aiData.factorExplanation || {}).map(([key, desc]) => (
+                        <div key={key} className="bg-slate-950 p-2 rounded-lg border border-slate-900 text-[10px]">
+                          <div className="text-indigo-400 font-bold font-mono text-[9px]">{key.replace('_', ' ').toUpperCase()}</div>
+                          <div className="text-slate-400 leading-relaxed mt-0.5">{desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
               <button 
                 onClick={() => setIsContactOpen(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-500/10 transition flex items-center justify-center gap-2 cursor-pointer text-sm"
@@ -485,7 +606,7 @@ const PropertyDetail = () => {
               </button>
             </div>
 
-            <div className="mt-6 border-t pt-4 text-[11px] text-gray-400 leading-normal flex items-start gap-1">
+            <div className="border-t pt-4 text-[11px] text-gray-400 leading-normal flex items-start gap-1">
               <Info size={14} className="shrink-0 text-blue-500 mt-0.5" />
               <span>Prices listed are provided by verified owners and might be subject to negotiation. No commission fees on PropSight.</span>
             </div>

@@ -61,6 +61,8 @@ import AreaGuides from "./Pages/AreaGuides";
 
 import { BlogIndex } from "./Pages/BlogIndex";
 import { BlogDetail } from "./Pages/BlogDetail";
+import InvestorRadarPage from "./Pages/AIPrediction/InvestorRadarPage.jsx";
+import AiPredictionHub from "./Pages/AIPrediction/AiPredictionHub.jsx";
 
 
 
@@ -211,6 +213,16 @@ const AppContent = () => {
           path="/login"
           element={<Login />}
         />
+
+
+{/* 1. Public Asset Analytics View */}
+                       
+                        
+                        {/* 2. Premium Analytics Dashboard */}
+                        <Route path="/investor/radar" element={<InvestorRadarPage />} />
+
+
+  {/* <Route path="/ai-prediction" element={<AiPredictionHub />} /> */}
 
 
         <Route

@@ -54,6 +54,7 @@ export const getMyProperties = async () => {
   }
 };
 
+
 export const getMyAuctions = async () => {
   try {
     const response = await dashboardClient.get("/user/dashboard/auctions");
