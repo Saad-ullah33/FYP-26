@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <clipPath id="c">
+      <rect width="32" height="32"/>
+    </clipPath>
+  </defs>
+  <!--
+    next_logo.png is a wide horizontal image (icon + text + tagline).
+    The brand icon sits in the left ~37% of the image width.
+    Rendering the image at width=87 means 32/87 ≈ 37% is visible —
+    which is exactly the icon symbol. y=-8 vertically centres it.
+  -->
+  <image
+    href="/next_logo.png"
+    x="0"
+    y="-8"
+    width="87"
+    clip-path="url(#c)"
+    preserveAspectRatio="xMinYMid meet"
+  />
+</svg>

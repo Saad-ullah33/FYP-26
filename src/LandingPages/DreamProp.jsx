@@ -95,7 +95,7 @@ const DreamProp = () => {
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
             Find Your Dream Property, <br />
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 text-transparent bg-clip-text">
-              Powered by PropSightAi
+              Powered by NextProperty Ai
             </span>
           </h1>
           <p className="text-slate-400 text-xs md:text-sm max-w-lg mx-auto font-medium">

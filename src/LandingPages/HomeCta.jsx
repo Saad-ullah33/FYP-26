@@ -246,7 +246,7 @@ export const HomeCta = () => {
 
           {/* Description */}
           <p className="text-slate-300 text-sm md:text-base leading-relaxed font-medium">
-            Step into the future of real estate. PropSightAi connects real-time market data, predictive valuation engines, and secure digital bidding to deliver unmatched transparency.
+            Step into the future of real estate. NextProperty connects real-time market data, predictive valuation engines, and secure digital bidding to deliver unmatched transparency.
           </p>
         </ScrollReveal>
 

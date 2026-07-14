@@ -55,7 +55,7 @@ export const BlogIndex = () => {
         <div className="max-w-[1600px] mx-auto relative z-10 text-center space-y-6">
           <ScrollReveal direction="up" duration={0.8}>
             <span className="text-blue-500 font-extrabold uppercase text-xs tracking-widest bg-blue-500/10 px-3.5 py-1.5 rounded-full border border-blue-500/20">
-              PropSightAi Insights
+              NextProperty Ai Insights
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mt-4 tracking-tight leading-none bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
               Editorial & Knowledge Hub

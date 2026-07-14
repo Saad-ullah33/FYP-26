@@ -12,7 +12,11 @@ import {
   ArrowLeft,
   ArrowRight,
   Loader2,
+  Sparkles,
 } from "lucide-react";
+import { useSubscription } from "../hooks/useSubscription";
+import { geminiService } from "../services/geminiService";
+import { getMyProperties } from "../utils/userDashboardService";
 
 const faisalabadLocations = [
   "Lyallpur Town", "Madina Town", "Jinnah Town", "Iqbal Town", "Chak Jhumra Town",
@@ -43,9 +47,11 @@ const PreviewCard = ({ title, value }) => {
 };
 
 const AddProperty = () => {
+  const { canAccess, setIsUpgradeModalOpen, incrementUsage } = useSubscription();
   const [customArea, setCustomArea] = useState("");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -172,11 +178,60 @@ const AddProperty = () => {
     }
   };
 
+  const handleGenerateAIDescription = async () => {
+    if (!canAccess("aiDescriptionGenerator")) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    if (!formData.propertyType || !formData.location || !formData.area || !formData.price) {
+      alert("Please fill in Property Type, Price, Area, and Location first so the AI can generate a description tailored to your listing.");
+      return;
+    }
+    setGeneratingDesc(true);
+    try {
+      const description = await geminiService.generatePropertyDescription({
+        title: formData.title,
+        propertyType: formData.propertyType,
+        location: formData.location,
+        area: formData.area,
+        price: formData.price,
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms
+      });
+      setFormData(prev => ({ ...prev, description }));
+      incrementUsage("aiDescriptionGenerator");
+    } catch (err) {
+      console.error("AI Description Generator error:", err);
+      alert("Failed to generate AI description.");
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
+
   // =========================
   // SUBMIT
   // =========================
   const handleSubmit = async () => {
     if (loading) return;
+    
+    // Check listings count limit (max 5 for Free users)
+    if (!canAccess("unlimitedListings")) {
+      try {
+        setLoading(true);
+        const myProps = await getMyProperties();
+        if (myProps.length >= 5) {
+          alert("You have reached the maximum listing limit (5) for the Free plan. Please upgrade to Pro or Business to add unlimited listings.");
+          setIsUpgradeModalOpen(true);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to check properties count limit offline:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
     setLoading(true);
 
     try {
@@ -215,6 +270,7 @@ await api.post(
         },
     }
 );
+      incrementUsage("unlimitedListings");
       alert("✅ Property Added Successfully!");
       // reset form...
 
@@ -602,9 +658,29 @@ await api.post(
 
                 {/* DESCRIPTION */}
                 <div className="mt-5">
-                  <label className="text-sm font-medium text-gray-700">
-                    Description
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAIDescription}
+                      disabled={generatingDesc}
+                      className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-[10px] font-black uppercase flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-50 transition"
+                    >
+                      {generatingDesc ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 text-amber-300" />
+                          Generate AI Description
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     rows={5}
                     name="description"

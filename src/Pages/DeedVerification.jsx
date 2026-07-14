@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { verifyDeedSignature } from "../utils/deedService";
+import { verifyDeedSignature, generateSignature, getDeedById } from "../utils/deedService";
 import { 
   ShieldCheck, 
   ShieldAlert, 
@@ -24,6 +24,17 @@ import confetti from "canvas-confetti";
 const DeedVerification = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // State for search/lookup portal when parameters are missing
+  const [lookupId, setLookupId] = useState("");
+  const [lookupRole, setLookupRole] = useState("public");
+  const [lookupError, setLookupError] = useState("");
+
+  // State for ledger integrity audit simulation modal
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditProgress, setAuditProgress] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [verificationProgress, setVerificationProgress] = useState(0);
   const [verificationStep, setVerificationStep] = useState("");
@@ -35,13 +46,15 @@ const DeedVerification = () => {
 
   useEffect(() => {
     if (!deedId || !sig) {
-      setResult({
-        verified: false,
-        error: "Missing verification parameters. Please scan a valid QR code.",
-      });
+      setResult(null);
       setLoading(false);
       return;
     }
+
+    // Reset results and start verification simulation
+    setResult(null);
+    setLoading(true);
+    setVerificationProgress(0);
 
     // Step-by-step verification simulation for premium UX
     const steps = [
@@ -79,6 +92,48 @@ const DeedVerification = () => {
 
     return () => clearInterval(interval);
   }, [deedId, role, sig]);
+
+  const handleLookupSubmit = () => {
+    if (!lookupId.trim()) {
+      setLookupError("Please enter a Deed ID.");
+      return;
+    }
+
+    const deed = getDeedById(lookupId.trim());
+    if (!deed) {
+      setLookupError("Deed ID not found in secure registry.");
+      return;
+    }
+
+    const signature = generateSignature(deed.deedId, lookupRole);
+    navigate(`/verify-deed?deedId=${deed.deedId}&role=${lookupRole}&sig=${signature}`);
+  };
+
+  const handleAuditLedger = () => {
+    setIsAuditing(true);
+    setAuditProgress(0);
+    setAuditLogs([]);
+
+    const logs = [
+      "Connecting to FDA Local Ledger Node #04...",
+      "Resolving Merkle root hash trees...",
+      "Matching transaction proof (SHA-256 integrity block)...",
+      "Retrieving state proofs from 5 active validator nodes...",
+      "Consensus verified (100% agreement on block status).",
+      "Ledger State: VALID & IMMUTABLE."
+    ];
+
+    let logIdx = 0;
+    const interval = setInterval(() => {
+      if (logIdx < logs.length) {
+        setAuditLogs((prev) => [...prev, logs[logIdx]]);
+        setAuditProgress(Math.round(((logIdx + 1) / logs.length) * 100));
+        logIdx++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 450);
+  };
 
   const handlePrint = () => {
     window.print();
@@ -228,6 +283,11 @@ const DeedVerification = () => {
                     className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-6 print:border-slate-300"
                   >
                     <div>
+                      {/* Logo in Certificate (Only visible in print or clean view) */}
+                      <div className="hidden print:flex items-center gap-2.5 mb-4">
+                        <img src="/favicon-icon.png" className="w-8 h-8 object-contain" alt="Logo" />
+                        <span className="text-base font-black tracking-tight text-slate-950">NextProperty Registry Services</span>
+                      </div>
                       <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight print:text-slate-900">
                         TRUSTDEED RECORD
                       </h1>
@@ -315,6 +375,16 @@ const DeedVerification = () => {
                           <p className="text-[10px] font-mono text-slate-400 break-all select-all hover:text-amber-400 transition cursor-pointer print:text-slate-700 bg-slate-950/60 p-2 rounded-lg border border-slate-900 mt-1 print:border-none print:bg-transparent">
                             {result.deed.blockchainHash}
                           </p>
+                        </div>
+                        <div className="pt-2 print:hidden">
+                          <button
+                            type="button"
+                            onClick={handleAuditLedger}
+                            className="flex items-center gap-1.5 text-[10px] font-extrabold text-amber-400/95 hover:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 transition cursor-pointer"
+                          >
+                            <Search className="w-3.5 h-3.5" />
+                            Audit Ledger Node Integrity
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -448,6 +518,82 @@ const DeedVerification = () => {
                 >
                   Return to Home
                 </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 4. MANUAL SEARCH PORTAL */}
+          {!loading && !result && (
+            <motion.div
+              key="manual-lookup"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl max-w-lg mx-auto"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 mx-auto mb-6">
+                <FileText className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-100 text-center mb-2 tracking-tight">Registry Verification Portal</h2>
+              <p className="text-slate-400 text-sm text-center mb-6">
+                Enter a Registry Deed ID below to authenticate cryptographic signature logs on the secure ledger.
+              </p>
+
+              <div className="space-y-4 text-left">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deed ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. TD-101-9921"
+                    value={lookupId}
+                    onChange={(e) => {
+                      setLookupId(e.target.value.toUpperCase());
+                      setLookupError("");
+                    }}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-xl px-4 py-3 text-sm font-mono tracking-wide focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+                  />
+                  {lookupError && <p className="text-xs text-red-500 mt-1 font-semibold">{lookupError}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Access Role</label>
+                  <select
+                    value={lookupRole}
+                    onChange={(e) => setLookupRole(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+                  >
+                    <option value="public">Public Scan (Masked GDPR View)</option>
+                    <option value="buyer">Buyer Profile (Full View)</option>
+                    <option value="seller">Seller Profile (Full View)</option>
+                    <option value="admin">Platform Administrator (Audit View)</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={handleLookupSubmit}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold py-3.5 rounded-xl text-sm transition shadow-lg shadow-amber-500/10 active:scale-[0.98] cursor-pointer"
+                >
+                  Initiate Ledger Audit
+                </button>
+              </div>
+
+              {/* Suggestions */}
+              <div className="mt-6 border-t border-slate-800/80 pt-4 text-left">
+                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-2">Demo Records Available</span>
+                <div className="flex gap-2.5 flex-wrap">
+                  <button
+                    onClick={() => { setLookupId("TD-101-9921"); setLookupError(""); }}
+                    className="text-xs font-mono font-bold text-amber-400/80 hover:text-amber-400 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-850 hover:border-slate-800 transition cursor-pointer"
+                  >
+                    TD-101-9921
+                  </button>
+                  <button
+                    onClick={() => { setLookupId("TD-102-8812"); setLookupError(""); }}
+                    className="text-xs font-mono font-bold text-amber-400/80 hover:text-amber-400 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-850 hover:border-slate-800 transition cursor-pointer"
+                  >
+                    TD-102-8812
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PremiumGate from '../components/subscription/PremiumGate';
 import { 
   IconArrowLeft, 
   IconMapPin, 
@@ -196,10 +197,15 @@ const BuilderProfiles = () => {
               <IconPhone size={20} />
               Call Directly
             </button>
-            <button className="flex-1 flex justify-center items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-6 rounded-xl font-extrabold shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
-              <IconBrandWhatsapp size={20} />
-              WhatsApp Message
-            </button>
+            <PremiumGate feature="whatsappLeadIntegration" fallbackMessage="Direct WhatsApp Lead integration is a Pro feature. Upgrade to get instant chat redirection to builder agents.">
+              <button 
+                onClick={() => window.open(`https://wa.me/${selectedBuilder.whatsapp}`, "_blank")}
+                className="flex-1 flex justify-center items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-6 rounded-xl font-extrabold shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer w-full"
+              >
+                <IconBrandWhatsapp size={20} />
+                WhatsApp Message
+              </button>
+            </PremiumGate>
           </div>
 
         </div>

@@ -13,7 +13,7 @@ export const Explore = () => {
         <ScrollReveal direction="up" duration={0.8}>
           <div className='space-y-2 mb-10'>
             <h2 className='text-2xl font-extrabold text-slate-900 tracking-tight'>
-              Explore more on PropSightAi
+              Explore more on NextProperty
             </h2>
             <p className='text-slate-550 text-sm max-w-lg'>
               Discover specialized AI tools, analytical construction calculators, and interactive mapping systems.
