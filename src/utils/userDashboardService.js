@@ -31,6 +31,31 @@ dashboardClient.interceptors.request.use((config) => {
 });
 
 /* =========================================================================
+   USER ANALYTICS & INSIGHTS (NEW ENDPOINTS ADDED)
+   ========================================================================= */
+
+/**
+ * Fetches personalized financial turnover, successful wins, and listing performance
+ * GET /api/user/analytics/overview
+ */
+export const getPersonalAnalyticsOverview = async () => {
+  try {
+    const response = await dashboardClient.get("/user/analytics/overview");
+    return response.data;
+  } catch (err) {
+    console.error("Personal analytics dashboard service unreachable:", err);
+    return {
+      totalBidsPlaced: 0,
+      successfulAuctionsWon: 0,
+      totalCapitalExpended: 0.0,
+      myTotalAuctionsCreated: 0,
+      myActiveAuctions: 0,
+      mySoldAuctions: 0
+    };
+  }
+};
+
+/* =========================================================================
    USER DASHBOARD METRICS & CORE METADATA
    ========================================================================= */
 
@@ -54,23 +79,26 @@ export const getMyProperties = async () => {
   }
 };
 
-
-export const getMyAuctions = async () => {
+/**
+ * Fetches auctions linked to the user. Optionally filters by status via request params.
+ * GET /api/user/dashboard/auctions?status=ACTIVE
+ */
+export const getMyAuctions = async (status = null) => {
   try {
-    const response = await dashboardClient.get("/user/dashboard/auctions");
+    const url = status ? `/user/dashboard/auctions?status=${status}` : "/user/dashboard/auctions";
+    const response = await dashboardClient.get(url);
     return Array.isArray(response.data) ? response.data : [];
   } catch (err) {
-    console.error("Auctions endpoint unreachable:", err);
+    console.error(`Auctions endpoint unreachable (filter: ${status}):`, err);
     return [];
   }
 };
 
 /* =========================================================================
-   PROPERTY MANAGEMENT CRUD ACTIONS (Directly utilizing our centralized proxy)
+   PROPERTY MANAGEMENT & AUCTION WORKFLOWS
    ========================================================================= */
 
 export const createPropertyListing = async (formData) => {
-  // Uses multi-part form data implicitly due to our automated interceptor check
   const response = await dashboardClient.post("/properties/create", formData);
   return response.data;
 };
@@ -85,8 +113,14 @@ export const deletePropertyListing = async (id) => {
   return response.data;
 };
 
-export const enablePropertyAuction = async (id) => {
-  const response = await dashboardClient.post(`/user/dashboard/properties/${id}/enable-auction`);
+/**
+ * Places an existing owned property listing onto the auction block.
+ * POST /api/user/dashboard/properties/{id}/enable-auction
+ * @param {number} id - The Property ID
+ * @param {Object} auctionData - The AuctionRequestDTO object { startingPrice, reservePrice, startTime, endTime }
+ */
+export const enablePropertyAuction = async (id, auctionData) => {
+  const response = await dashboardClient.post(`/user/dashboard/properties/${id}/enable-auction`, auctionData);
   return response.data;
 };
 

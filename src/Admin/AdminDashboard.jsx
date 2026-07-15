@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { getQRUrls, createDeed, initializeDeeds } from '../utils/deedService';
 import { adminService } from '../utils/adminService';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, ExternalLink, LayoutDashboard, Building2, Users, BrainCircuit, QrCode, Settings, LogOut, Menu, X, TrendingUp, AlertCircle, Search, Filter, Check, Sliders, ShieldCheck, UserCheck, UserX, Save, RefreshCw, ChevronRight, Sparkles, Database, Lock } from 'lucide-react';
+import { 
+  Copy, ExternalLink, LayoutDashboard, Building2, Users, BrainCircuit, QrCode, 
+  Settings, LogOut, Menu, X, TrendingUp, AlertCircle, Search, Filter, Check, 
+  Sliders, ShieldCheck, UserCheck, UserX, Save, RefreshCw, ChevronRight, 
+  Sparkles, Database, Lock, Play, Ban, ShieldAlert 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,8 +22,8 @@ const AdminDashboard = () => {
 
   // Search and Filter States
   const [userSearch, setUserSearch] = useState('');
-  const [propertyFilter, setPropertyFilter] = useState('All');
-  const [propertySearch, setPropertySearch] = useState('');
+  const [auctionFilter, setAuctionFilter] = useState('ALL');
+  const [auctionSearch, setAuctionSearch] = useState('');
 
   // ── LIVE BACKEND DATA STATES ──
   const [liveStats, setLiveStats] = useState({
@@ -26,13 +31,10 @@ const AdminDashboard = () => {
     totalProperties: 0, activeAuctions: 0, totalBids: 0
   });
   const [usersList, setUsersList] = useState([]);
+  const [auctionsList, setAuctionsList] = useState([]);
   const [analyticsData, setAnalyticsData] = useState(null);
 
   // Static Fallback Lists for Non-Analytics Modules
-  const [propertiesList, setPropertiesList] = useState([
-    { id: 101, title: '5 Marla Modern House', location: 'Giga Mall, Islamabad', price: '1.8 Crore', owner: 'Ali Khan', date: '2026-06-25', status: 'Pending', type: 'HOUSE' },
-    { id: 102, title: 'Luxury 3 Bed Apartment', location: 'Gulberg III, Lahore', price: '2.5 Crore', owner: 'Sarah Ahmed', date: '2026-06-24', status: 'Approved', type: 'APARTMENT' }
-  ]);
   const [trustDeeds, setTrustDeeds] = useState([
     { id: 201, propertyId: 101, owner: 'Ali Khan', documentId: 'TD-9921-PB', registryOffice: 'Faisalabad West', status: 'Pending', uploadDate: '2026-06-26', verifiedAt: null }
   ]);
@@ -61,23 +63,48 @@ const AdminDashboard = () => {
   // ── HOOK INTO SPRING BOOT NETWORKS ON MOUNT ──
   useEffect(() => {
     initializeDeeds();
-    fetchInitialDashboardData();
+    loadAllDashboardData(); // Unified call to fetch absolutely everything
   }, []);
 
-  const fetchInitialDashboardData = async () => {
+  // Sync state filter mutations dynamically
+  useEffect(() => {
+    fetchAuctionsByFilters();
+  }, [auctionFilter]);
+
+  const loadAllDashboardData = async () => {
     try {
       setGlobalLoading(true);
-      const [statsData, usersData, completeAnalytics] = await Promise.all([
+      const [statsData, usersData, completeAnalytics, auctionsData] = await Promise.all([
         adminService.getStatsSummary(),
         adminService.getAllUsers(),
-        adminService.getComprehensiveDashboard()
+        adminService.getComprehensiveDashboard(),
+        adminService.getAllAuctions()
       ]);
       
-      setLiveStats(statsData);
-      setUsersList(usersData);
-      setAnalyticsData(completeAnalytics);
+      setLiveStats(statsData || { totalUsers: 0, activeUsers: 0, blockedUsers: 0, pendingUsers: 0, totalProperties: 0, activeAuctions: 0, totalBids: 0 });
+      setUsersList(usersData || []);
+      setAnalyticsData(completeAnalytics || null);
+      setAuctionsList(auctionsData || []);
     } catch (err) {
+      console.error("Dashboard fetch error: ", err);
       triggerToast("Failed to fetch dynamic server metrics.");
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
+  const fetchAuctionsByFilters = async () => {
+    try {
+      setGlobalLoading(true);
+      let data;
+      if (auctionFilter === 'ALL') {
+        data = await adminService.getAllAuctions();
+      } else {
+        data = await adminService.getAuctionsByStatus(auctionFilter);
+      }
+      setAuctionsList(data || []);
+    } catch (err) {
+      triggerToast("Failed to retrieve filtered auction records.");
     } finally {
       setGlobalLoading(false);
     }
@@ -88,9 +115,9 @@ const AdminDashboard = () => {
     setTimeout(() => setToastMsg(""), 4000);
   };
 
-  // ── RE-WIRED ADMINISTRATIVE TRANSACTION PIPES ──
+  // ── USER MANAGEMENT SIGNATURE PIPES ──
   const handleToggleUserBan = (user) => {
-    const isCurrentlyActive = user.profile !== "BLOCKED"; // Mapping your profile text string to status limits
+    const isCurrentlyActive = user.profile !== "BLOCKED"; 
     const actionText = isCurrentlyActive ? 'Block' : 'Unblock';
 
     setConfirmModal({
@@ -109,7 +136,7 @@ const AdminDashboard = () => {
             await adminService.unblockUserAccount(user.id);
             triggerToast(`User Account #${user.id} is now active.`);
           }
-          fetchInitialDashboardData(); // Fresh reload
+          loadAllDashboardData(); 
         } catch (err) {
           triggerToast("Transaction authorization error.");
         } finally {
@@ -123,10 +150,103 @@ const AdminDashboard = () => {
     try {
       await adminService.approveUserAccount(userId);
       triggerToast("User credentials marked as verified.");
-      fetchInitialDashboardData();
+      loadAllDashboardData();
     } catch (err) {
       triggerToast("Approval transaction failed.");
     }
+  };
+
+  // ── AUCTION MANAGEMENT SIGNATURE PIPES ──
+  const handleApproveAuction = async (id) => {
+    try {
+      setGlobalLoading(true);
+      await adminService.approveAuction(id);
+      triggerToast(`Auction #${id} approved for system staging.`);
+      loadAllDashboardData();
+    } catch (err) {
+      triggerToast("Failed to complete approval process.");
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
+  const handleRejectAuction = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Reject Auction Request',
+      message: `Are you sure you want to reject and cancel Auction listing #${id}?`,
+      confirmText: 'Reject Auction',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await adminService.rejectAuction(id);
+          triggerToast(`Auction Listing #${id} rejected and updated.`);
+          loadAllDashboardData();
+        } catch (err) {
+          triggerToast("Transaction error modifying state variables.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handlePublishAuction = async (id) => {
+    try {
+      setGlobalLoading(true);
+      await adminService.publishAuction(id);
+      triggerToast(`Auction #${id} successfully forced live instantly!`);
+      loadAllDashboardData();
+    } catch (err) {
+      triggerToast("Failed to launch auction listing.");
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
+  const handleForceFinalizeAuction = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Force Finalize Auction Settlement',
+      message: `Warning: This triggers an administrative command override to conclude bidding operations for Auction #${id} instantly. Proceed?`,
+      confirmText: 'Force Settlement',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await adminService.finalizeAuction(id);
+          triggerToast(`Settlement routines run on Auction #${id}.`);
+          loadAllDashboardData();
+        } catch (err) {
+          triggerToast("Failed to execute manual settlement override.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleHardDeleteAuction = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hard System Deletion',
+      message: `Are you sure you want to permanently clean the database registry records for Auction #${id}? This action is irreversible.`,
+      confirmText: 'Hard Delete Record',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await adminService.deleteAuction(id);
+          triggerToast(`Auction profile #${id} safely purged from backend.`);
+          loadAllDashboardData();
+        } catch (err) {
+          triggerToast("Purge command execution dropped.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   // Stats Display Framework Matrix Mapping
@@ -136,12 +256,6 @@ const AdminDashboard = () => {
     { title: 'Live System Bids', value: liveStats.totalBids, change: `Active Auctions: ${liveStats.activeAuctions}`, icon: BrainCircuit, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
     { title: 'System Engine Accuracy', value: '95.1%', change: 'PropPredict Core', icon: QrCode, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
   ];
-
-  const updatePropertyStatus = (propertyId, newStatus) => {
-    setPropertiesList(prev => prev.map(p => p.id === propertyId ? { ...p, status: newStatus } : p));
-    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-    triggerToast(`Property status updated to ${newStatus}`);
-  };
 
   const approveTrustDeed = (deedId) => {
     const deed = trustDeeds.find(d => d.id === deedId);
@@ -216,7 +330,7 @@ const AdminDashboard = () => {
           <ul className="space-y-1.5 px-3">
             <SidebarItem icon={LayoutDashboard} text="Overview" active={activeTab === 'Overview'} onClick={() => setActiveTab('Overview')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Users} text="User Management" active={activeTab === 'Users'} onClick={() => setActiveTab('Users')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={Building2} text="Properties" active={activeTab === 'Properties'} onClick={() => setActiveTab('Properties')} isOpen={isSidebarOpen} />
+            <SidebarItem icon={Building2} text="Property Auctions" active={activeTab === 'Auctions'} onClick={() => setActiveTab('Auctions')} isOpen={isSidebarOpen} />
             <SidebarItem icon={BrainCircuit} text="PropPredict AI" active={activeTab === 'AI'} onClick={() => setActiveTab('AI')} isOpen={isSidebarOpen} />
             <SidebarItem icon={QrCode} text="TrustDeed Requests" active={activeTab === 'TrustDeed'} onClick={() => setActiveTab('TrustDeed')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Settings} text="System Settings" active={activeTab === 'Settings'} onClick={() => setActiveTab('Settings')} isOpen={isSidebarOpen} />
@@ -238,11 +352,18 @@ const AdminDashboard = () => {
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#142035] relative z-10">
           <div>
             <h2 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              {activeTab}
+              {activeTab === 'Auctions' ? 'Property Auctions' : activeTab}
             </h2>
             <p className="text-slate-400 text-xs mt-1">PropSight AI ERP Administration Dashboard Panel.</p>
           </div>
           <div className="flex items-center gap-3.5">
+            <button 
+              onClick={loadAllDashboardData} 
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#121c2e] hover:bg-[#1b2b47] rounded-xl text-xs font-semibold border border-[#1e2d4a] transition"
+              title="Force Database Sync"
+            >
+              <RefreshCw size={12} className={globalLoading ? "animate-spin text-blue-400" : "text-slate-400"} /> Sync Data
+            </button>
             <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold border border-emerald-500/25">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" /> Live Node Online
             </div>
@@ -273,24 +394,36 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Analytics Live Performance Table */}
               <div className="lg:col-span-2 bg-[#0e1626]/80 backdrop-blur-md rounded-2xl border border-[#1e2d4a]/50 p-6 shadow-xl">
-                <h3 className="text-sm font-bold text-white mb-4">Live Traffic Matrix (Most Viewed)</h3>
+                <h3 className="text-sm font-bold text-white mb-4">Live Traffic Matrix / System Catalog</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="text-slate-400 border-b border-slate-800">
                         <th className="pb-3">Property Asset Context</th>
                         <th className="pb-3">Calculated Spread</th>
-                        <th className="pb-3">Traffic Views</th>
+                        <th className="pb-3">Workflow State</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40">
-                      {analyticsData?.most_viewed_properties?.map((p, i) => (
+                      {/* Tries to render analytics data first, otherwise safely falls back to standard auctions database */}
+                      {(analyticsData?.most_viewed_properties || auctionsList.slice(0, 5)).map((p, i) => (
                         <tr key={i} className="text-slate-350">
-                          <td className="py-3 font-semibold text-slate-200">{p.title || `Asset ID #${p.id}`}</td>
-                          <td className="py-3 font-mono text-blue-400">PKR {p.price?.toLocaleString()}</td>
-                          <td className="py-3 font-mono text-emerald-400 font-bold">{p.views || Math.floor(Math.random() * 500 + 50)} Hits</td>
+                          <td className="py-3 font-semibold text-slate-200">{p.title || `Asset Reference #${p.id}`}</td>
+                          <td className="py-3 font-mono text-blue-400">
+                            PKR {(p.reservePrice || p.price || 0).toLocaleString()}
+                          </td>
+                          <td className="py-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400">
+                              {p.status || "ACTIVE"}
+                            </span>
+                          </td>
                         </tr>
                       ))}
+                      {(!analyticsData?.most_viewed_properties && auctionsList.length === 0) && (
+                        <tr>
+                          <td colSpan="3" className="text-center py-6 text-slate-500 text-xs">No global auction profiles found in database.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -317,7 +450,7 @@ const AdminDashboard = () => {
         )}
 
         {/* ================= TAB: USER MANAGEMENT ================= */}
-        {activeTab === 'Browse Users' || activeTab === 'Users' && (
+        {activeTab === 'Users' && (
           <div className="bg-[#0e1626]/80 backdrop-blur-md rounded-2xl border border-[#1e2d4a]/50 overflow-hidden shadow-xl animate-in fade-in duration-300">
             <div className="p-6 border-b border-[#1e2d4a]/40 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111c30]/30">
               <div className="relative w-full md:w-80">
@@ -347,7 +480,7 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4.5">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-blue-600/10 text-blue-400 border border-blue-500/20 font-extrabold flex items-center justify-center text-xs">
-                              {item.name?.charAt(0)}
+                              {item.name?.charAt(0) || "U"}
                             </div>
                             <div>
                               <p className="font-bold text-white text-sm">{item.name}</p>
@@ -361,7 +494,7 @@ const AdminDashboard = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleManualUserApproval(item.id)}
-                              className="px-2.5 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1"
+                              className="px-2.5 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
                             >
                               Verify
                             </button>
@@ -375,22 +508,42 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
+                  {usersList.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="text-center py-8 text-slate-500 text-xs">No users registered on system database.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* ================= TAB: PROPERTIES ================= */}
-        {activeTab === 'Properties' && (
+        {/* ================= TAB: PROPERTIES / SYSTEM AUCTIONS ================= */}
+        {activeTab === 'Auctions' && (
           <div className="bg-[#0e1626]/80 backdrop-blur-md rounded-2xl border border-[#1e2d4a]/50 overflow-hidden shadow-xl animate-in fade-in duration-300">
             <div className="p-6 border-b border-[#1e2d4a]/40 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111c30]/30">
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                 <input
-                  type="text" placeholder="Search structural profiles..." value={propertySearch} onChange={(e) => setPropertySearch(e.target.value)}
+                  type="text" placeholder="Search system auctions..." value={auctionSearch} onChange={(e) => setAuctionSearch(e.target.value)}
                   className="w-full bg-[#121c2e] border border-[#1e2d4a]/50 pl-10 pr-4 py-2.5 rounded-xl text-xs outline-none text-slate-200"
                 />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter size={14} className="text-slate-400" />
+                <select
+                  value={auctionFilter}
+                  onChange={(e) => setAuctionFilter(e.target.value)}
+                  className="bg-[#121c2e] border border-[#1e2d4a]/50 text-slate-200 text-xs rounded-xl px-3 py-2 cursor-pointer outline-none focus:border-blue-500"
+                >
+                  <option value="ALL">All States</option>
+                  <option value="PENDING_APPROVAL">Pending Approval</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="ACTIVE">Active (Live)</option>
+                  <option value="CONCLUDED">Concluded</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
               </div>
             </div>
 
@@ -398,27 +551,91 @@ const AdminDashboard = () => {
               <table className="w-full text-left text-sm text-slate-350">
                 <thead className="bg-[#121c2e]/40 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-[#1e2d4a]/40">
                   <tr>
-                    <th className="px-6 py-4">Property context</th>
-                    <th className="px-6 py-4">Location Indices</th>
-                    <th className="px-6 py-4">Capital Cost</th>
-                    <th className="px-6 py-4">Registry Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4">Auction Ref</th>
+                    <th className="px-6 py-4">Assigned Location</th>
+                    <th className="px-6 py-4">Reserves/Pricing</th>
+                    <th className="px-6 py-4">Workflow Status</th>
+                    <th className="px-6 py-4 text-right">Administration Pipeline Controls</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#18263f]">
-                  {propertiesList.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#121b2b]/40 transition">
-                      <td className="px-6 py-4.5 font-bold text-white text-sm">{item.title}</td>
-                      <td className="px-6 py-4.5 text-xs text-slate-400">{item.location}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-blue-400">{item.price}</td>
-                      <td className="px-6 py-4.5">
-                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold">{item.status}</span>
-                      </td>
-                      <td className="px-6 py-4.5 text-right">
-                        <button onClick={() => updatePropertyStatus(item.id, 'Approved')} className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-bold transition">Approve</button>
-                      </td>
+                  {auctionsList
+                    .filter(a => a.title?.toLowerCase().includes(auctionSearch.toLowerCase()) || a.location?.toLowerCase().includes(auctionSearch.toLowerCase()))
+                    .map((item) => (
+                      <tr key={item.id} className="hover:bg-[#121b2b]/40 transition">
+                        <td className="px-6 py-4.5 font-bold text-white text-sm">
+                          <div>
+                            <p>{item.title || `Auction Profile #${item.id}`}</p>
+                            <p className="text-[10px] text-slate-500 font-normal">Owner ID Ref: {item.ownerId || 'System'}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4.5 text-xs text-slate-400">{item.location || 'Faisalabad Regional'}</td>
+                        <td className="px-6 py-4.5 text-sm font-extrabold text-blue-400">
+                          {item.reservePrice ? `PKR ${item.reservePrice.toLocaleString()}` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.status === 'PENDING_APPROVAL' ? 'bg-amber-500/10 text-amber-400' :
+                            item.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' :
+                            item.status === 'CONCLUDED' ? 'bg-blue-500/10 text-blue-400' :
+                            'bg-slate-500/10 text-slate-400'
+                          }`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {item.status === 'PENDING_APPROVAL' && (
+                              <>
+                                <button 
+                                  onClick={() => handleApproveAuction(item.id)} 
+                                  className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Check size={12} /> Approve
+                                </button>
+                                <button 
+                                  onClick={() => handleRejectAuction(item.id)} 
+                                  className="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Ban size={12} /> Reject
+                                </button>
+                              </>
+                            )}
+
+                            {item.status === 'APPROVED' && (
+                              <button 
+                                onClick={() => handlePublishAuction(item.id)} 
+                                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Play size={12} /> Launch Live
+                              </button>
+                            )}
+
+                            {item.status === 'ACTIVE' && (
+                              <button 
+                                onClick={() => handleForceFinalizeAuction(item.id)} 
+                                className="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <ShieldCheck size={12} /> Force Finalize
+                              </button>
+                            )}
+
+                            <button 
+                              onClick={() => handleHardDeleteAuction(item.id)} 
+                              className="p-1.5 rounded-lg border bg-rose-500/10 text-rose-400 border-rose-500/25 hover:bg-rose-500/20 transition cursor-pointer"
+                              title="Hard System Purge"
+                            >
+                              <UserX size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  {auctionsList.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-slate-500 text-xs">No administrative auctions match state or criteria parameters.</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -455,7 +672,7 @@ const AdminDashboard = () => {
                 {trainingLog.map((log, idx) => <div key={idx}>{log}</div>)}
                 {isTraining && <div className="text-blue-400 animate-pulse">Running compilation layer weights ({trainingProgress}%)...</div>}
               </div>
-              <button onClick={startTraining} disabled={isTraining} className="w-full mt-4 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-indigo-500 transition">Optimize Engine Node</button>
+              <button onClick={startTraining} disabled={isTraining} className="w-full mt-4 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-indigo-500 transition cursor-pointer">Optimize Engine Node</button>
             </div>
           </div>
         )}
@@ -482,7 +699,7 @@ const AdminDashboard = () => {
                       <td className="p-4 font-mono">{item.documentId} • {item.registryOffice}</td>
                       <td className="p-4 text-center">
                         {item.status === 'Pending' ? (
-                          <button onClick={() => approveTrustDeed(item.id)} className="bg-orange-600 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg hover:bg-orange-500 transition">Seal Asset Title</button>
+                          <button onClick={() => approveTrustDeed(item.id)} className="bg-orange-600 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg hover:bg-orange-500 transition cursor-pointer">Seal Asset Title</button>
                         ) : (
                           <span className="text-emerald-400 font-bold font-mono">SEALED: {item.qrCode}</span>
                         )}
@@ -504,7 +721,7 @@ const AdminDashboard = () => {
                 <h4 className="text-xs font-bold text-white">Dynamic API Compression</h4>
                 <p className="text-[10px] text-slate-500 mt-0.5">Caches predictive valuation structures on proxy servers to boost UI execution speed.</p>
               </div>
-              <button onClick={() => setSystemSettings({ ...systemSettings, apiCaching: !systemSettings.apiCaching })} className={`w-10 h-5 rounded-full p-0.5 flex items-center transition-colors ${systemSettings.apiCaching ? 'bg-blue-600 justify-end' : 'bg-slate-800 justify-start'}`}><span className="w-4 h-4 bg-white rounded-full shadow" /></button>
+              <button onClick={() => setSystemSettings({ ...systemSettings, apiCaching: !systemSettings.apiCaching })} className={`w-10 h-5 rounded-full p-0.5 flex items-center transition-colors ${systemSettings.apiCaching ? 'bg-blue-600 justify-end' : 'bg-slate-800 justify-start'}`}><span className="w-4 h-4 bg-white rounded-full shadow cursor-pointer" /></button>
             </div>
           </div>
         )}
@@ -512,14 +729,14 @@ const AdminDashboard = () => {
 
       {/* Confirmation Backdrop Dialog Frame */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setConfirmModal(p => ({ ...prev, isOpen: false }))} />
-          <div className="bg-[#0e1626] border border-slate-800 rounded-2xl p-6 max-w-sm w-full relative z-10 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))} />
+          <div className="bg-[#0e1626] border border-slate-800 rounded-2xl p-6 max-w-sm w-full relative z-10 space-y-4 shadow-2xl">
             <h3 className="font-bold text-sm text-white">{confirmModal.title}</h3>
             <p className="text-xs text-slate-400 leading-relaxed">{confirmModal.message}</p>
             <div className="flex justify-end gap-2 border-t border-slate-800 pt-3">
-              <button onClick={() => setConfirmModal(p => ({ ...prev, isOpen: false }))} className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 text-slate-400">Cancel</button>
-              <button onClick={confirmModal.onConfirm} className="px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl">Confirm Command</button>
+              <button onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))} className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 text-slate-400 cursor-pointer">Cancel</button>
+              <button onClick={confirmModal.onConfirm} className="px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl cursor-pointer">Confirm Command</button>
             </div>
           </div>
         </div>

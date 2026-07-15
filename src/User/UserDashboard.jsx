@@ -8,7 +8,8 @@ import {
   updateUserProfile,
   createPropertyListing,
   updatePropertyListing,
-  enablePropertyAuction
+  enablePropertyAuction,
+  getPersonalAnalyticsOverview
 } from "../utils/userDashboardService";
 
 import {
@@ -40,7 +41,11 @@ import {
   Edit2,
   ArrowUpRight,
   Filter,
-  Clock
+  Clock,
+  Coins,
+  TrendingUp,
+  Award,
+  AlertOctagon
 } from 'lucide-react';
 
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -73,6 +78,15 @@ const UserDashboard = () => {
     soldAuctions: 0
   });
 
+  const [personalAnalytics, setPersonalAnalytics] = useState({
+    totalBidsPlaced: 0,
+    successfulAuctionsWon: 0,
+    totalCapitalExpended: 0.0,
+    myTotalAuctionsCreated: 0,
+    myActiveAuctions: 0,
+    mySoldAuctions: 0
+  });
+
   const [savedProperties] = useState([]); 
   const [buildEstimates] = useState([]);   
   const [notifications] = useState([]);    
@@ -83,16 +97,24 @@ const UserDashboard = () => {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   
-  // Real-time ticker clock to keep countdown timers exact down to the second
   const [currentTime, setCurrentTime] = useState(new Date());
 
   /* ===========================
       CRUD & MODAL INTERACTION STATES
-  =========================== */
+  ========================== */
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
+
+  const [isAuctionModalOpen, setIsAuctionModalOpen] = useState(false);
+  const [auctionSetupForm, setAuctionSetupForm] = useState({
+    propertyId: null,
+    startingPrice: "",
+    reservePrice: "",
+    startTime: "",
+    endTime: ""
+  });
 
   const [propertyForm, setPropertyForm] = useState({
     title: "",
@@ -133,13 +155,12 @@ const UserDashboard = () => {
   });
 
   /* ===========================
-      LOAD DASHBOARD & PROFILE DATA
+      LOAD DATA
   =========================== */
   useEffect(() => {
     loadDashboard();
     loadUserProfile();
 
-    // Initialize clock ticker interval
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -151,20 +172,20 @@ const UserDashboard = () => {
     try {
       setLoading(true);
       setError("");
-      const [stats, properties, auctions] = await Promise.all([
+      const [stats, properties, auctions, analyticsData] = await Promise.all([
         getDashboardStats(),
         getMyProperties(),
-        getMyAuctions()
+        getMyAuctions(),
+        getPersonalAnalyticsOverview()
       ]);
 
       setDashboardStats(stats || { totalProperties: 0, totalAuctions: 0, activeAuctions: 0, pendingAuctions: 0, rejectedAuctions: 0, soldAuctions: 0 });
       setMyListings(Array.isArray(properties) ? properties : []);
       setMyAuctions(Array.isArray(auctions) ? auctions : []);
+      if (analyticsData) setPersonalAnalytics(analyticsData);
     } catch (err) {
       console.error(err);
       setError("Failed to load user records from remote endpoint.");
-      setMyListings([]);
-      setMyAuctions([]);
     } finally {
       setLoading(false);
     }
@@ -182,12 +203,12 @@ const UserDashboard = () => {
         notificationsEnabled: data.notificationsEnabled ?? true
       });
     } catch (err) {
-      console.error("Error pulling server profile context:", err);
+      console.error("Error pulling profile:", err);
     }
   };
 
   /* ===========================
-      QUERY TAB CONTROL
+      TAB MAPPING
   =========================== */
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -199,60 +220,14 @@ const UserDashboard = () => {
     else if (tab === "auctions") setActiveTab("Auctions");
   }, [location]);
 
-  /* ===========================
-      STATS CARDS CONFIG
-  =========================== */
-  const stats = [
-    {
-      title: "My Listings",
-      value: dashboardStats.totalProperties,
-      detail: "Properties uploaded",
-      icon: Building2,
-      color: "bg-blue-600/10 text-blue-600"
-    },
-    {
-      title: "Auctions",
-      value: dashboardStats.totalAuctions,
-      detail: `${dashboardStats.activeAuctions} Active`,
-      icon: Gavel,
-      color: "bg-amber-600/10 text-amber-600"
-    },
-    {
-      title: "Pending Auctions",
-      value: dashboardStats.pendingAuctions,
-      detail: "Waiting approval",
-      icon: Calendar,
-      color: "bg-purple-600/10 text-purple-600"
-    },
-    {
-      title: "Sold Auctions",
-      value: dashboardStats.soldAuctions,
-      detail: "Completed",
-      icon: CheckCircle2,
-      color: "bg-green-600/10 text-green-600"
-    }
-  ];
-
-  /* ===========================
-      CRUD OPERATION METHODS
-  =========================== */
   const handleOpenCreateModal = () => {
     setIsEditMode(false);
     setSelectedPropertyId(null);
     setSelectedImages([]);
     setPropertyForm({
-      title: "",
-      description: "",
-      price: "",
-      purpose: "BUY",
-      propertyType: "HOUSE",
-      location: "D Ground",
-      cityId: 1,
-      bathrooms: 2,
-      bedrooms: 3,
-      area: "5 Marla",
-      address: "",
-      auctionEnabled: false
+      title: "", description: "", price: "", purpose: "BUY",
+      propertyType: "HOUSE", location: "D Ground", cityId: 1,
+      bathrooms: 2, bedrooms: 3, area: "5 Marla", address: "", auctionEnabled: false
     });
     setIsCreateModalOpen(true);
   };
@@ -262,26 +237,16 @@ const UserDashboard = () => {
     setSelectedPropertyId(item.id);
     setSelectedImages([]);
     setPropertyForm({
-      title: item.title || "",
-      description: item.description || "",
-      price: item.price || "",
-      purpose: item.purpose || "BUY",
-      propertyType: item.propertyType || "HOUSE",
-      location: item.location || "D Ground",
-      cityId: 1,
-      bathrooms: item.bathrooms || 2,
-      bedrooms: item.bedrooms || 3,
-      area: item.area || "5 Marla",
-      address: item.address || "",
-      auctionEnabled: item.auctionEnabled || false
+      title: item.title || "", description: item.description || "", price: item.price || "",
+      purpose: item.purpose || "BUY", propertyType: item.propertyType || "HOUSE", location: item.location || "D Ground",
+      cityId: 1, bathrooms: item.bathrooms || 2, bedrooms: item.bedrooms || 3, area: item.area || "5 Marla",
+      address: item.address || "", auctionEnabled: item.auctionEnabled || false
     });
     setIsCreateModalOpen(true);
   };
 
   const handleImageChange = (e) => {
-    if (e.target.files) {
-      setSelectedImages(Array.from(e.target.files));
-    }
+    if (e.target.files) setSelectedImages(Array.from(e.target.files));
   };
 
   const handlePropertyFormSubmit = async (e) => {
@@ -297,40 +262,47 @@ const UserDashboard = () => {
       } else {
         await createPropertyListing(formData);
       }
-      
       setIsCreateModalOpen(false);
       await loadDashboard(); 
     } catch (err) {
-      console.error("Form transmission fault layer:", err);
-      alert("Validation criteria breach inside Faisalabad registry restrictions or missing image maps.");
+      console.error(err);
+      alert("Submission failed. Verify parameters.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTriggerAuctionLaunch = (item) => {
-    if (item.status !== "APPROVED") {
-      alert(`Asset tracking blocked. Cannot transition property state from [${item.status}]. Only APPROVED listings are allowed.`);
-      return;
-    }
+const handleTriggerAuctionLaunch = (item) => {
+  // Removed the strict property status check so any active property can submit an auction request
+  setAuctionSetupForm({
+    propertyId: item.id,
+    startingPrice: item.price || "",
+    reservePrice: "",
+    startTime: "",
+    endTime: ""
+  });
+  setIsAuctionModalOpen(true);
+};
 
-    setConfirmModal({
-      isOpen: true,
-      title: "Route Asset to Auction",
-      message: `Are you sure you want to transition "${item.title}" into the bidding matrix pipelines? This action alerts platform buyers immediately.`,
-      confirmText: "Launch Auction",
-      type: "warning",
-      onConfirm: async () => {
-        try {
-          await enablePropertyAuction(item.id);
-          setConfirmModal({ isOpen: false });
-          await loadDashboard();
-        } catch (err) {
-          console.error("Failed to re-route property:", err);
-          alert("Error upgrading property to live bidding context tier.");
-        }
-      }
-    });
+  const handleAuctionFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await enablePropertyAuction(auctionSetupForm.propertyId, {
+        startingPrice: parseFloat(auctionSetupForm.startingPrice),
+        reservePrice: auctionSetupForm.reservePrice ? parseFloat(auctionSetupForm.reservePrice) : null,
+        startTime: auctionSetupForm.startTime,
+        endTime: auctionSetupForm.endTime
+      });
+      setIsAuctionModalOpen(false);
+      await loadDashboard();
+      alert("Land auction request routed to Admin verify board successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Error processing launch setup. Verify date matrices framework rules.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -340,10 +312,7 @@ const UserDashboard = () => {
       message: "Are you sure you want to sign out?",
       confirmText: "Sign Out",
       type: "warning",
-      onConfirm: () => {
-        logout();
-        navigate("/login");
-      }
+      onConfirm: () => { logout(); navigate("/login"); }
     });
   };
 
@@ -357,26 +326,14 @@ const UserDashboard = () => {
       onConfirm: async () => {
         try {
           await deletePropertyListing(id);
-          setMyListings(prev => prev.filter(item => item.id !== id));
-          setDashboardStats(prev => ({
-            ...prev,
-            totalProperties: Math.max(0, prev.totalProperties - 1)
-          }));
           setConfirmModal({ isOpen: false });
+          await loadDashboard();
         } catch (err) {
-          console.error("Failed to delete local reference:", err);
-          alert("Error processing resource destruction frame.");
+          console.error(err);
+          alert("Error processing deletion.");
         }
       }
     });
-  };
-
-  const toggleCompare = (id) => {
-    if (comparedProperties.includes(id)) {
-      setComparedProperties(comparedProperties.filter(x => x !== id));
-    } else {
-      if (comparedProperties.length < 3) setComparedProperties([...comparedProperties, id]);
-    }
   };
 
   const saveProfileSettings = async (e) => {
@@ -387,36 +344,23 @@ const UserDashboard = () => {
       setTimeout(() => setIsSavedMsg(false), 2000);
     } catch (err) {
       console.error(err);
-      alert("Failed to sync profile change matrix.");
+      alert("Profile save failed.");
     }
   };
 
-  /* ===========================
-      AUCTION TIME SCHEDULER LOGIC
-     =========================== */
   const calculateAuctionTimeState = (startTimeStr, endTimeStr) => {
     if (!startTimeStr || !endTimeStr) return { label: "Unknown Date Matrix", color: "text-slate-400" };
-    
     const start = new Date(startTimeStr);
     const end = new Date(endTimeStr);
     
     if (currentTime < start) {
       const diff = start - currentTime;
-      return {
-        label: `Starts in: ${formatTimeDiff(diff)}`,
-        color: "text-purple-600 bg-purple-50 border-purple-100"
-      };
+      return { label: `Starts in: ${formatTimeDiff(diff)}`, color: "text-purple-600 bg-purple-50 border-purple-100" };
     } else if (currentTime >= start && currentTime <= end) {
       const diff = end - currentTime;
-      return {
-        label: `Closing in: ${formatTimeDiff(diff)}`,
-        color: "text-rose-600 bg-rose-50 border-rose-100 animate-pulse font-bold"
-      };
+      return { label: `Closing in: ${formatTimeDiff(diff)}`, color: "text-rose-600 bg-rose-50 border-rose-100 animate-pulse font-bold" };
     } else {
-      return {
-        label: "Auction Concluded",
-        color: "text-slate-500 bg-slate-100 border-slate-200 font-medium"
-      };
+      return { label: "Auction Concluded", color: "text-slate-500 bg-slate-100 border-slate-200 font-medium" };
     }
   };
 
@@ -434,11 +378,8 @@ const UserDashboard = () => {
     return str;
   };
 
-  /* ===========================
-      CLIENT SIDE PIPELINE FILTERS
-     =========================== */
   const filteredListings = myListings.filter(item => {
-    const matchesType = typeFilter === "ALL" || (item.type && item.type.toUpperCase() === typeFilter.toUpperCase());
+    const matchesType = typeFilter === "ALL" || (item.propertyType && item.propertyType.toUpperCase() === typeFilter.toUpperCase());
     const matchesStatus = statusFilter === "ALL" || (item.status && item.status.toUpperCase() === statusFilter.toUpperCase());
     return matchesType && matchesStatus;
   });
@@ -447,7 +388,6 @@ const UserDashboard = () => {
     <div className="flex h-screen bg-[#f8fafc] text-slate-700 font-sans overflow-hidden">
       {/* ================= SIDEBAR ================= */}
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}>
-        {/* Sidebar Header */}
         <div className="p-4 flex items-center justify-between h-20 border-b border-slate-200">
           {isSidebarOpen ? (
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -464,7 +404,6 @@ const UserDashboard = () => {
           </button>
         </div>
 
-        {/* Sidebar Navigation */}
         <nav className="flex-1 overflow-y-auto py-6">
           <ul className="space-y-1.5 px-3">
             <SidebarItem icon={LayoutDashboard} text="Overview" active={activeTab === 'Overview'} onClick={() => setActiveTab('Overview')} isOpen={isSidebarOpen} />
@@ -472,8 +411,7 @@ const UserDashboard = () => {
             <SidebarItem icon={Heart} text="Saved Properties" active={activeTab === 'Saved Properties'} onClick={() => setActiveTab('Saved Properties')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Calculator} text="Smart Build" active={activeTab === 'Smart Build'} onClick={() => setActiveTab('Smart Build')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Gavel} text="Auctions" active={activeTab === 'Auctions'} onClick={() => setActiveTab('Auctions')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
-
+<SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
             <div className={`mt-6 mb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
               Account Settings
             </div>
@@ -481,7 +419,6 @@ const UserDashboard = () => {
           </ul>
         </nav>
 
-        {/* Profile Card */}
         {isSidebarOpen && profileForm.fullName && (
           <div className="p-4 bg-slate-50 mx-3 mb-2 rounded-2xl border border-slate-200/80 flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm">
@@ -495,10 +432,7 @@ const UserDashboard = () => {
         )}
 
         <div className="p-4 border-t border-slate-200">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer font-semibold text-sm"
-          >
+          <button onClick={handleLogout} className="flex items-center w-full p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer font-semibold text-sm">
             <LogOut size={18} />
             {isSidebarOpen && <span className="ml-3">Sign Out</span>}
           </button>
@@ -507,19 +441,6 @@ const UserDashboard = () => {
 
       {/* ================= MAIN CONTENT AREA ================= */}
       <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-6 lg:p-8">
-        {loading && (
-          <div className="bg-white rounded-xl p-6 mb-6 text-center shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">Loading dashboard...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 mb-6 text-sm font-semibold">
-            {error}
-          </div>
-        )}
-
-        {/* Top Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
           <div>
             <h2 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
@@ -533,18 +454,14 @@ const UserDashboard = () => {
               {activeTab === 'Deeds' ? "Digital Deeds" : activeTab}
             </h2>
             <p className="text-slate-500 text-sm mt-1">
-              {activeTab === 'Deeds' ? "Verify, manage, and download digital land registry deeds and QR seals." : "Manage listings, appraisal histories, bids, and profile credentials."}
+              Manage listings, appraisal histories, bids, and profile credentials.
             </p>
           </div>
 
           <div className="flex items-center gap-3.5 self-start sm:self-center">
             {activeTab === 'Overview' && (
-              <button
-                onClick={handleOpenCreateModal}
-                className="px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-blue-500/20"
-              >
-                <PlusCircle size={14} />
-                Post Property
+              <button onClick={handleOpenCreateModal} className="px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-blue-500/20">
+                <PlusCircle size={14} /> Post Property
               </button>
             )}
           </div>
@@ -553,9 +470,37 @@ const UserDashboard = () => {
         {/* ================= TAB: OVERVIEW ================= */}
         {activeTab === 'Overview' && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Coins size={22} /></div>
+                <div>
+                  <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">Total Capital Expended</p>
+                  <h4 className="text-xl font-black text-slate-800 mt-1">Rs {personalAnalytics.totalCapitalExpended?.toLocaleString() || "0"}</h4>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><Award size={22} /></div>
+                <div>
+                  <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">Successful Wins</p>
+                  <h4 className="text-xl font-black text-slate-800 mt-1">{personalAnalytics.successfulAuctionsWon} Completed</h4>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl"><TrendingUp size={22} /></div>
+                <div>
+                  <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">Active Bids Placed</p>
+                  <h4 className="text-xl font-black text-slate-800 mt-1">{personalAnalytics.totalBidsPlaced} Bids</h4>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, idx) => (
+              {[
+                { title: "My Listings", value: dashboardStats.totalProperties, detail: "Properties uploaded", icon: Building2, color: "bg-blue-600/10 text-blue-600" },
+                { title: "Auctions", value: dashboardStats.totalAuctions, detail: `${dashboardStats.activeAuctions} Active`, icon: Gavel, color: "bg-amber-600/10 text-amber-600" },
+                { title: "Pending Auctions", value: dashboardStats.pendingAuctions, detail: "Waiting approval", icon: Calendar, color: "bg-purple-600/10 text-purple-600" },
+                { title: "Sold Auctions", value: dashboardStats.soldAuctions, detail: "Completed", icon: CheckCircle2, color: "bg-green-600/10 text-green-600" }
+              ].map((stat, idx) => (
                 <div
                   key={idx}
                   onClick={() => {
@@ -574,9 +519,7 @@ const UserDashboard = () => {
                       <stat.icon size={20} />
                     </div>
                   </div>
-                  <div className="mt-4 text-xs text-slate-500 font-medium">
-                    {stat.detail}
-                  </div>
+                  <div className="mt-4 text-xs text-slate-500 font-medium">{stat.detail}</div>
                 </div>
               ))}
             </div>
@@ -596,11 +539,7 @@ const UserDashboard = () => {
                 <div className="flex items-center gap-1.5 bg-white border px-2.5 py-1.5 rounded-xl shadow-sm text-xs font-semibold">
                   <Filter size={12} className="text-slate-400" />
                   <span className="text-[10px] text-slate-400 uppercase font-bold">Type:</span>
-                  <select 
-                    value={typeFilter} 
-                    onChange={e => setTypeFilter(e.target.value)}
-                    className="outline-none bg-transparent font-bold text-slate-700 cursor-pointer"
-                  >
+                  <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="outline-none bg-transparent font-bold text-slate-700 cursor-pointer">
                     <option value="ALL">All Asset Types</option>
                     <option value="HOUSE">House</option>
                     <option value="PLOT">Plot</option>
@@ -610,11 +549,7 @@ const UserDashboard = () => {
 
                 <div className="flex items-center gap-1.5 bg-white border px-2.5 py-1.5 rounded-xl shadow-sm text-xs font-semibold">
                   <span className="text-[10px] text-slate-400 uppercase font-bold">State:</span>
-                  <select 
-                    value={statusFilter} 
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="outline-none bg-transparent font-bold text-slate-700 cursor-pointer"
-                  >
+                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="outline-none bg-transparent font-bold text-slate-700 cursor-pointer">
                     <option value="ALL">All Status States</option>
                     <option value="PENDING">Pending Moderation</option>
                     <option value="APPROVED">Approved (Live)</option>
@@ -623,12 +558,8 @@ const UserDashboard = () => {
                   </select>
                 </div>
 
-                <button
-                  onClick={handleOpenCreateModal}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-500/10 cursor-pointer"
-                >
-                  <PlusCircle size={14} />
-                  Add Property
+                <button onClick={handleOpenCreateModal} className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-500/10 cursor-pointer">
+                  <PlusCircle size={14} /> Add Property
                 </button>
               </div>
             </div>
@@ -652,65 +583,109 @@ const UserDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredListings.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition">
-                        <td className="px-6 py-4.5 font-bold text-slate-800">
-                          <div className="flex items-center gap-3">
-                            <span className={`w-2 h-2 rounded-full ${item.status === 'APPROVED' ? 'bg-emerald-500' : item.status === 'SOLD' ? 'bg-blue-500' : 'bg-amber-500'}`}></span>
-                            {item.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4.5 text-xs text-slate-500 font-semibold">{item.city || item.location || "N/A"}</td>
-                        <td className="px-6 py-4.5 text-sm font-extrabold text-blue-600">Rs {item.price?.toLocaleString()}</td>
-                        <td className="px-6 py-4.5">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                            item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
-                            item.status === 'SOLD' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
-                            item.status === 'REJECTED' ? 'bg-red-50 text-red-600 border-red-200' :
-                            'bg-amber-50 text-amber-600 border-amber-200'
-                          }`}>
-                            {item.status || "PENDING"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4.5">
-                          <div className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-slate-500">
-                            <span className="text-slate-400 text-[11px]">Type: {item.type}</span>
-                            {item.auctionEnabled ? (
-                              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[9px] font-extrabold uppercase tracking-wide">In Auction Pool</span>
-                            ) : (
-                              <button 
-                                onClick={() => handleTriggerAuctionLaunch(item)}
-                                disabled={item.status !== "APPROVED"}
-                                className={`text-[9px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded border transition ${
-                                  item.status === "APPROVED" 
-                                    ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 cursor-pointer" 
-                                    : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                                }`}
-                                title={item.status !== "APPROVED" ? "Auctions require explicit Admin validation approval before launch." : "Promote to bidding pool"}
-                              >
-                                <ArrowUpRight size={10} /> Launch Auction
+                    {filteredListings.map((item) => {
+                      // CRITICAL WORKFLOW FIX: Read linked dynamic auction states to toggle button logic
+                      const activeWorkflow = myAuctions.find(auc => auc.propertyId === item.id);
+                      
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/50 transition">
+<td className="px-6 py-4.5">
+  <div className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-slate-500">
+    <span className="text-slate-400 text-[11px]">Type: {item.propertyType}</span>
+    
+    {/* DYNAMIC AUCTION PIPELINE SWITCH */}
+    {activeWorkflow ? (
+      <>
+        {activeWorkflow.status === 'PENDING_APPROVAL' && (
+          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+            <Clock size={10} /> Request Processing
+          </span>
+        )}
+        {activeWorkflow.status === 'REJECTED' && (
+          <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1" title="Violation flagged by administrative moderator rules.">
+            <AlertOctagon size={10} /> Violation/Rejected
+          </span>
+        )}
+        {['ACTIVE', 'SCHEDULED', 'APPROVED', 'SOLD'].includes(activeWorkflow.status) && (
+          <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+            <CheckCircle2 size={10} /> Live in Pool
+          </span>
+        )}
+      </>
+    ) : (
+      /* FIX: Removed item.status === "APPROVED" lock. Anyone can now apply for an auction on their property listing. */
+      <button 
+        onClick={() => handleTriggerAuctionLaunch(item)}
+        className="text-[9px] font-bold flex items-center gap-0.5 px-2 py-1 rounded border bg-gradient-to-r from-blue-600 to-blue-500 text-white border-transparent hover:opacity-90 cursor-pointer shadow-sm shadow-blue-500/10"
+      >
+        <ArrowUpRight size={10} /> Launch Auction
+      </button>
+    )}
+  </div>
+</td>
+                          <td className="px-6 py-4.5 text-xs text-slate-500 font-semibold">{item.city || item.location || "N/A"}</td>
+                          <td className="px-6 py-4.5 text-sm font-extrabold text-blue-600">Rs {item.price?.toLocaleString()}</td>
+                          <td className="px-6 py-4.5">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                              item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
+                              item.status === 'SOLD' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
+                              item.status === 'REJECTED' ? 'bg-red-50 text-red-600 border-red-200' :
+                              'bg-amber-50 text-amber-600 border-amber-200'
+                            }`}>
+                              {item.status || "PENDING"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4.5">
+                            <div className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-slate-500">
+                              <span className="text-slate-400 text-[11px]">Type: {item.propertyType}</span>
+                              
+                              {/* DYNAMIC PIPELINE BUTTON SWITCH STATE COMPLIANCE */}
+                              {activeWorkflow ? (
+                                <>
+                                  {activeWorkflow.status === 'PENDING_APPROVAL' && (
+                                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+                                      <Clock size={10} /> Request Processing
+                                    </span>
+                                  )}
+                                  {activeWorkflow.status === 'REJECTED' && (
+                                    <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1" title="Violation flagged by administrative moderator rules.">
+                                      <AlertOctagon size={10} /> Violation/Rejected
+                                    </span>
+                                  )}
+                                  {['ACTIVE', 'SCHEDULED', 'APPROVED', 'SOLD'].includes(activeWorkflow.status) && (
+                                    <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+                                      <CheckCircle2 size={10} /> Live in Pool
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <button 
+                                  onClick={() => handleTriggerAuctionLaunch(item)}
+                                  disabled={item.status !== "APPROVED"}
+                                  className={`text-[9px] font-bold flex items-center gap-0.5 px-2 py-1 rounded border transition ${
+                                    item.status === "APPROVED" 
+                                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white border-transparent hover:opacity-90 cursor-pointer shadow-sm shadow-blue-500/10" 
+                                      : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                                  }`}
+                                >
+                                  <ArrowUpRight size={10} /> Launch Auction
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => handleOpenEditModal(item)} className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-transparent hover:border-blue-100 rounded-lg transition cursor-pointer">
+                                <Edit2 size={14} />
                               </button>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4.5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleOpenEditModal(item)}
-                              className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-transparent hover:border-blue-100 rounded-lg transition cursor-pointer"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => deleteListing(item.id)}
-                              className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-lg transition cursor-pointer"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              <button onClick={() => deleteListing(item.id)} className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-lg transition cursor-pointer">
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -718,7 +693,7 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* ================= MODAL: CREATE & EDIT PROPERTY MATRIX ================= */}
+        {/* ================= MODAL: CREATE & EDIT PROPERTY ================= */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCreateModalOpen(false)} />
@@ -796,6 +771,47 @@ const UserDashboard = () => {
           </div>
         )}
 
+        {/* ================= MODAL: AUCTION STEPPER CONFIGURATOR ================= */}
+        {isAuctionModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsAuctionModalOpen(false)} />
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95">
+              <div className="flex items-center gap-2 border-b pb-3 mb-4 text-slate-800">
+                <Gavel className="text-amber-600" size={18} />
+                <h3 className="text-md font-bold">Configure Land Auction Registry</h3>
+              </div>
+              <form onSubmit={handleAuctionFormSubmit} className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Starting Bidding Floor (PKR)</label>
+                  <input type="number" value={auctionSetupForm.startingPrice} onChange={e => setAuctionSetupForm({...auctionSetupForm, startingPrice: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500" required />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Minimum Hidden Reserve Target (PKR - Optional)</label>
+                  <input type="number" value={auctionSetupForm.reservePrice} onChange={e => setAuctionSetupForm({...auctionSetupForm, reservePrice: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500" placeholder="e.g. Lowest price acceptable to close sale" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Opening Bid Window</label>
+                    <input type="datetime-local" value={auctionSetupForm.startTime} onChange={e => setAuctionSetupForm({...auctionSetupForm, startTime: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500" required />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-400 uppercase mb-1">Closing Expiration Window</label>
+                    <input type="datetime-local" value={auctionSetupForm.endTime} onChange={e => setAuctionSetupForm({...auctionSetupForm, endTime: e.target.value})} className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500" required />
+                  </div>
+                </div>
+                <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl flex gap-2.5 text-amber-800 text-[11px] leading-relaxed">
+                  <Info size={16} className="shrink-0 mt-0.5" />
+                  <p>Upgrading listings places them directly into the admin approval workflow. Live timestamps update automatically.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <button type="button" onClick={() => setIsAuctionModalOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-slate-50 cursor-pointer font-bold">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-500 text-white rounded-xl hover:opacity-95 cursor-pointer font-bold">Launch to Moderator Panel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* ================= TAB: SAVED PROPERTIES ================= */}
         {activeTab === 'Saved Properties' && (
           <div className="space-y-6 animate-in fade-in duration-200">
@@ -825,7 +841,7 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* ================= TAB: AUCTIONS (PROFESSIONALLY REMODELLED) ================= */}
+        {/* ================= TAB: AUCTIONS ================= */}
         {activeTab === 'Auctions' && (
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm animate-in fade-in duration-200">
             <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -833,12 +849,8 @@ const UserDashboard = () => {
                 <h3 className="text-md font-bold text-slate-800">Your Bids & Linked Auctions</h3>
                 <p className="text-xs text-slate-400 mt-1">Real-time scheduling logs, active high bidders, and chronological ticker frames.</p>
               </div>
-              <button
-                onClick={() => navigate('/auction')}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
-              >
-                <Gavel size={14} />
-                Explore Live Auctions
+              <button onClick={() => navigate('/auction')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10">
+                <Gavel size={14} /> Explore Live Auctions
               </button>
             </div>
 
@@ -846,10 +858,7 @@ const UserDashboard = () => {
               <div className="p-12 text-center">
                 <Gavel size={40} className="mx-auto text-slate-300 mb-3" />
                 <p className="text-slate-500 font-medium">You have no active or historical auction listings logs mapped.</p>
-                <button
-                  onClick={() => navigate('/auction')}
-                  className="mt-4 px-4 py-2 border border-blue-600 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-50 transition cursor-pointer"
-                >
+                <button onClick={() => navigate('/auction')} className="mt-4 px-4 py-2 border border-blue-600 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-50 transition cursor-pointer">
                   Join Live Auctions
                 </button>
               </div>
@@ -893,7 +902,7 @@ const UserDashboard = () => {
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide border ${
                               item.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
                               item.status === 'PENDING_APPROVAL' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                              item.status == 'SOLD' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                              item.status === 'SOLD' ? 'bg-blue-50 text-blue-600 border-blue-200' :
                               'bg-slate-50 text-slate-600 border-slate-200'
                             }`}>
                               {item.status === 'PENDING_APPROVAL' ? 'PENDING MODERATION' : item.status}
@@ -934,11 +943,6 @@ const UserDashboard = () => {
               </div>
             </form>
           </div>
-        )}
-
-        {/* ================= TAB: DIGITAL DEEDS ================= */}
-        {activeTab === 'Deeds' && (
-          <div className="space-y-6 animate-in fade-in duration-300" />
         )}
       </main>
 
