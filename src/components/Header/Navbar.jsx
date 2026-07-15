@@ -27,7 +27,8 @@ const Navbar = () => {
     { name: "Property Finder", url: "/property-finder" },
     { name: "Smart Build", url: "/smart-build" },
     { name: "Auction", url: "/auction" },
-    { name: "Map", url: "/map" }
+    { name: "Map", url: "/map" },
+    // { name: "AI Prediction", url: "/ai-prediction" } // 👈 AI HUBS INTEGRATION PATH ADDED CLEANLY HERE
   ];
 
   const urls = [...baseUrls];
@@ -228,6 +229,7 @@ const Navbar = () => {
                 </span>
               </div>
             </div>
+            
 
             {/* Card 6: AI Property Assessor */}
             <div
