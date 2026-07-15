@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import { PLANS } from "../data/plans";
+import { PLANS } from "../data/plans.js";
 
 export const SubscriptionContext = createContext();
 
