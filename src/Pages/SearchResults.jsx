@@ -15,6 +15,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { faisalabadProperties } from "../data/faisalabadProperties";
+import { geminiService } from "../services/geminiService";
 
 // =========================================================================
 // MOCK PROPERTY DATABASE
@@ -316,6 +318,12 @@ const SearchResults = () => {
   const [fLocation, setFLocation] = useState(locationQuery);
   const [fType, setFType] = useState(typeQuery);
 
+  // AI & results state
+  const [displayProperties, setDisplayProperties] = useState([]);
+  const [aiInsight, setAiInsight] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorNote, setErrorNote] = useState("");
+
   // Sync filter panel when URL changes
   useEffect(() => {
     setFCity(city);
@@ -324,7 +332,7 @@ const SearchResults = () => {
     setFType(typeQuery);
   }, [city, purpose, locationQuery, typeQuery]);
 
-  // ── FILTER LOGIC (tiered fallback, computed synchronously via useMemo) ──
+  // ── FILTER LOGIC FOR OTHER CITIES (tiered fallback, computed synchronously via useMemo) ──
   const results = useMemo(() => {
     const cityLower = city.toLowerCase();
     const purposeLower = purpose.toLowerCase();
@@ -359,6 +367,167 @@ const SearchResults = () => {
     // Tier 5: show everything
     return ALL_PROPERTIES;
   }, [city, purpose, locationQuery, typeQuery]);
+
+  // ── FAISALABAD FILTER & AI FETCH EFFECT ──
+  useEffect(() => {
+    if (city !== "Faisalabad") {
+      setDisplayProperties(results);
+      setAiInsight("");
+      setLoading(false);
+      setErrorNote("");
+      return;
+    }
+
+    const loadFaisalabadResults = async () => {
+      // 1. Client-side filtering on mock Faisalabad properties
+      // Tier 1: purpose + type + location
+      let matched = faisalabadProperties.filter((p) => {
+        if (p.purpose.toLowerCase() !== purpose.toLowerCase()) return false;
+        if (!matchesType(p.propertyType, typeQuery)) return false;
+        if (locationQuery) {
+          const loc = locationQuery.toLowerCase().trim();
+          return (
+            p.areaName.toLowerCase().includes(loc) ||
+            p.address.toLowerCase().includes(loc) ||
+            p.title.toLowerCase().includes(loc)
+          );
+        }
+        return true;
+      });
+
+      // Tier 2 fallback: purpose + type (ignore location if no match)
+      if (matched.length === 0) {
+        matched = faisalabadProperties.filter((p) => {
+          return p.purpose.toLowerCase() === purpose.toLowerCase() && matchesType(p.propertyType, typeQuery);
+        });
+      }
+
+      // Tier 3 fallback: purpose only (ignore type)
+      if (matched.length === 0) {
+        matched = faisalabadProperties.filter((p) => {
+          return p.purpose.toLowerCase() === purpose.toLowerCase();
+        });
+      }
+
+      // If no matched properties at all, set empty state
+      if (matched.length === 0) {
+        setDisplayProperties([]);
+        setAiInsight("");
+        setLoading(false);
+        setErrorNote("");
+        return;
+      }
+
+      // 2. Check client-side cache (sessionStorage)
+      const cacheKey = `fsd_${purpose.toLowerCase()}_${typeQuery.toLowerCase()}_${(locationQuery || "").toLowerCase().trim()}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          setDisplayProperties(parsed.listings);
+          setAiInsight(parsed.marketInsight);
+          setLoading(false);
+          setErrorNote("");
+          return;
+        } catch (e) {
+          console.warn("Error parsing cached Faisalabad search:", e);
+        }
+      }
+
+      // 3. Trigger Gemini API call
+      setLoading(true);
+      setErrorNote("");
+      setAiInsight("");
+      sessionStorage.setItem("faisalabad_search_in_flight", "true");
+
+      try {
+        const prompt = `You are a real estate market analysis assistant. 
+Analyze the following Faisalabad property listings based on the user's search criteria.
+
+User Search Criteria:
+- Purpose: ${purpose} (Buy/Rent)
+- Location: ${locationQuery || "Any Location"}
+- Property Type: ${typeQuery}
+
+Matched Mock Listings (JSON context):
+${JSON.stringify(matched, null, 2)}
+
+Instructions:
+1. Do not invent new listings or real market statistics. Only use the provided listing data.
+2. Write a short 2-3 sentence "Faisalabad market insight" summary framed as illustrative/demo content for these search criteria.
+3. For each listing in the JSON, rewrite its description in a more engaging, professional tone based only on its given fields. Keep each description under 80 words.
+4. Respond ONLY with a valid JSON object matching the schema below. Do not output any markdown formatting (like \`\`\`json) outside the JSON object itself.
+
+JSON Output Schema:
+{
+  "marketInsight": "A 2-3 sentence summary...",
+  "listings": [
+    {
+      "id": 4001, // must match the original listing ID exactly
+      "description": "Rewritten description..."
+    }
+  ]
+}
+`;
+
+        const aiInstance = await geminiService.getAIInstance();
+        const model = aiInstance.getGenerativeModel({
+          model: "gemini-2.0-flash",
+          generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const result = await model.generateContent(prompt);
+        const textResponse = result.response.text().trim();
+
+        // Clean JSON formatting if any
+        let cleanedText = textResponse;
+        if (cleanedText.startsWith("```json")) {
+          cleanedText = cleanedText.substring(7);
+        } else if (cleanedText.startsWith("```")) {
+          cleanedText = cleanedText.substring(3);
+        }
+        if (cleanedText.endsWith("```")) {
+          cleanedText = cleanedText.substring(0, cleanedText.length - 3);
+        }
+        cleanedText = cleanedText.trim();
+
+        const jsonResponse = JSON.parse(cleanedText);
+
+        // Map updated descriptions back to properties
+        const matchedWithAi = matched.map((p) => {
+          const aiItem = jsonResponse.listings?.find((l) => l.id === p.id);
+          return {
+            ...p,
+            description: aiItem ? aiItem.description : p.description,
+          };
+        });
+
+        const finalInsight = jsonResponse.marketInsight || "Premium property options matching your search in Faisalabad.";
+
+        setDisplayProperties(matchedWithAi);
+        setAiInsight(finalInsight);
+
+        // Store in cache
+        sessionStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            marketInsight: finalInsight,
+            listings: matchedWithAi,
+          })
+        );
+      } catch (err) {
+        console.error("Faisalabad Gemini Search Error:", err);
+        setErrorNote("AI insights unavailable right now — showing standard results.");
+        setDisplayProperties(matched); // Fallback to plain listings
+        setAiInsight("");
+      } finally {
+        setLoading(false);
+        sessionStorage.removeItem("faisalabad_search_in_flight");
+      }
+    };
+
+    loadFaisalabadResults();
+  }, [city, purpose, locationQuery, typeQuery, results]);
 
   const applyFilters = () => {
     setSearchParams({ purpose: fPurpose, city: fCity, location: fLocation, type: fType });
@@ -397,9 +566,15 @@ const SearchResults = () => {
             <span className="font-semibold tracking-wide">Back to Home</span>
           </button>
           <div className="hidden sm:flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-              {results.length} Properties Found
+            <span className={`w-2 h-2 rounded-full ${city === "Faisalabad" ? "bg-blue-500" : "bg-emerald-500"} animate-pulse`} />
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold flex items-center gap-2">
+              {city === "Faisalabad" ? displayProperties.length : results.length} Properties Found
+              {city === "Faisalabad" && !loading && !errorNote && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-full text-[9px] font-extrabold uppercase tracking-widest animate-pulse">
+                  <Sparkles className="w-3 h-3 text-blue-400" />
+                  AI-Powered
+                </span>
+              )}
             </span>
           </div>
         </div>
@@ -488,8 +663,12 @@ const SearchResults = () => {
                       Cancel
                     </button>
                     <button onClick={applyFilters}
-                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition-all">
-                      Apply Filters
+                      disabled={loading}
+                      className={`bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition-all ${
+                        loading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      {loading ? "Processing..." : "Apply Filters"}
                     </button>
                   </div>
                 </div>
@@ -498,98 +677,169 @@ const SearchResults = () => {
           </AnimatePresence>
         </div>
 
-        {/* ── RESULTS GRID ── */}
-        {results.length > 0 ? (
-          <motion.div variants={container} initial="hidden" animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {results.map((p) => (
-              <motion.div key={p.id} variants={card}
-                onClick={() => navigate(`/property/${p.id}`)}
-                className="bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 rounded-2xl overflow-hidden cursor-pointer hover:shadow-[0_12px_36px_rgba(59,130,246,0.12)] hover:-translate-y-1 transition-all duration-300 group">
-                
-                {/* Image */}
-                <div className="relative h-48 w-full overflow-hidden bg-slate-900">
-                  <img src={p.image} alt={p.title}
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className="bg-blue-600 text-white font-bold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-lg">
-                      For {p.purpose}
-                    </span>
-                    <span className="bg-slate-900/80 backdrop-blur text-slate-300 font-bold text-[9px] px-2.5 py-1 rounded-lg border border-slate-700">
-                      {p.propertyType}
-                    </span>
-                  </div>
-                  {p.featured && (
-                    <span className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-[9px] uppercase px-2.5 py-1 rounded-lg flex items-center gap-0.5">
-                      <Sparkles className="w-3 h-3" /> Featured
-                    </span>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <h3 className="font-bold text-[15px] text-slate-100 group-hover:text-blue-400 transition-colors leading-snug line-clamp-1">
-                    {p.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-1.5 flex items-start gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-                    <span className="truncate">{p.address}</span>
-                  </p>
-
-                  {/* Specs */}
-                  <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-                    {p.bedrooms > 0 && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
-                        <BedDouble className="w-3.5 h-3.5 text-slate-500" />
-                        {p.bedrooms} Beds
-                      </div>
-                    )}
-                    {p.bathrooms > 0 && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
-                        <Bath className="w-3.5 h-3.5 text-slate-500" />
-                        {p.bathrooms} Baths
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
-                      <Ruler className="w-3.5 h-3.5 text-slate-500" />
-                      {p.area}
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] text-slate-500 uppercase tracking-wider block">Price</span>
-                      <span className="text-sm font-black text-blue-400 flex items-center gap-1">
-                        <Coins className="w-4 h-4 text-yellow-500" /> {p.price}
-                      </span>
-                    </div>
-                    <div className="bg-slate-800 border border-slate-700 hover:bg-slate-700 p-2 rounded-xl transition-all">
-                      <ChevronRight className="w-4 h-4 text-blue-400" />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          /* Empty State */
-          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center mx-auto mb-4">
-              <Inbox className="w-8 h-8" />
+        {/* ── RESULTS GRID / STATES ── */}
+        {loading ? (
+          <div className="space-y-6">
+            {/* Loading message */}
+            <div className="flex items-center justify-center gap-3 py-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl animate-pulse">
+              <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
+              <span className="text-sm font-bold text-blue-300">AI is analyzing Faisalabad listings...</span>
             </div>
-            <h3 className="text-base font-bold text-slate-300 mb-1">No Matching Properties</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              No listings for <strong>{typeQuery} ({purpose})</strong> in {city}.
-            </p>
-            <button
-              onClick={() => setSearchParams({ purpose: "Buy", city: "Islamabad", location: "", type: "Homes" })}
-              className="mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
-            >
-              Reset to Islamabad
-            </button>
+            
+            {/* Skeleton Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-slate-900/50 border border-slate-800/80 rounded-2xl overflow-hidden h-[380px] flex flex-col justify-between p-5 animate-pulse">
+                  <div className="space-y-4">
+                    <div className="h-40 bg-slate-800/60 rounded-xl w-full" />
+                    <div className="h-4 bg-slate-800/60 rounded-md w-3/4" />
+                    <div className="h-3 bg-slate-800/60 rounded-md w-1/2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-slate-800/60 rounded-md w-full" />
+                    <div className="h-3 bg-slate-800/60 rounded-md w-5/6" />
+                  </div>
+                  <div className="h-8 bg-slate-800/60 rounded-xl w-1/3 mt-4" />
+                </div>
+              ))}
+            </div>
           </div>
+        ) : (
+          <>
+            {/* AI Insight Card */}
+            {city === "Faisalabad" && aiInsight && (
+              <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-blue-950/40 via-indigo-950/20 to-slate-950/40 border border-blue-500/20 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <h3 className="font-extrabold text-sm text-slate-200 tracking-wide uppercase">
+                      Faisalabad Market Insight
+                    </h3>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-full text-[9px] font-extrabold uppercase tracking-widest animate-pulse self-start sm:self-auto">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    AI-Powered
+                  </span>
+                </div>
+                
+                <p className="text-slate-300 text-xs md:text-sm leading-relaxed font-medium">
+                  {aiInsight}
+                </p>
+              </div>
+            )}
+
+            {/* Fallback Error Note */}
+            {city === "Faisalabad" && errorNote && (
+              <div className="mb-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                {errorNote}
+              </div>
+            )}
+
+            {displayProperties.length > 0 ? (
+              <motion.div variants={container} initial="hidden" animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayProperties.map((p) => (
+                  <motion.div key={p.id} variants={card}
+                    onClick={() => navigate(`/property/${p.id}`)}
+                    className="bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 rounded-2xl overflow-hidden cursor-pointer hover:shadow-[0_12px_36px_rgba(59,130,246,0.12)] hover:-translate-y-1 transition-all duration-300 group">
+                    
+                    {/* Image */}
+                    <div className="relative h-48 w-full overflow-hidden bg-slate-900">
+                      <img src={p.image} alt={p.title}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                      <div className="absolute top-3 left-3 flex gap-1.5">
+                        <span className="bg-blue-600 text-white font-bold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-lg">
+                          For {p.purpose}
+                        </span>
+                        <span className="bg-slate-900/80 backdrop-blur text-slate-300 font-bold text-[9px] px-2.5 py-1 rounded-lg border border-slate-700">
+                          {p.propertyType}
+                        </span>
+                      </div>
+                      {p.featured && (
+                        <span className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-[9px] uppercase px-2.5 py-1 rounded-lg flex items-center gap-0.5">
+                          <Sparkles className="w-3 h-3" /> Featured
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="font-bold text-[15px] text-slate-100 group-hover:text-blue-400 transition-colors leading-snug line-clamp-1">
+                        {p.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-1.5 flex items-start gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                        <span className="truncate">{p.address}</span>
+                      </p>
+
+                      {/* AI Rewritten Description */}
+                      {p.description && (
+                        <p className="text-xs text-slate-400 mt-3 leading-relaxed line-clamp-3 border-t border-slate-800/40 pt-3">
+                          {p.description}
+                        </p>
+                      )}
+
+                      {/* Specs */}
+                      <div className="mt-4 flex items-center gap-2.5 flex-wrap">
+                        {p.bedrooms > 0 && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
+                            <BedDouble className="w-3.5 h-3.5 text-slate-500" />
+                            {p.bedrooms} Beds
+                          </div>
+                        )}
+                        {p.bathrooms > 0 && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
+                            <Bath className="w-3.5 h-3.5 text-slate-500" />
+                            {p.bathrooms} Baths
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-800/70 px-2.5 py-1.5 rounded-lg">
+                          <Ruler className="w-3.5 h-3.5 text-slate-500" />
+                          {p.area}
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                        <div>
+                          <span className="text-[9px] text-slate-500 uppercase tracking-wider block">Price</span>
+                          <span className="text-sm font-black text-blue-400 flex items-center gap-1">
+                            <Coins className="w-4 h-4 text-yellow-500" /> {p.price}
+                          </span>
+                        </div>
+                        <div className="bg-slate-800 border border-slate-700 hover:bg-slate-700 p-2 rounded-xl transition-all">
+                          <ChevronRight className="w-4 h-4 text-blue-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              /* Empty State */
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center mx-auto mb-4">
+                  <Inbox className="w-8 h-8" />
+                </div>
+                <h3 className="text-base font-bold text-slate-300 mb-1">No Matching Properties</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  No listings for <strong>{typeQuery} ({purpose})</strong> in {city}.
+                </p>
+                <button
+                  onClick={() => setSearchParams({ purpose: "Buy", city: "Islamabad", location: "", type: "Homes" })}
+                  className="mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
+                >
+                  Reset to Islamabad
+                </button>
+              </div>
+            )}
+          </>
         )}
 
       </div>

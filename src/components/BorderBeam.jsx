@@ -22,7 +22,11 @@ export const BorderBeam = ({
   colorTo = "#6366f1",
   delay = 0,
   className = "",
+  borderRadius = 16,
+  anchor = 90,
 }) => {
+  const brValue = typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius;
+
   return (
     <div
       style={{
@@ -32,6 +36,7 @@ export const BorderBeam = ({
         "--color-from": colorFrom,
         "--color-to": colorTo,
         "--delay": `${delay}s`,
+        "--border-radius": brValue,
       }}
       className={`pointer-events-none absolute inset-0 rounded-[inherit] [border:var(--border-width)_solid_transparent]
 
@@ -42,10 +47,14 @@ export const BorderBeam = ({
       [mask-image:linear-gradient(#000,#000),linear-gradient(#000,#000)] ${className}`}
     >
       <div
-        className="absolute aspect-square w-[var(--size)] [motion-path:rect(0_auto_auto_0_round_16px)] [offset-path:rect(0_auto_auto_0_round_16px)] animate-border-beam"
+        className="absolute aspect-square w-[var(--size)] animate-border-beam"
         style={{
           background: 'linear-gradient(to left, var(--color-from), var(--color-to), transparent)',
           animationDelay: 'var(--delay)',
+          offsetPath: `rect(0 auto auto 0 round ${brValue})`,
+          offsetAnchor: `${anchor}% 50%`,
+          willChange: 'offset-distance, transform',
+          transform: 'translate3d(0, 0, 0)',
         }}
       />
     </div>
@@ -53,3 +62,4 @@ export const BorderBeam = ({
 };
 
 export default BorderBeam;
+

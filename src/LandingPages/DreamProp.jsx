@@ -62,13 +62,34 @@ const DreamProp = () => {
   const cities = ['Islamabad', 'Lahore', 'Karachi', 'Faisalabad', 'Rawalpindi', 'Multan'];
   const types = ['Homes', 'Plots', 'Commercial'];
 
+  const [isSearching, setIsSearching] = useState(false);
+  const [isInFlight, setIsInFlight] = useState(false);
+
+  // Sync state with sessionStorage to detect in-flight queries
+  useEffect(() => {
+    const checkInFlight = () => {
+      setIsInFlight(sessionStorage.getItem('faisalabad_search_in_flight') === 'true');
+    };
+    checkInFlight();
+    const interval = setInterval(checkInFlight, 500); // Poll in-session status
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSearch = () => {
+    if (isSearching || (city === 'Faisalabad' && isInFlight)) {
+      return;
+    }
     if (active === 'Projects') {
       navigate('/property-index');
       return;
     }
+    setIsSearching(true);
+    setTimeout(() => setIsSearching(false), 2000); // Safely reset after 2s
+
     navigate(`/search-results?purpose=${active}&city=${city}&location=${encodeURIComponent(location)}&type=${propertyType}`);
   };
+
+  const isSearchDisabled = isSearching || (city === 'Faisalabad' && isInFlight);
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-slate-950">
@@ -165,10 +186,13 @@ const DreamProp = () => {
           <div className="flex justify-center mt-5">
             <button
               onClick={handleSearch}
-              className="h-12 px-14 rounded-xl text-[13px] font-extrabold tracking-widest text-white transition-all duration-200 hover:scale-[1.025] hover:shadow-[0_12px_32px_rgba(37,99,235,0.5)] active:scale-[0.98]"
+              disabled={isSearchDisabled}
+              className={`h-12 px-14 rounded-xl text-[13px] font-extrabold tracking-widest text-white transition-all duration-200 hover:scale-[1.025] hover:shadow-[0_12px_32px_rgba(37,99,235,0.5)] active:scale-[0.98] ${
+                isSearchDisabled ? 'opacity-50 cursor-not-allowed hover:scale-100 hover:shadow-none' : ''
+              }`}
               style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 60%, #2563eb 100%)' }}
             >
-              {active === 'Projects' ? 'BROWSE PROJECTS' : 'FIND PROPERTY'}
+              {isSearchDisabled ? 'PROCESSING...' : (active === 'Projects' ? 'BROWSE PROJECTS' : 'FIND PROPERTY')}
             </button>
           </div>
 

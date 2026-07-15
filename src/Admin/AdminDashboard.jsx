@@ -65,11 +65,6 @@ const AdminDashboard = () => {
   const [qrModal, setQrModal] = useState({ isOpen: false, deedId: '', urls: {} });
   const [toastMsg, setToastMsg] = useState("");
 
-  const [modelSettings, setModelSettings] = useState({
-    learningRate: 0.001, epochs: 150, batchSize: 32, activeModel: 'PropPredict-v2.4-Neural', autoTrain: true,
-    featureWeights: { location: 40, size: 30, age: 15, condition: 15 }
-  });
-
   const [systemSettings, setSystemSettings] = useState({
     maintenanceMode: false, apiCaching: true, securityShield: true, backupInterval: 'Daily',
   });

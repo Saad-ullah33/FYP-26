@@ -32,7 +32,7 @@ export const AuctionBanner = () => {
       >
         
         {/* Card 1: Verified Dealers */}
-        <div className="relative overflow-hidden bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group">
+        <div className="relative overflow-hidden bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group h-full">
           {/* Border Beam Animation */}
           <BorderBeam size={130} duration={8} borderWidth={1.5} delay={0} />
 
@@ -55,7 +55,7 @@ export const AuctionBanner = () => {
         </div>
 
         {/* Card 2: Trusted Listings */}
-        <div className="relative overflow-hidden bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group">
+        <div className="relative overflow-hidden bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-1.5 group h-full">
           {/* Border Beam Animation */}
           <BorderBeam size={130} duration={8} borderWidth={1.5} delay={0} />
 

@@ -55,6 +55,7 @@ import Map from "./Pages/Map/Map";
 import PlotDetail from "./Pages/Map/PlotDetail";
 
 import SearchResults from "./Pages/SearchResults";
+import ProjectDetail from "./Pages/ProjectDetail";
 
 import PropertyIndex from "./Pages/PropertyIndex";
 import AreaGuides from "./Pages/AreaGuides";
@@ -275,6 +276,13 @@ const AppContent = () => {
         <Route
           path="/property/:id"
           element={<PropertyDetail />}
+        />
+
+
+
+        <Route
+          path="/project/:id"
+          element={<ProjectDetail />}
         />
 
 

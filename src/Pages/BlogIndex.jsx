@@ -124,7 +124,7 @@ export const BlogIndex = () => {
                 className="relative overflow-hidden group grid grid-cols-1 lg:grid-cols-12 bg-white border border-slate-200/80 hover:border-slate-300 rounded-3xl transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/60 block"
               >
                 {/* Border Beam accent */}
-                <BorderBeam size={220} duration={8} borderWidth={1.5} delay={0} />
+                <BorderBeam size={220} duration={8} borderWidth={1.5} delay={0} borderRadius={24} />
 
                 {/* Left Column: Big Image */}
                 <div className="lg:col-span-7 aspect-[16/10] lg:aspect-auto overflow-hidden bg-slate-100 min-h-[320px] relative">

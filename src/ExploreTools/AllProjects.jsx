@@ -15,7 +15,7 @@ import {
 } from "@tabler/icons-react";
 
 // HIGH-FIDELITY PROJECTS DATABASE
-const DATABASE_PROJECTS = [
+export const DATABASE_PROJECTS = [
   {
     id: 1,
     title: "Canal Heights",
