@@ -8,10 +8,22 @@ const Footer = () => {
 
         {/* Brand */}
         <div>
-          <h3 className="text-xl font-bold text-white mb-3">
-            PropSight
-          </h3>
-          <p className="text-sm leading-relaxed">
+          <div className="flex items-center gap-3 mb-4">
+            <img
+              src="/favicon-icon.png"
+              alt="NextProperty Icon"
+              className="w-10 h-10 object-contain"
+            />
+            <div className="flex flex-col leading-none gap-[3px]">
+              <span className="text-lg font-black tracking-tight text-white">
+                Next<span className="text-blue-400">Property</span>
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                The Future of Real Estate
+              </span>
+            </div>
+          </div>
+          <p className="text-sm leading-relaxed text-gray-400">
             Buy, sell, and discover properties with confidence.  
             Trusted real estate solutions for modern living.
           </p>
@@ -63,7 +75,7 @@ const Footer = () => {
 
           <div className="flex items-center gap-3 text-sm">
             <IconMail size={18} />
-            <span>info@propsight.com</span>
+            <span>info@nextproperty.com</span>
           </div>
         </div>
 
@@ -71,7 +83,7 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-gray-700 py-4 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} PropSight. All rights reserved.
+        © {new Date().getFullYear()} NextProperty. All rights reserved.
       </div>
     </footer>
   );

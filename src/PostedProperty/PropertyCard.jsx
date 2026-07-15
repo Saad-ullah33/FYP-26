@@ -75,7 +75,7 @@ const PropertyCard = ({
     <div className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition">
 
       {/* IMAGE SECTION */}
-      <div className="relative h-56 overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden">
 
         <img
           src={imgError ? "https://via.placeholder.com/400" : mainImage}

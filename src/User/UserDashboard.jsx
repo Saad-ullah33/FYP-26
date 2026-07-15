@@ -52,11 +52,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getQRUrls, getDeeds } from '../utils/deedService';
 import { QRCodeSVG } from 'qrcode.react';
+import { useSubscription } from '../hooks/useSubscription';
+import { geminiService } from '../services/geminiService';
+import CTABanner from '../components/subscription/CTABanner';
+import { Loader2 } from 'lucide-react';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { plan, billingCycle, canAccess, setIsUpgradeModalOpen, incrementUsage } = useSubscription();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -144,6 +149,7 @@ const UserDashboard = () => {
   });
 
   const [isSavedMsg, setIsSavedMsg] = useState(false);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -221,6 +227,11 @@ const UserDashboard = () => {
   }, [location]);
 
   const handleOpenCreateModal = () => {
+    if (!canAccess('unlimitedListings') && myListings.length >= 5) {
+      alert("You have reached the maximum listing limit (5) for the Free plan. Please upgrade to Pro or Business to add unlimited listings.");
+      setIsUpgradeModalOpen(true);
+      return;
+    }
     setIsEditMode(false);
     setSelectedPropertyId(null);
     setSelectedImages([]);
@@ -249,8 +260,43 @@ const UserDashboard = () => {
     if (e.target.files) setSelectedImages(Array.from(e.target.files));
   };
 
+  const handleGenerateAIDescription = async () => {
+    if (!canAccess("aiDescriptionGenerator")) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    if (!propertyForm.propertyType || !propertyForm.location || !propertyForm.area || !propertyForm.price) {
+      alert("Please fill in Property Type, Price, Area, and Location Sector first so the AI can generate a description tailored to your listing.");
+      return;
+    }
+    setGeneratingDesc(true);
+    try {
+      const description = await geminiService.generatePropertyDescription({
+        title: propertyForm.title,
+        propertyType: propertyForm.propertyType,
+        location: propertyForm.location,
+        area: propertyForm.area,
+        price: propertyForm.price,
+        bedrooms: propertyForm.bedrooms,
+        bathrooms: propertyForm.bathrooms
+      });
+      setPropertyForm(prev => ({ ...prev, description }));
+      incrementUsage("aiDescriptionGenerator");
+    } catch (err) {
+      console.error("AI Description fault layer:", err);
+      alert("Failed to generate AI description.");
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
+
   const handlePropertyFormSubmit = async (e) => {
     e.preventDefault();
+    if (!isEditMode && !canAccess('unlimitedListings') && myListings.length >= 5) {
+      alert("You have reached the maximum listing limit (5) for the Free plan. Please upgrade to Pro or Business to add unlimited listings.");
+      setIsUpgradeModalOpen(true);
+      return;
+    }
     try {
       setLoading(true);
       const formData = new FormData();
@@ -261,6 +307,7 @@ const UserDashboard = () => {
         await updatePropertyListing(selectedPropertyId, formData);
       } else {
         await createPropertyListing(formData);
+        incrementUsage("unlimitedListings");
       }
       setIsCreateModalOpen(false);
       await loadDashboard(); 
@@ -390,14 +437,28 @@ const handleTriggerAuctionLaunch = (item) => {
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}>
         <div className="p-4 flex items-center justify-between h-20 border-b border-slate-200">
           {isSidebarOpen ? (
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-              <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20">PS</span>
-              <h1 className="text-lg font-black text-slate-800 tracking-wider">
-                PropSight<span className="text-blue-600 text-xs font-semibold ml-0.5">User</span>
-              </h1>
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+              <img
+                src="/favicon-icon.png"
+                alt="NextProperty Icon"
+                className="w-9 h-9 object-contain group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="flex flex-col leading-none gap-[3px]">
+                <span className="text-[16px] font-black tracking-tight text-slate-850">
+                  Next<span className="text-blue-600">Property</span>
+                </span>
+                <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                  User Workspace
+                </span>
+              </div>
             </div>
           ) : (
-            <span className="w-8 h-8 mx-auto rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white">P</span>
+            <img
+              src="/favicon-icon.png"
+              alt="NP"
+              className="w-9 h-9 mx-auto object-contain cursor-pointer"
+              onClick={() => navigate('/')}
+            />
           )}
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition">
             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
@@ -470,6 +531,7 @@ const handleTriggerAuctionLaunch = (item) => {
         {/* ================= TAB: OVERVIEW ================= */}
         {activeTab === 'Overview' && (
           <div className="space-y-8 animate-in fade-in duration-300">
+            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Coins size={22} /></div>
@@ -494,6 +556,10 @@ const handleTriggerAuctionLaunch = (item) => {
               </div>
             </div>
 
+            {/* Upgrade banner for Free accounts */}
+            <CTABanner />
+
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { title: "My Listings", value: dashboardStats.totalProperties, detail: "Properties uploaded", icon: Building2, color: "bg-blue-600/10 text-blue-600" },
@@ -751,7 +817,27 @@ const handleTriggerAuctionLaunch = (item) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-400 uppercase mb-1">Description</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block font-bold text-slate-400 uppercase">Description</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAIDescription}
+                      disabled={generatingDesc}
+                      className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50 transition"
+                    >
+                      {generatingDesc ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3" />
+                          Generate AI Description
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea value={propertyForm.description} onChange={e => setPropertyForm({...propertyForm, description: e.target.value})} className="w-full border rounded-xl px-3 py-2 h-16 outline-none focus:border-blue-500" required />
                 </div>
                 <div>
@@ -926,8 +1012,40 @@ const handleTriggerAuctionLaunch = (item) => {
 
         {/* ================= TAB: PROFILE ================= */}
         {activeTab === 'Profile' && (
-          <div className="max-w-3xl bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8 animate-in fade-in duration-200">
-            <form onSubmit={saveProfileSettings} className="space-y-6">
+          <div className="max-w-3xl space-y-6 animate-in fade-in duration-200">
+            
+            {/* CURRENT SUBSCRIPTION BADGE CARD */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Active Account Plan</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <h3 className="text-lg font-black text-slate-800 capitalize">{plan.name} Plan</h3>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    plan.id === 'free' ? 'bg-slate-100 text-slate-500 border border-slate-200' :
+                    plan.id === 'pro' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                    'bg-indigo-50 text-indigo-650 border border-indigo-150'
+                  }`}>
+                    {plan.id === 'free' ? 'Free' : 'Premium'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  {plan.id === 'free' 
+                    ? "Upgrade your account to unlock AI Price Assessor maps, unlimited listings, and registry deed certificates." 
+                    : `Your ${plan.name} account is active, billed ${billingCycle}. Enjoy unlimited AI tools and features.`
+                  }
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/pricing')}
+                className="px-4.5 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm hover:shadow-md shrink-0"
+              >
+                Manage Subscription
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
+              <form onSubmit={saveProfileSettings} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
@@ -943,6 +1061,7 @@ const handleTriggerAuctionLaunch = (item) => {
               </div>
             </form>
           </div>
+        </div>
         )}
       </main>
 

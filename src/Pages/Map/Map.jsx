@@ -18,8 +18,11 @@ import {
   CheckCircle,
   HelpCircle,
   Coins,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  Sparkles
 } from "lucide-react";
+import { geminiService } from "../../services/geminiService";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
@@ -71,6 +74,7 @@ const Map = () => {
   const [selectedPlot, setSelectedPlot] = useState(null);
   const [hoveredPlot, setHoveredPlot] = useState(null);
   const [mapZoom, setMapZoom] = useState(13);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   // Advanced GIS plot status filter
   const [plotFilter, setPlotFilter] = useState("all"); // 'all', 'available', 'sold', 'reserved'
@@ -84,6 +88,31 @@ const Map = () => {
   // Focus properties
   const [focusCenter, setFocusCenter] = useState(null);
   const [focusZoom, setFocusZoom] = useState(null);
+
+  // AI-powered plot analysis states
+  const [plotAiLoading, setPlotAiLoading] = useState(false);
+  const [plotAiAnalysis, setPlotAiAnalysis] = useState("");
+
+  useEffect(() => {
+    if (selectedPlot && selectedColony) {
+      setPlotAiLoading(true);
+      setPlotAiAnalysis("");
+      geminiService.generatePlotAnalysis({
+        plotNumber: selectedPlot.number,
+        block: selectedPlot.block,
+        size: selectedPlot.size,
+        price: selectedPlot.price,
+        status: selectedPlot.status,
+        colonyName: selectedColony.name
+      }).then((analysis) => {
+        setPlotAiAnalysis(analysis);
+        setPlotAiLoading(false);
+      }).catch((err) => {
+        console.error(err);
+        setPlotAiLoading(false);
+      });
+    }
+  }, [selectedPlot, selectedColony]);
 
   // Filtered Colonies list
   const filteredColonies = colonies.filter((c) => {
@@ -119,6 +148,7 @@ const Map = () => {
     setSelectedPlot(null); // Clear selected plot when switching colonies
     setFocusCenter(colony.center);
     setFocusZoom(colony.zoom);
+    setIsSidebarExpanded(false);
   };
 
   // Live Inventory Statistics Scanner (Helper)
@@ -175,7 +205,7 @@ const Map = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-80px)] overflow-hidden bg-slate-50 font-sans">
+    <div className="relative w-full h-[calc(100dvh-64px)] md:h-[calc(100vh-80px)] overflow-hidden bg-slate-50 font-sans">
       
       {/* 1. MAP CANVAS (LIGHT THEME VOYAGER OVERLAY) */}
       <MapContainer
@@ -245,9 +275,8 @@ const Map = () => {
         {showPlots && mapZoom >= 14 && colonies.map((colony) => {
           if (!toggledColonies[colony.id] || !colony.plots) return null;
 
-          const filteredPlots = colony.plots.filter((plot) => 
-            plot.status === "available"
-          );
+          // Render all plots to map both Available (Green) and Sold/Reserved (Red/Amber) statuses
+          const filteredPlots = colony.plots;
 
           return filteredPlots.map((plot) => {
             const isHovered = hoveredPlot?.id === plot.id;
@@ -264,6 +293,7 @@ const Map = () => {
                   click: (e) => {
                     setSelectedPlot(plot);
                     setSelectedColony(colony);
+                    setIsSidebarExpanded(false);
                     L.DomEvent.stopPropagation(e);
                   }
                 }}
@@ -282,10 +312,19 @@ const Map = () => {
       </MapContainer>
 
       {/* 2. LIGHT GLASSMORPHIC SIDEBAR PANEL */}
-      <div className="absolute top-4 left-4 bottom-4 w-96 z-[1000] flex flex-col gap-3.5 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-5 text-slate-800 shadow-xl overflow-hidden">
+      <div 
+        className={`fixed lg:absolute bottom-0 lg:top-4 lg:bottom-4 left-0 lg:left-4 right-0 lg:right-auto w-full lg:w-96 z-[1000] flex flex-col bg-white/95 backdrop-blur-md border-t lg:border border-slate-200/80 rounded-t-2xl lg:rounded-2xl p-5 text-slate-800 shadow-xl transition-all duration-300 ${
+          isSidebarExpanded ? "h-[75vh]" : "h-[70px] lg:h-auto"
+        }`}
+      >
+        {/* Drag Handle for Mobile */}
+        <div 
+          className="w-12 h-1.5 bg-slate-300 hover:bg-slate-400 rounded-full mx-auto mb-3 lg:hidden cursor-pointer shrink-0" 
+          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        />
         
         {/* Sidebar Header */}
-        <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-200">
+        <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-200 shrink-0">
           <button 
             onClick={() => navigate(-1)} 
             className="group inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 transition font-extrabold text-xs self-start"
@@ -299,13 +338,21 @@ const Map = () => {
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
                 <MapPin className="w-5 h-5" />
               </div>
-              <div>
+              <div 
+                className="cursor-pointer lg:cursor-default" 
+                onClick={() => { if (window.innerWidth < 1024) setIsSidebarExpanded(!isSidebarExpanded); }}
+              >
                 <h1 className="text-base font-extrabold tracking-tight text-slate-900">Faisalabad GIS Map</h1>
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">Interactive Plot Locator</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+                  {!isSidebarExpanded ? "Tap to expand list & filters" : "Interactive Plot Locator"}
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Sidebar scrollable contents */}
+        <div className={`flex-1 flex flex-col gap-3.5 overflow-hidden mt-3.5 ${isSidebarExpanded ? "block" : "hidden lg:flex"}`}>
 
         {/* Layer Controls Console */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-2.5">
@@ -384,14 +431,21 @@ const Map = () => {
         {/* GIS Legend & Plot Filters */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
-            <span className="flex items-center gap-1.5"><Grid className="w-3.5 h-3.5 text-blue-600" /> Plot Display Status</span>
+            <span className="flex items-center gap-1.5"><Grid className="w-3.5 h-3.5 text-blue-600" /> Plot Grid Legend</span>
           </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center justify-between text-xs font-bold text-emerald-800">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Displaying Available Plots Only</span>
+          <div className="grid grid-cols-3 gap-1.5 text-[9px] font-extrabold text-slate-700">
+            <div className="flex items-center gap-1 justify-center py-1.5 bg-emerald-50 text-emerald-800 rounded border border-emerald-150 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Available
             </div>
-            <span className="text-[10px] bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-700">Active</span>
+            <div className="flex items-center gap-1 justify-center py-1.5 bg-rose-50 text-rose-800 rounded border border-rose-150 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              Sold
+            </div>
+            <div className="flex items-center gap-1 justify-center py-1.5 bg-amber-50 text-amber-800 rounded border border-amber-200 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Reserved
+            </div>
           </div>
         </div>
 
@@ -519,15 +573,15 @@ const Map = () => {
             Click on any boundary or list item to center the camera. Zoom in past level 14 to display specific plots and availability details.
           </p>
         </div>
-
+        </div> {/* Close the collapsible contents div */}
       </div>
 
       {/* 3. LIGHT DETAILED INFORMATION TILES (BOTTOM RIGHT) */}
-      <div className="absolute bottom-4 right-4 z-[1000] w-96 flex flex-col gap-3">
+      <div className="fixed lg:absolute bottom-0 lg:bottom-4 left-0 lg:left-auto right-0 lg:right-4 z-[1000] w-full lg:w-96 flex flex-col gap-3 px-4 pb-4 lg:px-0 lg:pb-0 pointer-events-none">
         
         {/* Plot Details overlay Card */}
         {selectedPlot && (
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-t-2xl lg:rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto max-h-[75vh] overflow-y-auto w-full">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
@@ -549,16 +603,34 @@ const Map = () => {
 
             <div className="grid grid-cols-2 gap-3 py-3 text-xs">
               <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                <span className="text-[10px] text-slate-450 block font-semibold">Plot Size</span>
+                <span className="text-[10px] text-slate-455 block font-semibold">Plot Size</span>
                 <span className="font-extrabold text-slate-800 mt-0.5 block">{selectedPlot.size}</span>
               </div>
 
               <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                <span className="text-[10px] text-slate-450 block font-semibold">Est. Market Value</span>
+                <span className="text-[10px] text-slate-455 block font-semibold">Est. Market Value</span>
                 <span className="font-black text-blue-600 mt-0.5 block flex items-center gap-1">
                   <Coins className="w-3.5 h-3.5 text-yellow-600" /> {selectedPlot.price}
                 </span>
               </div>
+            </div>
+
+            {/* AI-powered Plot Evaluation Popup Analysis */}
+            <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-100 rounded-xl p-3 mb-3.5">
+              <div className="flex items-center gap-1.5 text-blue-700 font-extrabold text-[10px] uppercase tracking-wider mb-1.5">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse text-indigo-550" />
+                AI Real-Time GIS Assessment
+              </div>
+              {plotAiLoading ? (
+                <div className="flex items-center gap-2 text-[10px] text-slate-550 font-semibold py-1">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-650" />
+                  Generating plot assessment...
+                </div>
+              ) : (
+                <p className="text-[10.5px] text-slate-650 font-semibold leading-relaxed">
+                  {plotAiAnalysis}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-2.5 border-t border-slate-200">
@@ -577,7 +649,15 @@ const Map = () => {
 
               {selectedPlot.status === "available" && (
                 <button 
-                  onClick={() => navigate(`/plot-detail/${selectedColony.id}/${selectedPlot.id}`)}
+                  onClick={() => {
+                    const checkoutPayload = {
+                      plot_id: selectedPlot.id,
+                      owner_id: "dev_faisalabad_gis",
+                      secure_checkout_url: `https://api.propsight.com/checkout?plot_id=${selectedPlot.id}&colony_id=${selectedColony.id}`
+                    };
+                    console.log("Redirecting with secure transactional payload:", checkoutPayload);
+                    navigate(`/plot-detail/${selectedColony.id}/${selectedPlot.id}`, { state: { transaction_payload: checkoutPayload } });
+                  }}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-md shadow-blue-500/10 cursor-pointer"
                 >
                   Buy Now <ChevronRight className="w-3.5 h-3.5" />
@@ -605,7 +685,7 @@ const Map = () => {
 
         {/* Colony Details overlay Card with dynamic Stats Scanner */}
         {selectedColony && !selectedPlot && (
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-t-2xl lg:rounded-2xl p-5 text-slate-800 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 pointer-events-auto max-h-[75vh] overflow-y-auto w-full">
             
             {/* Colony Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">

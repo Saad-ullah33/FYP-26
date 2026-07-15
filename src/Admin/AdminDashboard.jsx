@@ -24,6 +24,33 @@ const AdminDashboard = () => {
   const [userSearch, setUserSearch] = useState('');
   const [auctionFilter, setAuctionFilter] = useState('ALL');
   const [auctionSearch, setAuctionSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('All');
+  const [userStatusFilter, setUserStatusFilter] = useState('All');
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [viewingUserActivity, setViewingUserActivity] = useState(null);
+
+  // Properties Filter & Selection States
+  const [propertySearch, setPropertySearch] = useState('');
+  const [propertyCityFilter, setPropertyCityFilter] = useState('All');
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState('All');
+  const [propertyStatusFilter, setPropertyStatusFilter] = useState('All');
+  const [selectedPropIds, setSelectedPropIds] = useState([]);
+
+  // System Settings Active Sub-Tab
+  const [settingsSubTab, setSettingsSubTab] = useState('General');
+
+  // TrustDeed request queue status tab
+  const [deedQueueTab, setDeedQueueTab] = useState('Pending');
+
+  // AI Predict Settings
+  const [modelSettings, setModelSettings] = useState({
+    learningRate: 0.001,
+    epochs: 150,
+    batchSize: 32,
+    activeModel: 'PropPredict-v2.4-Neural',
+    autoTrain: true,
+    featureWeights: { location: 40, size: 30, amenities: 15, marketTrend: 15 }
+  });
 
   // ── LIVE BACKEND DATA STATES ──
   const [liveStats, setLiveStats] = useState({
@@ -309,19 +336,41 @@ const AdminDashboard = () => {
       )}
 
       {/* ================= SIDEBAR ================= */}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-[#0e1626] transition-all duration-300 flex flex-col border-r border-[#1e2d4a]`}>
-        <div className="p-4 flex items-center justify-between h-20 border-b border-[#1e2d4a]">
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50 lg:z-30
+        ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20'} 
+        bg-white transition-all duration-300 flex flex-col border-r border-[#E5E7EB] shrink-0
+      `}>
+        <div className="p-4 flex items-center justify-between h-20 border-b border-[#E5E7EB]">
           {isSidebarOpen ? (
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-              <span className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">PS</span>
-              <h1 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-wider">
-                PropSight<span className="text-white text-xs font-medium ml-0.5">Admin</span>
-              </h1>
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+              <img
+                src="/favicon-icon.png"
+                alt="NextProperty Icon"
+                className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="flex flex-col leading-none gap-[3px] text-left">
+                <span className="text-[15px] font-black tracking-tight text-[#0F172A]">
+                  Next<span className="text-[#1D4ED8]">Property</span>
+                </span>
+                <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#64748B]">
+                  Admin Control
+                </span>
+              </div>
             </div>
           ) : (
-            <span className="w-8 h-8 mx-auto rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white">P</span>
+            <img
+              src="/favicon-icon.png"
+              alt="NP"
+              className="w-8 h-8 mx-auto object-contain cursor-pointer"
+              onClick={() => navigate('/')}
+            />
           )}
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-[#1a263f] text-slate-400 hover:text-white rounded cursor-pointer transition">
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            className="p-1.5 hover:bg-slate-50 text-[#64748B] hover:text-[#0F172A] rounded-lg cursor-pointer transition focus:ring-2 focus:ring-blue-500/25 focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="Toggle Sidebar"
+          >
             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
@@ -377,9 +426,12 @@ const AdminDashboard = () => {
               {stats.map((stat, idx) => (
                 <div key={idx} className="bg-[#0e1626]/80 backdrop-blur-md p-6 rounded-2xl border border-[#1e2d4a]/50 flex flex-col justify-between shadow-xl">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{stat.title}</p>
-                      <h3 className="text-3xl font-black mt-2 text-white tracking-tight">{stat.value}</h3>
+                    <div className="text-left">
+                      <p className="text-[#64748B] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                        <span>{stat.title}</span>
+                        {stat.isAi && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-green-pulse" />}
+                      </p>
+                      <h3 className="text-3xl font-black mt-2 text-[#0F172A] tracking-tight tabular-nums">{stat.value}</h3>
                     </div>
                     <div className={`p-3 rounded-xl border ${stat.color}`}>
                       <stat.icon size={20} />
@@ -427,6 +479,27 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                <div className="p-4 border-t border-[#E5E7EB] flex items-center justify-between bg-slate-50/30 text-xs font-semibold">
+                  <span className="text-slate-500">Page {opsPage} of {totalOpsPages || 1}</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setOpsPage(prev => Math.max(prev - 1, 1))}
+                      disabled={opsPage === 1}
+                      className="px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-lg disabled:opacity-50 text-slate-650 hover:bg-slate-100 transition cursor-pointer min-h-[44px]"
+                    >
+                      Prev
+                    </button>
+                    <button 
+                      onClick={() => setOpsPage(prev => Math.min(prev + 1, totalOpsPages))}
+                      disabled={opsPage >= totalOpsPages}
+                      className="px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-lg disabled:opacity-50 text-slate-650 hover:bg-slate-100 transition cursor-pointer min-h-[44px]"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Quick Config Drawer Display */}
@@ -472,7 +545,7 @@ const AdminDashboard = () => {
                     <th className="px-6 py-4 text-right">Account Verification Commands</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#18263f]/60">
+                <tbody className="divide-y divide-[#E5E7EB] text-slate-700">
                   {usersList
                     .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
                     .map((item) => (
@@ -492,6 +565,13 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4.5 text-xs text-slate-300 max-w-xs truncate">{item.address || 'Faisalabad Regional Registry'}</td>
                         <td className="px-6 py-4.5 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setViewingUserActivity(item)}
+                              className="px-2 py-1 bg-slate-50 border border-slate-200 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-lg text-[10px] font-bold transition flex items-center gap-1"
+                            >
+                              <Activity size={10} />
+                              Log
+                            </button>
                             <button
                               onClick={() => handleManualUserApproval(item.id)}
                               className="px-2.5 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
@@ -515,6 +595,73 @@ const AdminDashboard = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Users Stacked Cards - Shown on Mobile */}
+            <div className="md:hidden divide-y divide-slate-100 p-4 space-y-4">
+              {usersList
+                .filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+                .filter(u => userRoleFilter === 'All' ? true : u.role === userRoleFilter)
+                .filter(u => userStatusFilter === 'All' ? true : u.status === userStatusFilter)
+                .map((item) => (
+                  <div key={item.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3.5 text-xs text-left">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedUserIds.includes(item.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedUserIds(prev => [...prev, item.id]);
+                            else setSelectedUserIds(prev => prev.filter(id => id !== item.id));
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className="font-extrabold text-[#0F172A] text-sm">{item.name}</span>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
+                        item.status === 'Active' ? 'bg-[#ECFDF5] text-[#047857] border-emerald-100' : 'bg-[#FEF2F2] text-[#B91C1C] border-red-100'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[#64748B] font-semibold">Email: <span className="text-slate-800 font-bold">{item.email}</span></p>
+                      <p className="text-[#64748B] font-semibold">Joined: <span className="text-slate-800 font-bold font-mono">{item.joined}</span></p>
+                      <p className="text-[#64748B] font-semibold">Role: 
+                        <span className={`ml-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
+                          item.role === 'ADMIN' ? 'bg-[#F5F3FF] text-[#7C3AED] border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                        }`}>
+                          {item.role}
+                        </span>
+                      </p>
+                      <p className="text-[#64748B] font-semibold">Plan: <span className="text-slate-900 font-extrabold capitalize">{item.plan}</span></p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200 flex justify-end gap-2">
+                      <button
+                        onClick={() => setViewingUserActivity(item)}
+                        className="px-3 py-2 bg-white border border-slate-200 text-[#64748B] hover:text-[#0F172A] rounded-lg text-xs font-bold transition flex items-center gap-1 min-h-[44px]"
+                      >
+                        <Activity size={12} /> Log
+                      </button>
+                      <button
+                        onClick={() => toggleUserRole(item.id)}
+                        className="px-3 py-2 bg-white border border-slate-200 text-[#1D4ED8] rounded-lg text-xs font-bold transition flex items-center gap-1 min-h-[44px]"
+                      >
+                        Role
+                      </button>
+                      <button
+                        onClick={() => toggleUserStatus(item.id)}
+                        className={`p-2 rounded-lg border transition min-h-[44px] px-3 py-2 flex items-center ${
+                          item.status === 'Active' 
+                            ? 'bg-[#FEF2F2] text-[#B91C1C] border-red-200 hover:bg-red-100 font-bold text-xs' 
+                            : 'bg-[#ECFDF5] text-[#047857] border-emerald-250 hover:bg-emerald-100 font-bold text-xs'
+                        }`}
+                      >
+                        {item.status === 'Active' ? 'Suspend' : 'Activate'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -709,6 +856,64 @@ const AdminDashboard = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* TrustDeed Stacked Cards - Shown on Mobile */}
+            <div className="md:hidden divide-y divide-slate-100 p-4 space-y-4">
+              {trustDeeds
+                .filter(d => d.status === deedQueueTab)
+                .map((item) => (
+                  <div key={item.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs text-left">
+                    <div className="flex justify-between items-center">
+                      <span className="font-extrabold text-[#0F172A] text-sm">{item.owner}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
+                        item.status === 'Verified' ? 'bg-[#ECFDF5] text-[#047857] border-emerald-100' : 'bg-[#FFFBEB] text-[#B45309] border-amber-100'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[#64748B] font-semibold">Title ID: <span className="text-slate-800 font-bold font-mono">{item.documentId}</span></p>
+                      <p className="text-[#64748B] font-semibold">District: <span className="text-slate-800 font-bold">{item.registryOffice}</span></p>
+                      <p className="text-[#64748B] font-semibold">Submitted: <span className="text-slate-700 font-mono font-semibold">{item.uploadDate}</span></p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200 flex justify-end">
+                      {item.status === 'Pending' ? (
+                        <button
+                          onClick={() => approveTrustDeed(item.id)}
+                          className="w-full justify-center px-3.5 py-2 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 text-white text-[10px] font-extrabold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow-sm shadow-orange-500/10 min-h-[44px]"
+                        >
+                          <ShieldCheck size={14} />
+                          Verify & Seal Title
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const urls = getQRUrls(item.qrCode || "TD-102-8812");
+                            const history = [
+                              { time: '2026-07-15 01:04', role: 'public', detail: 'Public QR scan log accessed successfully.' },
+                              { time: '2026-07-14 16:12', role: 'buyer', detail: 'Buyer certificate downloaded & verified.' },
+                              { time: '2026-07-14 10:10', role: 'admin', detail: 'Admin registry consensus signature created.' }
+                            ];
+                            setQrModal({ isOpen: true, deedId: item.qrCode || "TD-102-8812", urls, history });
+                          }}
+                          className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-lg border border-slate-200 shadow-sm transition-all text-left w-full justify-between min-h-[44px]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-white p-0.5 rounded border border-slate-200 flex items-center justify-center shrink-0 shadow-inner">
+                              <span className="text-[5px] text-black font-mono font-bold leading-none break-all">QR-CODE</span>
+                            </div>
+                            <div className="text-left font-sans">
+                              <p className="text-[8px] text-[#047857] font-extrabold tracking-wider leading-none">VIEW QR KEYS</p>
+                              <span className="text-[9px] font-mono text-slate-800 mt-1 block font-bold leading-none">{item.qrCode || "TD-102-8812"}</span>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-400" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
 
@@ -738,6 +943,21 @@ const AdminDashboard = () => {
               <button onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))} className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 text-slate-400 cursor-pointer">Cancel</button>
               <button onClick={confirmModal.onConfirm} className="px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl cursor-pointer">Confirm Command</button>
             </div>
+
+            {/* Audit Scan logs trail */}
+            {qrModal.history && qrModal.history.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Cryptographic scan logs trail</h4>
+                <div className="space-y-2.5">
+                  {qrModal.history.map((h, i) => (
+                    <div key={i} className="flex items-center justify-between text-[11px] p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+                      <span className="font-semibold text-slate-700">{h.detail}</span>
+                      <span className="font-mono text-[9px] text-slate-400 font-bold">{h.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

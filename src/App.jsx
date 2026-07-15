@@ -63,6 +63,11 @@ import { BlogIndex } from "./Pages/BlogIndex";
 import { BlogDetail } from "./Pages/BlogDetail";
 import InvestorRadarPage from "./Pages/AIPrediction/InvestorRadarPage.jsx";
 import AiPredictionHub from "./Pages/AIPrediction/AiPredictionHub.jsx";
+import AIPropertyAssessor from "./components/AIPropertyAssessor";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
+import UpgradeModal from "./components/subscription/UpgradeModal";
+import AIChatbotAssistant from "./components/subscription/AIChatbotAssistant";
+import PricingPage from "./Pages/PricingPage";
 
 
 
@@ -173,8 +178,7 @@ APPLICATION CONTENT
 
 
 const AppContent = () => {
-
-
+  const { user } = useAuth();
   const location = useLocation();
 
 
@@ -253,6 +257,17 @@ const AppContent = () => {
         <Route
           path="/area-guides"
           element={<AreaGuides />}
+        />
+
+
+        <Route
+          path="/ai-assessor"
+          element={<AIPropertyAssessor />}
+        />
+
+        <Route
+          path="/pricing"
+          element={<PricingPage />}
         />
 
 
@@ -505,8 +520,8 @@ const AppContent = () => {
 
       {!hideFooter && <Footer />}
 
-
-
+      <UpgradeModal />
+      {user && <AIChatbotAssistant />}
     </>
 
   );
@@ -532,14 +547,17 @@ function App(){
 
     <MantineProvider>
 
+      <SubscriptionProvider>
 
-      <BrowserRouter>
-
-
-        <AppContent />
+        <BrowserRouter>
 
 
-      </BrowserRouter>
+          <AppContent />
+
+
+        </BrowserRouter>
+
+      </SubscriptionProvider>
 
 
     </MantineProvider>

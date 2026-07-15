@@ -97,15 +97,11 @@ const handleLogin = async (e) => {
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
 
           <div className="flex items-center gap-4 mb-10">
-            <div className="w-14 h-14 rounded-xl bg-blue-500/20 flex items-center justify-center border border-white/10">
-              <ShieldCheck />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">PropSight AI</h1>
-              <p className="text-blue-300 text-sm">
-                Enterprise Real Estate Platform
-              </p>
-            </div>
+            <img
+              src="/next_logo.png"
+              alt="NextProperty Logo"
+              className="h-14 w-auto object-contain"
+            />
           </div>
 
           <h2 className="text-5xl font-black leading-tight">
@@ -243,7 +239,14 @@ const handleLogin = async (e) => {
                 type="button"
                 onClick={() => {
                   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vQGZ5cC5jb20iLCJyb2xlIjoiVVNFUiIsImV4cCI6OTk5OTk5OTk5OX0.mock-signature";
-                  login(mockToken);
+                  login({
+                    accessToken: mockToken,
+                    refreshToken: "mock-refresh-token",
+                    email: "demo@fyp.com",
+                    name: "Demo User",
+                    role: "USER",
+                    emailVerified: true
+                  });
                   setSuccess("Logged in as User (Dev Mode)");
                   setTimeout(() => navigate(from, { replace: true }), 1000);
                 }}
@@ -256,7 +259,14 @@ const handleLogin = async (e) => {
                 type="button"
                 onClick={() => {
                   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBmeXAuY29tIiwicm9sZSI6IkFETUlOIiwiZXhwIjo5OTk5OTk5OTk5fQ.mock-signature";
-                  login(mockToken);
+                  login({
+                    accessToken: mockToken,
+                    refreshToken: "mock-refresh-token",
+                    email: "admin@fyp.com",
+                    name: "Demo Admin",
+                    role: "ADMIN",
+                    emailVerified: true
+                  });
                   setSuccess("Logged in as Admin (Dev Mode)");
                   setTimeout(() => navigate(from, { replace: true }), 1000);
                 }}

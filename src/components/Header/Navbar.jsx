@@ -12,7 +12,7 @@ import {
   FaCity,
   FaChevronDown,
 } from "react-icons/fa";
-import { Building2, Calculator, Map as LucideMap, LineChart, MapPin } from "lucide-react";
+import { Building2, Calculator, Map as LucideMap, LineChart, MapPin, Sparkles } from "lucide-react";
 
 const Navbar = () => {
   const location = useLocation();
@@ -230,6 +230,30 @@ const Navbar = () => {
               </div>
             </div>
             
+
+            {/* Card 6: AI Property Assessor */}
+            <div
+              onClick={() => {
+                setOpen(false);
+                navigate("/ai-assessor");
+              }}
+              className="group flex items-center gap-3.5 p-2.5 rounded-xl hover:bg-slate-50/70 cursor-pointer transition-all duration-200"
+            >
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-200 shrink-0 shadow-sm shadow-purple-100/20">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col transform group-hover:translate-x-0.5 transition-transform duration-200">
+                <span className="font-extrabold text-slate-800 text-xs group-hover:text-purple-600 transition-colors leading-tight flex items-center gap-1">
+                  AI Property Assessor
+                  <span className="px-1.5 py-0.5 text-[8px] bg-purple-100 text-purple-700 rounded-full font-black uppercase tracking-wide">
+                    New
+                  </span>
+                </span>
+                <span className="text-[10px] text-slate-450 font-bold mt-0.5 leading-tight">
+                  Valuation, trends & projections
+                </span>
+              </div>
+            </div>
 
           </div>
         )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import PremiumGate from "../../components/subscription/PremiumGate";
 import { MOCK_AUCTIONS } from "../../constants/mockAuctions";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -507,39 +508,41 @@ const AuctionDetail = () => {
 
               {/* Tab Contents: AI Analytics */}
               {activeTab === "valuation" && (
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 border border-slate-800 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-xl pointer-events-none" />
-                    
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-[10px] text-blue-300 font-extrabold uppercase tracking-widest flex items-center gap-1 mb-1">
-                          <Sparkles size={12} /> PropSight AI Valuation
-                        </span>
-                        <h4 className="text-xl font-black">PKR {auction.aiValuation?.estimatedValue.toLocaleString()}</h4>
-                        <p className="text-xs text-slate-400 mt-1">Average market value calculation based on neural-node spatial metrics.</p>
+                <PremiumGate feature="advancedAnalytics" fallbackMessage="NextProperty AI Valuation requires advanced real-estate metrics. Upgrade to Pro/Business to view historical indexes and spatial node calculations.">
+                  <div className="space-y-6">
+                    <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 border border-slate-800 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-xl pointer-events-none" />
+                      
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[10px] text-blue-300 font-extrabold uppercase tracking-widest flex items-center gap-1 mb-1">
+                            <Sparkles size={12} /> NextProperty AI Valuation
+                          </span>
+                          <h4 className="text-xl font-black">PKR {auction.aiValuation?.estimatedValue.toLocaleString()}</h4>
+                          <p className="text-xs text-slate-400 mt-1">Average market value calculation based on neural-node spatial metrics.</p>
+                        </div>
+                        <div className="bg-blue-600 text-white text-xs font-black px-2.5 py-1.5 rounded-xl border border-blue-500 shadow-md">
+                          {auction.aiValuation?.confidenceScore}% Confidence
+                        </div>
                       </div>
-                      <div className="bg-blue-600 text-white text-xs font-black px-2.5 py-1.5 rounded-xl border border-blue-500 shadow-md">
-                        {auction.aiValuation?.confidenceScore}% Confidence
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-6 pt-5 border-t border-white/5 text-xs">
-                      <div>
-                        <span className="text-slate-400 block mb-0.5">Valuation Range</span>
-                        <span className="font-bold text-slate-200">PKR {auction.aiValuation?.lowRange.toLocaleString()} - {auction.aiValuation?.highRange.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block mb-0.5">Market Sentiment</span>
-                        <span className="font-bold text-teal-400">{auction.aiValuation?.marketTrend}</span>
+                      <div className="grid grid-cols-2 gap-4 mt-6 pt-5 border-t border-white/5 text-xs">
+                        <div>
+                          <span className="text-slate-400 block mb-0.5">Valuation Range</span>
+                          <span className="font-bold text-slate-200">PKR {auction.aiValuation?.lowRange.toLocaleString()} - {auction.aiValuation?.highRange.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block mb-0.5">Market Sentiment</span>
+                          <span className="font-bold text-teal-400">{auction.aiValuation?.marketTrend}</span>
+                        </div>
                       </div>
                     </div>
+                    
+                    <div className="text-xs text-slate-500 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-150">
+                      NextProperty AI analytics are computed automatically by reviewing land registries, regional sale metrics, Susan/Canal Road inflation trends, and surrounding spatial node densities.
+                    </div>
                   </div>
-                  
-                  <div className="text-xs text-slate-500 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-150">
-                    PropSight AI analytics are computed automatically by reviewing land registries, regional sale metrics, Susan/Canal Road inflation trends, and surrounding spatial node densities.
-                  </div>
-                </div>
+                </PremiumGate>
               )}
             </div>
           </div>

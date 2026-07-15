@@ -95,7 +95,7 @@ const AuctionListingPage = () => {
         const data = result?.data || result?.result || result || [];
         setAuctions(Array.isArray(data) && data.length > 0 ? data : MOCK_AUCTIONS);
       } catch (error) {
-        console.warn("Backend offline or request failed. Loading PropSight mock auctions...");
+        console.warn("Backend offline or request failed. Loading NextProperty mock auctions...");
         // Use premium mock data
         setAuctions(MOCK_AUCTIONS);
       } finally {
@@ -158,7 +158,7 @@ const AuctionListingPage = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-bold tracking-wider uppercase mb-3">
-              <Sparkles size={12} /> PropSight Live Auctions
+              <Sparkles size={12} /> NextProperty Live Auctions
             </div>
             <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
               Real-Time Property <br />
@@ -332,7 +332,7 @@ const AuctionListingPage = () => {
                   >
                     {/* Top image and countdown */}
                     <div>
-                      <div className="relative h-48 overflow-hidden bg-slate-100">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                         <img
                           src={item.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80"}
                           alt={item.title}
