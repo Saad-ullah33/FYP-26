@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Check, X, Loader2, Sparkles, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useSubscription } from "../../hooks/useSubscription";
-import { PLANS } from "../../Data/plans";
+import PLANS  from "../../Data/plans";
 
 export const UpgradeModal = () => {
   const {

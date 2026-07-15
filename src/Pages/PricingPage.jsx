@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Check, X, ShieldCheck, Sparkles, Loader2, Award, Calendar, HelpCircle } from "lucide-react";
 import { useSubscription } from "../hooks/useSubscription";
-import { PLANS } from "../Data/plans";
+import  PLANS  from "../Data/plans";
 
 const PricingPage = () => {
   const {
