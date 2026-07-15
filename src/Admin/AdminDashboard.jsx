@@ -6,19 +6,23 @@ import {
   Copy, ExternalLink, LayoutDashboard, Building2, Users, BrainCircuit, QrCode, 
   Settings, LogOut, Menu, X, TrendingUp, AlertCircle, Search, Filter, Check, 
   Sliders, ShieldCheck, UserCheck, UserX, Save, RefreshCw, ChevronRight, 
-  Sparkles, Database, Lock, Play, Ban, ShieldAlert 
+  Sparkles, Database, Lock, Play, Ban, ShieldAlert, Activity, Clock, ShieldX, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user: currentUser } = useAuth(); // Grabbing current admin session info to prevent self-deletion
   
   // Dashboard Core Navigation States
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
   const [globalLoading, setGlobalLoading] = useState(false);
+
+  // Pagination Controls Variables
+  const [opsPage, setOpsPage] = useState(1);
+  const [totalOpsPages, setTotalOpsPages] = useState(1);
 
   // Search and Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -69,11 +73,6 @@ const AdminDashboard = () => {
   const [qrModal, setQrModal] = useState({ isOpen: false, deedId: '', urls: {} });
   const [toastMsg, setToastMsg] = useState("");
 
-  const [modelSettings, setModelSettings] = useState({
-    learningRate: 0.001, epochs: 150, batchSize: 32, activeModel: 'PropPredict-v2.4-Neural', autoTrain: true,
-    featureWeights: { location: 40, size: 30, age: 15, condition: 15 }
-  });
-
   const [systemSettings, setSystemSettings] = useState({
     maintenanceMode: false, apiCaching: true, securityShield: true, backupInterval: 'Daily',
   });
@@ -90,13 +89,13 @@ const AdminDashboard = () => {
   // ── HOOK INTO SPRING BOOT NETWORKS ON MOUNT ──
   useEffect(() => {
     initializeDeeds();
-    loadAllDashboardData(); // Unified call to fetch absolutely everything
+    loadAllDashboardData(); 
   }, []);
 
   // Sync state filter mutations dynamically
   useEffect(() => {
     fetchAuctionsByFilters();
-  }, [auctionFilter]);
+  }, [auctionFilter, activeTab]);
 
   const loadAllDashboardData = async () => {
     try {
@@ -142,21 +141,24 @@ const AdminDashboard = () => {
     setTimeout(() => setToastMsg(""), 4000);
   };
 
-  // ── USER MANAGEMENT SIGNATURE PIPES ──
+  // Compute pending items count cleanly from our reactive arrays
+  const pendingRequestsCount = auctionsList.filter(a => a.status === "PENDING_APPROVAL").length;
+
+  // ── USER MANAGEMENT SIGNATURE PIPES (CONNECTED TO REFACTORED ADMIN CONTROLLER) ──
   const handleToggleUserBan = (user) => {
-    const isCurrentlyActive = user.profile !== "BLOCKED"; 
-    const actionText = isCurrentlyActive ? 'Block' : 'Unblock';
+    const isCurrentlyBlocked = user.status === "BLOCKED" || user.profile === "BLOCKED"; 
+    const actionText = isCurrentlyBlocked ? 'Unblock' : 'Block';
 
     setConfirmModal({
       isOpen: true,
       title: `${actionText} User Account`,
-      message: `Are you sure you want to change status parameters for user "${user.name}"?`,
+      message: `Are you sure you want to change status parameters for user "${user.name}"? This immediately updates system credentials authorization filters layers.`,
       confirmText: `${actionText} User`,
       cancelText: 'Cancel',
       type: 'danger',
       onConfirm: async () => {
         try {
-          if (isCurrentlyActive) {
+          if (!isCurrentlyBlocked) {
             await adminService.blockUserAccount(user.id);
             triggerToast(`User Account #${user.id} has been blocked.`);
           } else {
@@ -173,22 +175,57 @@ const AdminDashboard = () => {
     });
   };
 
+  // FIXED: Explicitly calling full master re-sync pipeline to push changes immediately to column indices
   const handleManualUserApproval = async (userId) => {
     try {
+      setGlobalLoading(true);
       await adminService.approveUserAccount(userId);
-      triggerToast("User credentials marked as verified.");
-      loadAllDashboardData();
+      triggerToast("✅ User verification complete. Account state synchronization finalized.");
+      await loadAllDashboardData(); // Force master database re-query mapping execution
     } catch (err) {
-      triggerToast("Approval transaction failed.");
+      console.error("Verification error:", err);
+      triggerToast("Approval transaction failure occurred.");
+    } finally {
+      setGlobalLoading(false);
     }
   };
 
-  // ── AUCTION MANAGEMENT SIGNATURE PIPES ──
+  const handleHardDeleteUser = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hard System Account Purge',
+      message: 'Are you sure you want to permanently erase this user registry map from the master database? This removes all active session tokens and cannot be reversed.',
+      confirmText: 'Purge Account',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await adminService.deleteUserAccount(id); // Connected to endpoint: DELETE /api/admin/users/{id}
+          triggerToast("User credentials completely purged.");
+          loadAllDashboardData();
+        } catch (err) {
+          triggerToast("Purge command aborted by server context mapping constraint.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const toggleUserRole = async (id) => {
+    triggerToast("Updating account authorization layer flags.");
+  };
+
+  const toggleUserStatus = async (id) => {
+    triggerToast("Altering workspace parameters access state.");
+  };
+
+  // ── AUCTION MANAGEMENT SIGNATURE PIPES (MAPPED TO ADMIN CONTROLLER) ──
   const handleApproveAuction = async (id) => {
     try {
       setGlobalLoading(true);
-      await adminService.approveAuction(id);
-      triggerToast(`Auction #${id} approved for system staging.`);
+      await adminService.approveAuction(id); 
+      triggerToast(`Auction #${id} approved successfully!`);
       loadAllDashboardData();
     } catch (err) {
       triggerToast("Failed to complete approval process.");
@@ -201,14 +238,14 @@ const AdminDashboard = () => {
     setConfirmModal({
       isOpen: true,
       title: 'Reject Auction Request',
-      message: `Are you sure you want to reject and cancel Auction listing #${id}?`,
+      message: `Are you sure you want to reject this request? The user can request again after 24 hours.`,
       confirmText: 'Reject Auction',
       cancelText: 'Cancel',
       type: 'danger',
       onConfirm: async () => {
         try {
-          await adminService.rejectAuction(id);
-          triggerToast(`Auction Listing #${id} rejected and updated.`);
+          await adminService.rejectAuction(id); 
+          triggerToast(`Auction Listing #${id} rejected.`);
           loadAllDashboardData();
         } catch (err) {
           triggerToast("Transaction error modifying state variables.");
@@ -222,8 +259,8 @@ const AdminDashboard = () => {
   const handlePublishAuction = async (id) => {
     try {
       setGlobalLoading(true);
-      await adminService.publishAuction(id);
-      triggerToast(`Auction #${id} successfully forced live instantly!`);
+      await adminService.publishAuction(id); 
+      triggerToast(`Auction #${id} is now live for public bidding!`);
       loadAllDashboardData();
     } catch (err) {
       triggerToast("Failed to launch auction listing.");
@@ -236,13 +273,13 @@ const AdminDashboard = () => {
     setConfirmModal({
       isOpen: true,
       title: 'Force Finalize Auction Settlement',
-      message: `Warning: This triggers an administrative command override to conclude bidding operations for Auction #${id} instantly. Proceed?`,
+      message: `Warning: This triggers an administrative command override to close bidding operations for Auction #${id} instantly. Proceed?`,
       confirmText: 'Force Settlement',
       cancelText: 'Cancel',
       type: 'danger',
       onConfirm: async () => {
         try {
-          await adminService.finalizeAuction(id);
+          await adminService.finalizeAuction(id); 
           triggerToast(`Settlement routines run on Auction #${id}.`);
           loadAllDashboardData();
         } catch (err) {
@@ -258,13 +295,13 @@ const AdminDashboard = () => {
     setConfirmModal({
       isOpen: true,
       title: 'Hard System Deletion',
-      message: `Are you sure you want to permanently clean the database registry records for Auction #${id}? This action is irreversible.`,
+      message: `Are you sure you want to permanently cancel and purge Auction #${id}? This action cannot be reversed.`,
       confirmText: 'Hard Delete Record',
       cancelText: 'Cancel',
       type: 'danger',
       onConfirm: async () => {
         try {
-          await adminService.deleteAuction(id);
+          await adminService.deleteAuction(id); 
           triggerToast(`Auction profile #${id} safely purged from backend.`);
           loadAllDashboardData();
         } catch (err) {
@@ -281,7 +318,7 @@ const AdminDashboard = () => {
     { title: 'Total Registered Users', value: liveStats.totalUsers, change: `Pending: ${liveStats.pendingUsers}`, icon: Users, color: 'bg-green-500/20 text-green-400 border-green-500/30' },
     { title: 'Total Properties Listed', value: liveStats.totalProperties, change: 'Live Assets', icon: Building2, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
     { title: 'Live System Bids', value: liveStats.totalBids, change: `Active Auctions: ${liveStats.activeAuctions}`, icon: BrainCircuit, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-    { title: 'System Engine Accuracy', value: '95.1%', change: 'PropPredict Core', icon: QrCode, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+    { title: 'Pending Queue Requests', value: pendingRequestsCount, change: 'Requires Attention', icon: Clock, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', alert: pendingRequestsCount > 0 },
   ];
 
   const approveTrustDeed = (deedId) => {
@@ -339,9 +376,9 @@ const AdminDashboard = () => {
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 lg:z-30
         ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20'} 
-        bg-white transition-all duration-300 flex flex-col border-r border-[#E5E7EB] shrink-0
+        bg-[#0b1220] transition-all duration-300 flex flex-col border-r border-slate-800 shrink-0
       `}>
-        <div className="p-4 flex items-center justify-between h-20 border-b border-[#E5E7EB]">
+        <div className="p-4 flex items-center justify-between h-20 border-b border-slate-800">
           {isSidebarOpen ? (
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
               <img
@@ -350,10 +387,10 @@ const AdminDashboard = () => {
                 className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-105"
               />
               <div className="flex flex-col leading-none gap-[3px] text-left">
-                <span className="text-[15px] font-black tracking-tight text-[#0F172A]">
+                <span className="text-[15px] font-black tracking-tight text-white">
                   Next<span className="text-[#1D4ED8]">Property</span>
                 </span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#64748B]">
+                <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400">
                   Admin Control
                 </span>
               </div>
@@ -368,7 +405,7 @@ const AdminDashboard = () => {
           )}
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            className="p-1.5 hover:bg-slate-50 text-[#64748B] hover:text-[#0F172A] rounded-lg cursor-pointer transition focus:ring-2 focus:ring-blue-500/25 focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg cursor-pointer transition focus:ring-2 focus:ring-blue-500/25 focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Toggle Sidebar"
           >
             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
@@ -386,7 +423,7 @@ const AdminDashboard = () => {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-[#1e2d4a]">
+        <div className="p-4 border-t border-slate-800">
           <button onClick={handleLogout} className="flex items-center w-full p-2.5 text-red-400 hover:text-red-300 hover:bg-[#ff4d4d]/10 rounded-xl transition-all cursor-pointer font-semibold text-sm">
             <LogOut size={18} />
             {isSidebarOpen && <span className="ml-3">Sign Out</span>}
@@ -424,14 +461,14 @@ const AdminDashboard = () => {
           <div className="space-y-8 animate-in fade-in duration-300 relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {stats.map((stat, idx) => (
-                <div key={idx} className="bg-[#0e1626]/80 backdrop-blur-md p-6 rounded-2xl border border-[#1e2d4a]/50 flex flex-col justify-between shadow-xl">
+                <div key={idx} className={`bg-[#0e1626]/80 backdrop-blur-md p-6 rounded-2xl border flex flex-col justify-between shadow-xl transition ${stat.alert ? 'border-orange-500/40 bg-orange-950/10' : 'border-[#1e2d4a]/50'}`}>
                   <div className="flex justify-between items-start">
                     <div className="text-left">
                       <p className="text-[#64748B] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
                         <span>{stat.title}</span>
-                        {stat.isAi && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-green-pulse" />}
+                        {stat.alert && <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />}
                       </p>
-                      <h3 className="text-3xl font-black mt-2 text-[#0F172A] tracking-tight tabular-nums">{stat.value}</h3>
+                      <h3 className="text-3xl font-black mt-2 text-white tracking-tight tabular-nums">{stat.value}</h3>
                     </div>
                     <div className={`p-3 rounded-xl border ${stat.color}`}>
                       <stat.icon size={20} />
@@ -457,15 +494,14 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40">
-                      {/* Tries to render analytics data first, otherwise safely falls back to standard auctions database */}
                       {(analyticsData?.most_viewed_properties || auctionsList.slice(0, 5)).map((p, i) => (
                         <tr key={i} className="text-slate-350">
-                          <td className="py-3 font-semibold text-slate-200">{p.title || `Asset Reference #${p.id}`}</td>
+                          <td className="py-3 font-semibold text-slate-200">{p.title || p.propertyTitle || `Asset Reference #${p.id}`}</td>
                           <td className="py-3 font-mono text-blue-400">
-                            PKR {(p.reservePrice || p.price || 0).toLocaleString()}
+                            PKR {(p.reservePrice || p.price || p.startingPrice || 0).toLocaleString()}
                           </td>
                           <td className="py-3">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'PENDING_APPROVAL' ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
                               {p.status || "ACTIVE"}
                             </span>
                           </td>
@@ -481,20 +517,20 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="p-4 border-t border-[#E5E7EB] flex items-center justify-between bg-slate-50/30 text-xs font-semibold">
+                <div className="p-4 border-t border-slate-800 flex items-center justify-between text-xs font-semibold">
                   <span className="text-slate-500">Page {opsPage} of {totalOpsPages || 1}</span>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setOpsPage(prev => Math.max(prev - 1, 1))}
                       disabled={opsPage === 1}
-                      className="px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-lg disabled:opacity-50 text-slate-650 hover:bg-slate-100 transition cursor-pointer min-h-[44px]"
+                      className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg disabled:opacity-50 text-slate-400 hover:bg-slate-800 transition cursor-pointer"
                     >
                       Prev
                     </button>
                     <button 
                       onClick={() => setOpsPage(prev => Math.min(prev + 1, totalOpsPages))}
                       disabled={opsPage >= totalOpsPages}
-                      className="px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-lg disabled:opacity-50 text-slate-650 hover:bg-slate-100 transition cursor-pointer min-h-[44px]"
+                      className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg disabled:opacity-50 text-slate-400 hover:bg-slate-800 transition cursor-pointer"
                     >
                       Next
                     </button>
@@ -545,52 +581,67 @@ const AdminDashboard = () => {
                     <th className="px-6 py-4 text-right">Account Verification Commands</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E5E7EB] text-slate-700">
+                <tbody className="divide-y divide-slate-800 text-slate-300">
                   {usersList
                     .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
-                    .map((item) => (
-                      <tr key={item.id} className="hover:bg-[#121b2b]/30 transition border-b border-[#18263f]/30">
-                        <td className="px-6 py-4.5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-blue-600/10 text-blue-400 border border-blue-500/20 font-extrabold flex items-center justify-center text-xs">
-                              {item.name?.charAt(0) || "U"}
+                    // SECURITY GUARDRAIL: Automatically hide current logged-in root admin from selection lists
+                    .filter(u => u.email !== currentUser?.email)
+                    .map((item) => {
+                      const isCurrentlyBlocked = item.status === "BLOCKED" || item.profile === "BLOCKED";
+                      return (
+                        <tr key={item.id} className="hover:bg-[#121b2b]/30 transition border-b border-[#18263f]/30">
+                          <td className="px-6 py-4.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-blue-600/10 text-blue-400 border border-blue-500/20 font-extrabold flex items-center justify-center text-xs">
+                                {item.name?.charAt(0) || "U"}
+                              </div>
+                              <div>
+                                <p className="font-bold text-white text-sm">{item.name}</p>
+                                <p className="text-[10px] text-slate-500 font-semibold">{item.email}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-bold text-white text-sm">{item.name}</p>
-                              <p className="text-[10px] text-slate-500 font-semibold">{item.email}</p>
+                          </td>
+                          <td className="px-6 py-4.5 text-xs font-mono font-semibold text-slate-400">{item.phone || 'N/A'}</td>
+                          <td className="px-6 py-4.5 text-xs text-slate-300 max-w-xs truncate">{item.address || 'Faisalabad Regional Registry'}</td>
+                          <td className="px-6 py-4.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => setViewingUserActivity(item)}
+                                className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Activity size={10} /> Log
+                              </button>
+                              <button
+                                onClick={() => handleManualUserApproval(item.id)}
+                                className="px-2.5 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                Verify
+                              </button>
+                              <button
+                                onClick={() => handleToggleUserBan(item)}
+                                className={`px-2.5 py-1.5 rounded-lg border font-bold text-[10px] transition cursor-pointer flex items-center gap-1 ${
+                                  isCurrentlyBlocked 
+                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-600 hover:text-white' 
+                                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-600 hover:text-white'
+                                }`}
+                              >
+                                <UserX size={12} /> {isCurrentlyBlocked ? "Unblock" : "Block"}
+                              </button>
+                              <button
+                                onClick={() => handleHardDeleteUser(item.id)}
+                                className="p-1.5 rounded-lg border bg-red-500/10 text-red-400 border-red-500/25 hover:bg-red-600 hover:text-white transition cursor-pointer"
+                                title="Purge Profile"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4.5 text-xs font-mono font-semibold text-slate-400">{item.phone || 'N/A'}</td>
-                        <td className="px-6 py-4.5 text-xs text-slate-300 max-w-xs truncate">{item.address || 'Faisalabad Regional Registry'}</td>
-                        <td className="px-6 py-4.5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setViewingUserActivity(item)}
-                              className="px-2 py-1 bg-slate-50 border border-slate-200 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-lg text-[10px] font-bold transition flex items-center gap-1"
-                            >
-                              <Activity size={10} />
-                              Log
-                            </button>
-                            <button
-                              onClick={() => handleManualUserApproval(item.id)}
-                              className="px-2.5 py-1.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                            >
-                              Verify
-                            </button>
-                            <button
-                              onClick={() => handleToggleUserBan(item)}
-                              className="p-1.5 rounded-lg border bg-rose-500/10 text-rose-400 border-rose-500/25 hover:bg-rose-500/20 transition cursor-pointer"
-                            >
-                              <UserX size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  {usersList.length === 0 && (
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {usersList.filter(u => u.email !== currentUser?.email).length === 0 && (
                     <tr>
-                      <td colSpan="4" className="text-center py-8 text-slate-500 text-xs">No users registered on system database.</td>
+                      <td colSpan="4" className="text-center py-8 text-slate-500 text-xs">No user profiles registered in database.</td>
                     </tr>
                   )}
                 </tbody>
@@ -598,70 +649,53 @@ const AdminDashboard = () => {
             </div>
 
             {/* Users Stacked Cards - Shown on Mobile */}
-            <div className="md:hidden divide-y divide-slate-100 p-4 space-y-4">
+            <div className="md:hidden divide-y divide-slate-800/40 p-4 space-y-4">
               {usersList
-                .filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
-                .filter(u => userRoleFilter === 'All' ? true : u.role === userRoleFilter)
-                .filter(u => userStatusFilter === 'All' ? true : u.status === userStatusFilter)
-                .map((item) => (
-                  <div key={item.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3.5 text-xs text-left">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="checkbox" 
-                          checked={selectedUserIds.includes(item.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedUserIds(prev => [...prev, item.id]);
-                            else setSelectedUserIds(prev => prev.filter(id => id !== item.id));
-                          }}
-                          className="w-4 h-4"
-                        />
-                        <span className="font-extrabold text-[#0F172A] text-sm">{item.name}</span>
-                      </div>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
-                        item.status === 'Active' ? 'bg-[#ECFDF5] text-[#047857] border-emerald-100' : 'bg-[#FEF2F2] text-[#B91C1C] border-red-100'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[#64748B] font-semibold">Email: <span className="text-slate-800 font-bold">{item.email}</span></p>
-                      <p className="text-[#64748B] font-semibold">Joined: <span className="text-slate-800 font-bold font-mono">{item.joined}</span></p>
-                      <p className="text-[#64748B] font-semibold">Role: 
-                        <span className={`ml-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
-                          item.role === 'ADMIN' ? 'bg-[#F5F3FF] text-[#7C3AED] border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
+                .filter(u => u.email !== currentUser?.email)
+                .map((item) => {
+                  const isCurrentlyBlocked = item.status === "BLOCKED" || item.profile === "BLOCKED";
+                  return (
+                    <div key={item.id} className="p-4 bg-[#111c30]/40 border border-slate-800 rounded-xl space-y-3.5 text-xs text-left">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-white text-sm">{item.name}</span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
+                          isCurrentlyBlocked ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         }`}>
-                          {item.role}
+                          {item.status || (isCurrentlyBlocked ? "BLOCKED" : "ACTIVE")}
                         </span>
-                      </p>
-                      <p className="text-[#64748B] font-semibold">Plan: <span className="text-slate-900 font-extrabold capitalize">{item.plan}</span></p>
+                      </div>
+                      <div className="space-y-1 text-slate-400">
+                        <p>Email: <span className="text-white font-bold">{item.email}</span></p>
+                        <p>Phone: <span className="text-white font-mono font-bold">{item.phone || 'N/A'}</span></p>
+                      </div>
+                      <div className="pt-2 border-t border-slate-800 flex justify-end gap-2">
+                        <button
+                          onClick={() => setViewingUserActivity(item)}
+                          className="px-3 py-2 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition flex items-center gap-1 min-h-[44px]"
+                        >
+                          <Activity size={12} /> Log
+                        </button>
+                        <button
+                          onClick={() => handleToggleUserBan(item)}
+                          className={`px-3 py-2 rounded-lg border transition min-h-[44px] flex items-center font-bold text-xs ${
+                            isCurrentlyBlocked 
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-600' 
+                              : 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-600'
+                          }`}
+                        >
+                          {isCurrentlyBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                        <button
+                          onClick={() => handleHardDeleteUser(item.id)}
+                          className="px-3 py-2 rounded-lg border bg-red-500/10 text-red-400 border-red-500/25 hover:bg-red-600 hover:text-white transition font-bold text-xs flex items-center min-h-[44px]"
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
                     </div>
-                    <div className="pt-2 border-t border-slate-200 flex justify-end gap-2">
-                      <button
-                        onClick={() => setViewingUserActivity(item)}
-                        className="px-3 py-2 bg-white border border-slate-200 text-[#64748B] hover:text-[#0F172A] rounded-lg text-xs font-bold transition flex items-center gap-1 min-h-[44px]"
-                      >
-                        <Activity size={12} /> Log
-                      </button>
-                      <button
-                        onClick={() => toggleUserRole(item.id)}
-                        className="px-3 py-2 bg-white border border-slate-200 text-[#1D4ED8] rounded-lg text-xs font-bold transition flex items-center gap-1 min-h-[44px]"
-                      >
-                        Role
-                      </button>
-                      <button
-                        onClick={() => toggleUserStatus(item.id)}
-                        className={`p-2 rounded-lg border transition min-h-[44px] px-3 py-2 flex items-center ${
-                          item.status === 'Active' 
-                            ? 'bg-[#FEF2F2] text-[#B91C1C] border-red-200 hover:bg-red-100 font-bold text-xs' 
-                            : 'bg-[#ECFDF5] text-[#047857] border-emerald-250 hover:bg-emerald-100 font-bold text-xs'
-                        }`}
-                      >
-                        {item.status === 'Active' ? 'Suspend' : 'Activate'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         )}
@@ -690,6 +724,7 @@ const AdminDashboard = () => {
                   <option value="ACTIVE">Active (Live)</option>
                   <option value="CONCLUDED">Concluded</option>
                   <option value="CANCELLED">Cancelled</option>
+                  <option value="REJECTED">Rejected</option>
                 </select>
               </div>
             </div>
@@ -707,24 +742,29 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-[#18263f]">
                   {auctionsList
-                    .filter(a => a.title?.toLowerCase().includes(auctionSearch.toLowerCase()) || a.location?.toLowerCase().includes(auctionSearch.toLowerCase()))
+                    .filter(a => {
+                      const term = auctionSearch.toLowerCase();
+                      const titleStr = a.title || a.propertyTitle || `Auction Profile #${a.id}`;
+                      return titleStr.toLowerCase().includes(term) || a.location?.toLowerCase().includes(term);
+                    })
                     .map((item) => (
                       <tr key={item.id} className="hover:bg-[#121b2b]/40 transition">
                         <td className="px-6 py-4.5 font-bold text-white text-sm">
                           <div>
-                            <p>{item.title || `Auction Profile #${item.id}`}</p>
+                            <p>{item.title || item.propertyTitle || `Auction Profile #${item.id}`}</p>
                             <p className="text-[10px] text-slate-500 font-normal">Owner ID Ref: {item.ownerId || 'System'}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4.5 text-xs text-slate-400">{item.location || 'Faisalabad Regional'}</td>
                         <td className="px-6 py-4.5 text-sm font-extrabold text-blue-400">
-                          {item.reservePrice ? `PKR ${item.reservePrice.toLocaleString()}` : 'N/A'}
+                          PKR {(item.reservePrice || item.startingPrice || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4.5">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             item.status === 'PENDING_APPROVAL' ? 'bg-amber-500/10 text-amber-400' :
                             item.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' :
                             item.status === 'CONCLUDED' ? 'bg-blue-500/10 text-blue-400' :
+                            item.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400' :
                             'bg-slate-500/10 text-slate-400'
                           }`}>
                             {item.status}
@@ -772,7 +812,7 @@ const AdminDashboard = () => {
                               className="p-1.5 rounded-lg border bg-rose-500/10 text-rose-400 border-rose-500/25 hover:bg-rose-500/20 transition cursor-pointer"
                               title="Hard System Purge"
                             >
-                              <UserX size={14} />
+                              <ShieldX size={14} />
                             </button>
                           </div>
                         </td>
@@ -856,64 +896,6 @@ const AdminDashboard = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* TrustDeed Stacked Cards - Shown on Mobile */}
-            <div className="md:hidden divide-y divide-slate-100 p-4 space-y-4">
-              {trustDeeds
-                .filter(d => d.status === deedQueueTab)
-                .map((item) => (
-                  <div key={item.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs text-left">
-                    <div className="flex justify-between items-center">
-                      <span className="font-extrabold text-[#0F172A] text-sm">{item.owner}</span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border ${
-                        item.status === 'Verified' ? 'bg-[#ECFDF5] text-[#047857] border-emerald-100' : 'bg-[#FFFBEB] text-[#B45309] border-amber-100'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[#64748B] font-semibold">Title ID: <span className="text-slate-800 font-bold font-mono">{item.documentId}</span></p>
-                      <p className="text-[#64748B] font-semibold">District: <span className="text-slate-800 font-bold">{item.registryOffice}</span></p>
-                      <p className="text-[#64748B] font-semibold">Submitted: <span className="text-slate-700 font-mono font-semibold">{item.uploadDate}</span></p>
-                    </div>
-                    <div className="pt-2 border-t border-slate-200 flex justify-end">
-                      {item.status === 'Pending' ? (
-                        <button
-                          onClick={() => approveTrustDeed(item.id)}
-                          className="w-full justify-center px-3.5 py-2 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 text-white text-[10px] font-extrabold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow-sm shadow-orange-500/10 min-h-[44px]"
-                        >
-                          <ShieldCheck size={14} />
-                          Verify & Seal Title
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            const urls = getQRUrls(item.qrCode || "TD-102-8812");
-                            const history = [
-                              { time: '2026-07-15 01:04', role: 'public', detail: 'Public QR scan log accessed successfully.' },
-                              { time: '2026-07-14 16:12', role: 'buyer', detail: 'Buyer certificate downloaded & verified.' },
-                              { time: '2026-07-14 10:10', role: 'admin', detail: 'Admin registry consensus signature created.' }
-                            ];
-                            setQrModal({ isOpen: true, deedId: item.qrCode || "TD-102-8812", urls, history });
-                          }}
-                          className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 px-3.5 py-2 rounded-lg border border-slate-200 shadow-sm transition-all text-left w-full justify-between min-h-[44px]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-white p-0.5 rounded border border-slate-200 flex items-center justify-center shrink-0 shadow-inner">
-                              <span className="text-[5px] text-black font-mono font-bold leading-none break-all">QR-CODE</span>
-                            </div>
-                            <div className="text-left font-sans">
-                              <p className="text-[8px] text-[#047857] font-extrabold tracking-wider leading-none">VIEW QR KEYS</p>
-                              <span className="text-[9px] font-mono text-slate-800 mt-1 block font-bold leading-none">{item.qrCode || "TD-102-8812"}</span>
-                            </div>
-                          </div>
-                          <ChevronRight size={14} className="text-slate-400" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-            </div>
           </div>
         )}
 
@@ -932,6 +914,48 @@ const AdminDashboard = () => {
         )}
       </main>
 
+      {/* ── USER REAL-TIME SYSTEM AUDIT TRAIL LOG DRAWER ── */}
+      {viewingUserActivity && (
+        <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setViewingUserActivity(null)} />
+          <div className="relative w-full max-w-md h-full bg-[#0e1626] border-l border-slate-800 p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300">
+            <div>
+              <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white">User Session Audit Trails</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Real-time parameters tracking for {viewingUserActivity.name}</p>
+                </div>
+                <button onClick={() => setViewingUserActivity(null)} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"><X size={16} /></button>
+              </div>
+
+              <div className="space-y-3 mt-6">
+                <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-850 text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Assigned Context Email</span>
+                  <span className="text-white font-semibold">{viewingUserActivity.email}</span>
+                </div>
+                <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-850 text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Authorization Privilege Role</span>
+                  <span className="text-purple-400 font-bold">{viewingUserActivity.role || viewingUserActivity.userType || "USER"}</span>
+                </div>
+                <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-850 text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Account Insertion Date</span>
+                  <span className="text-slate-200 font-mono font-bold">
+                    {viewingUserActivity.createdAt ? new Date(viewingUserActivity.createdAt).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-850 text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Last Timestamp Login</span>
+                  <span className="text-blue-400 font-mono font-bold">
+                    {viewingUserActivity.lastLogin ? new Date(viewingUserActivity.lastLogin).toLocaleString() : 'Never Logged In'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setViewingUserActivity(null)} className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition">Close Trail View</button>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Backdrop Dialog Frame */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
@@ -943,21 +967,6 @@ const AdminDashboard = () => {
               <button onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))} className="px-3 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-850 rounded-xl border border-slate-800 text-slate-400 cursor-pointer">Cancel</button>
               <button onClick={confirmModal.onConfirm} className="px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl cursor-pointer">Confirm Command</button>
             </div>
-
-            {/* Audit Scan logs trail */}
-            {qrModal.history && qrModal.history.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Cryptographic scan logs trail</h4>
-                <div className="space-y-2.5">
-                  {qrModal.history.map((h, i) => (
-                    <div key={i} className="flex items-center justify-between text-[11px] p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                      <span className="font-semibold text-slate-700">{h.detail}</span>
-                      <span className="font-mono text-[9px] text-slate-400 font-bold">{h.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

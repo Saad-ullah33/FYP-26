@@ -34,7 +34,7 @@ export const adminService = {
   },
 
   approveUserAccount: async (id) => {
-    const res = await adminClient.post(`/users/${id}/approve`);
+    const res = await adminClient.post(`/users/${id}/verify`);
     return res.data;
   },
 

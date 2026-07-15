@@ -125,7 +125,7 @@ const UserDashboard = () => {
     title: "",
     description: "",
     price: "",
-    purpose: "BUY",
+    purpose: "SALE", // Updated from "BUY" to match backend "SALE"
     propertyType: "HOUSE",
     location: "D Ground",
     cityId: 1, 
@@ -226,30 +226,23 @@ const UserDashboard = () => {
     else if (tab === "auctions") setActiveTab("Auctions");
   }, [location]);
 
-  const handleOpenCreateModal = () => {
+const handleOpenCreateModal = () => {
     if (!canAccess('unlimitedListings') && myListings.length >= 5) {
       alert("You have reached the maximum listing limit (5) for the Free plan. Please upgrade to Pro or Business to add unlimited listings.");
       setIsUpgradeModalOpen(true);
       return;
     }
-    setIsEditMode(false);
-    setSelectedPropertyId(null);
-    setSelectedImages([]);
-    setPropertyForm({
-      title: "", description: "", price: "", purpose: "BUY",
-      propertyType: "HOUSE", location: "D Ground", cityId: 1,
-      bathrooms: 2, bedrooms: 3, area: "5 Marla", address: "", auctionEnabled: false
-    });
-    setIsCreateModalOpen(true);
-  };
 
+    // Redirect directly to your standalone step-by-step AddProperty component
+    navigate("/add-property"); 
+  };
   const handleOpenEditModal = (item) => {
     setIsEditMode(true);
     setSelectedPropertyId(item.id);
     setSelectedImages([]);
     setPropertyForm({
       title: item.title || "", description: item.description || "", price: item.price || "",
-      purpose: item.purpose || "BUY", propertyType: item.propertyType || "HOUSE", location: item.location || "D Ground",
+      purpose: item.purpose || "SALE", propertyType: item.propertyType || "HOUSE", location: item.location || "D Ground",
       cityId: 1, bathrooms: item.bathrooms || 2, bedrooms: item.bedrooms || 3, area: item.area || "5 Marla",
       address: item.address || "", auctionEnabled: item.auctionEnabled || false
     });
@@ -290,7 +283,7 @@ const UserDashboard = () => {
     }
   };
 
-  const handlePropertyFormSubmit = async (e) => {
+const handlePropertyFormSubmit = async (e) => {
     e.preventDefault();
     if (!isEditMode && !canAccess('unlimitedListings') && myListings.length >= 5) {
       alert("You have reached the maximum listing limit (5) for the Free plan. Please upgrade to Pro or Business to add unlimited listings.");
@@ -300,36 +293,51 @@ const UserDashboard = () => {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append("property", new Blob([JSON.stringify(propertyForm)], { type: "application/json" }));
-      selectedImages.forEach(img => formData.append("images", img));
+      
+      // Package the property parameters as an application/json blob
+      const propertyBlob = new Blob([JSON.stringify(propertyForm)], { 
+        type: "application/json" 
+      });
+      formData.append("property", propertyBlob);
+
+      // Append binary images
+      selectedImages.forEach(img => {
+        formData.append("images", img);
+      });
+
+      // Config containing the header explicitly telling Axios to let the browser handle boundary markers
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
 
       if (isEditMode) {
-        await updatePropertyListing(selectedPropertyId, formData);
+        await updatePropertyListing(selectedPropertyId, formData, config);
       } else {
-        await createPropertyListing(formData);
+        await createPropertyListing(formData, config);
         incrementUsage("unlimitedListings");
       }
       setIsCreateModalOpen(false);
       await loadDashboard(); 
     } catch (err) {
-      console.error(err);
-      alert("Submission failed. Verify parameters.");
+      console.error("Payload submission error details:", err.response?.data || err.message);
+      alert(`Submission failed: ${err.response?.data?.message || "Verify your form parameters."}`);
     } finally {
       setLoading(false);
     }
   };
 
-const handleTriggerAuctionLaunch = (item) => {
-  // Removed the strict property status check so any active property can submit an auction request
-  setAuctionSetupForm({
-    propertyId: item.id,
-    startingPrice: item.price || "",
-    reservePrice: "",
-    startTime: "",
-    endTime: ""
-  });
-  setIsAuctionModalOpen(true);
-};
+  const handleTriggerAuctionLaunch = (item) => {
+    setAuctionSetupForm({
+      propertyId: item.id,
+      startingPrice: item.price || "",
+      reservePrice: "",
+      startTime: "",
+      endTime: ""
+    });
+    setIsAuctionModalOpen(true);
+  };
 
   const handleAuctionFormSubmit = async (e) => {
     e.preventDefault();
@@ -472,7 +480,7 @@ const handleTriggerAuctionLaunch = (item) => {
             <SidebarItem icon={Heart} text="Saved Properties" active={activeTab === 'Saved Properties'} onClick={() => setActiveTab('Saved Properties')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Calculator} text="Smart Build" active={activeTab === 'Smart Build'} onClick={() => setActiveTab('Smart Build')} isOpen={isSidebarOpen} />
             <SidebarItem icon={Gavel} text="Auctions" active={activeTab === 'Auctions'} onClick={() => setActiveTab('Auctions')} isOpen={isSidebarOpen} />
-<SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
+            <SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
             <div className={`mt-6 mb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
               Account Settings
             </div>
@@ -493,7 +501,7 @@ const handleTriggerAuctionLaunch = (item) => {
         )}
 
         <div className="p-4 border-t border-slate-200">
-          <button onClick={handleLogout} className="flex items-center w-full p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer font-semibold text-sm">
+          <button onClick={handleLogout} className="flex items-center w-full p-2.5 text-red-500 hover:bg-red-550 rounded-xl transition-all cursor-pointer font-semibold text-sm">
             <LogOut size={18} />
             {isSidebarOpen && <span className="ml-3">Sign Out</span>}
           </button>
@@ -502,6 +510,7 @@ const handleTriggerAuctionLaunch = (item) => {
 
       {/* ================= MAIN CONTENT AREA ================= */}
       <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-6 lg:p-8">
+        {loading && <div className="absolute top-4 left-1/2 bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full z-50 animate-bounce">Processing Server Requests...</div>}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
           <div>
             <h2 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
@@ -644,51 +653,22 @@ const handleTriggerAuctionLaunch = (item) => {
                       <th className="px-6 py-4">District / Area</th>
                       <th className="px-6 py-4">Asking Price</th>
                       <th className="px-6 py-4">Post State</th>
-                      <th className="px-6 py-4 text-center">Performance / Action</th>
+                      <th className="px-6 py-4 text-center">Auction Integration</th>
                       <th className="px-6 py-4 text-right">Settings</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredListings.map((item) => {
-                      // CRITICAL WORKFLOW FIX: Read linked dynamic auction states to toggle button logic
                       const activeWorkflow = myAuctions.find(auc => auc.propertyId === item.id);
                       
                       return (
                         <tr key={item.id} className="hover:bg-slate-50/50 transition">
-<td className="px-6 py-4.5">
-  <div className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-slate-500">
-    <span className="text-slate-400 text-[11px]">Type: {item.propertyType}</span>
-    
-    {/* DYNAMIC AUCTION PIPELINE SWITCH */}
-    {activeWorkflow ? (
-      <>
-        {activeWorkflow.status === 'PENDING_APPROVAL' && (
-          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
-            <Clock size={10} /> Request Processing
-          </span>
-        )}
-        {activeWorkflow.status === 'REJECTED' && (
-          <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1" title="Violation flagged by administrative moderator rules.">
-            <AlertOctagon size={10} /> Violation/Rejected
-          </span>
-        )}
-        {['ACTIVE', 'SCHEDULED', 'APPROVED', 'SOLD'].includes(activeWorkflow.status) && (
-          <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[9px] font-extrabold uppercase tracking-wide flex items-center gap-1">
-            <CheckCircle2 size={10} /> Live in Pool
-          </span>
-        )}
-      </>
-    ) : (
-      /* FIX: Removed item.status === "APPROVED" lock. Anyone can now apply for an auction on their property listing. */
-      <button 
-        onClick={() => handleTriggerAuctionLaunch(item)}
-        className="text-[9px] font-bold flex items-center gap-0.5 px-2 py-1 rounded border bg-gradient-to-r from-blue-600 to-blue-500 text-white border-transparent hover:opacity-90 cursor-pointer shadow-sm shadow-blue-500/10"
-      >
-        <ArrowUpRight size={10} /> Launch Auction
-      </button>
-    )}
-  </div>
-</td>
+                          <td className="px-6 py-4.5 font-bold text-slate-800">
+                            <div className="flex flex-col">
+                              <span>{item.title}</span>
+                              <span className="text-[10px] text-slate-400 font-mono mt-0.5">Ref ID: #PRP-{item.id}</span>
+                            </div>
+                          </td>
                           <td className="px-6 py-4.5 text-xs text-slate-500 font-semibold">{item.city || item.location || "N/A"}</td>
                           <td className="px-6 py-4.5 text-sm font-extrabold text-blue-600">Rs {item.price?.toLocaleString()}</td>
                           <td className="px-6 py-4.5">
@@ -701,11 +681,8 @@ const handleTriggerAuctionLaunch = (item) => {
                               {item.status || "PENDING"}
                             </span>
                           </td>
-                          <td className="px-6 py-4.5">
+                          <td className="px-6 py-4.5 text-center">
                             <div className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-slate-500">
-                              <span className="text-slate-400 text-[11px]">Type: {item.propertyType}</span>
-                              
-                              {/* DYNAMIC PIPELINE BUTTON SWITCH STATE COMPLIANCE */}
                               {activeWorkflow ? (
                                 <>
                                   {activeWorkflow.status === 'PENDING_APPROVAL' && (
@@ -727,12 +704,7 @@ const handleTriggerAuctionLaunch = (item) => {
                               ) : (
                                 <button 
                                   onClick={() => handleTriggerAuctionLaunch(item)}
-                                  disabled={item.status !== "APPROVED"}
-                                  className={`text-[9px] font-bold flex items-center gap-0.5 px-2 py-1 rounded border transition ${
-                                    item.status === "APPROVED" 
-                                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white border-transparent hover:opacity-90 cursor-pointer shadow-sm shadow-blue-500/10" 
-                                      : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                                  }`}
+                                  className="text-[9px] font-bold flex items-center gap-0.5 px-2 py-1 rounded border bg-gradient-to-r from-blue-600 to-blue-500 text-white border-transparent hover:opacity-90 cursor-pointer shadow-sm shadow-blue-500/10"
                                 >
                                   <ArrowUpRight size={10} /> Launch Auction
                                 </button>
@@ -780,7 +752,7 @@ const handleTriggerAuctionLaunch = (item) => {
                   <div>
                     <label className="block font-bold text-slate-400 uppercase mb-1">Purpose</label>
                     <select value={propertyForm.purpose} onChange={e => setPropertyForm({...propertyForm, purpose: e.target.value})} className="w-full border rounded-xl px-3 py-2 bg-transparent outline-none">
-                      <option value="BUY">For Sale</option>
+                      <option value="SALE">For Sale</option> {/* Corrected value to "SALE" */}
                       <option value="RENT">Rent</option>
                     </select>
                   </div>
@@ -1046,22 +1018,22 @@ const handleTriggerAuctionLaunch = (item) => {
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
               <form onSubmit={saveProfileSettings} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
-                  <input type="text" value={profileForm.fullName} onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 outline-none" required />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                    <input type="text" value={profileForm.fullName} onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                    <input type="email" value={profileForm.email} disabled className="w-full border border-slate-200 bg-slate-50 text-slate-400 rounded-xl px-4 py-2.5 text-sm outline-none cursor-not-allowed" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
-                  <input type="email" value={profileForm.email} disabled className="w-full border border-slate-200 bg-slate-50 text-slate-400 rounded-xl px-4 py-2.5 text-sm outline-none cursor-not-allowed" />
+                <div className="flex justify-end pt-4">
+                  <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"><Save size={14} /> Save Profiling Changes</button>
                 </div>
-              </div>
-              <div className="flex justify-end pt-4">
-                <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"><Save size={14} /> Save Profiling Changes</button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
         )}
       </main>
 

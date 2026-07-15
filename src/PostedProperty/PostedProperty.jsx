@@ -52,7 +52,6 @@ const handleWishlist = (property) => {
         const props = Array.isArray(res.data)
           ? res.data
           : res.data?.data || [];
-
         const normalized = props.map((p) => ({
           ...p,
           imageUrl:
