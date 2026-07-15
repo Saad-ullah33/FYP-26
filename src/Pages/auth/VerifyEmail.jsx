@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
+import api from "../../utils/api";
 
+  // 🎯 CONFETTI EFFECT (simple emoji burst)
+  const confetti = ["🎉", "✨", "🎊", "🔥"];
 const VerifyEmail = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -13,8 +15,7 @@ const VerifyEmail = () => {
 
   const token = params.get("token");
 
-  // 🎯 CONFETTI EFFECT (simple emoji burst)
-  const confetti = ["🎉", "✨", "🎊", "🔥"];
+
 
   // ⏳ TIMER (expiry UI simulation)
   useEffect(() => {
@@ -36,9 +37,9 @@ const VerifyEmail = () => {
 
     const verifyEmail = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8080/api/auth/verify-email?token=${token}`
-        );
+        const res = await api.get(
+  `/auth/verify-email?token=${token}`
+);
 
         setEmail(res.data?.email || "");
 
@@ -72,15 +73,23 @@ const VerifyEmail = () => {
   // 🔁 RESEND EMAIL
   const resendEmail = async () => {
     try {
-      await axios.post("http://localhost:8080/api/auth/resend-verification", {
-        email,
-      });
+      await api.post(
+  "/auth/resend-verification",
+  {
+    email,
+  }
+);
 
       alert("Verification email sent again!");
       setTimeLeft(60);
     } catch (error) {
-      alert("Failed to resend email");
-    }
+  console.error(
+    "Email verification failed:",
+    error.response?.data || error.message
+  );
+
+  setStatus("error");
+}
   };
 
   return (

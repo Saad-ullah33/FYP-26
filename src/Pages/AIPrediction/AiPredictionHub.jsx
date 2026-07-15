@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { Search, Sliders, LineChart as ChartIcon, Sparkles, Building2, Landmark, ArrowRight, TrendingUp } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
@@ -24,7 +24,7 @@ export default function AiPredictionHub() {
 
   // Fetch dynamic location configuration from backend on mount
   useEffect(() => {
-    axios.get("http://localhost:8080/api/predictions/faisalabad-sectors")
+api.get("/predictions/faisalabad-sectors")
       .then(res => {
         setSectors(res.data);
         if (res.data.length > 0) setSelectedSector(res.data[0]);
@@ -36,7 +36,7 @@ export default function AiPredictionHub() {
     e.preventDefault();
     setSearchLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/predictions/search-by-budget?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+      const res = await api.get(`/predictions/search-by-budget?minPrice=${minPrice}&maxPrice=${maxPrice}`);
       setSearchResults(res.data);
       if (res.data.length > 0) setActiveForecast(res.data[0]);
     } catch (err) {
@@ -50,7 +50,7 @@ export default function AiPredictionHub() {
     e.preventDefault();
     setAppraisalLoading(true);
     try {
-      const res = await axios.post("http://localhost:8080/api/predictions/estimate-price", {
+      const res = await api.post("/predictions/estimate-price", {
         area, sector: selectedSector, propertyType, purpose
       });
       setAppraisalResult(res.data);

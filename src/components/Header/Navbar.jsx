@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import {
   FaHome,
@@ -49,16 +49,14 @@ const Navbar = () => {
     "relative py-1.5 text-slate-600 hover:text-blue-600 font-semibold whitespace-nowrap transition-all duration-200 after:absolute after:bottom-0 after:left-1/2 after:h-[2.5px] after:w-0 after:bg-blue-600 after:rounded-full hover:after:w-full hover:after:left-0 after:transition-all after:duration-250";
 
   useEffect(() => {
-    const fetchTypes = async () => {
-      try {
-        const res = await axios.get(
-          "http://localhost:8080/api/properties/property-types"
-        );
-        setTypes(res.data || []);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+const fetchTypes = async () => {
+  try {
+    const res = await api.get("/properties/property-types");
+    setTypes(res.data || []);
+  } catch (err) {
+    console.log("Failed to fetch property types:", err);
+  }
+};
 
     fetchTypes();
   }, []);

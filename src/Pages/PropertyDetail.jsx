@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 import {
   ChevronLeft,
   ChevronRight,
@@ -92,8 +92,9 @@ const PropertyDetail = () => {
   const fetchAiValuationMetrics = async () => {
     try {
       setAiLoading(true);
-      const res = await axios.get(`http://localhost:8080/api/predictions/${id}/explanation`);
-      setAiData(res.data);
+const res = await api.get(
+  `/predictions/${id}/explanation`
+);      setAiData(res.data);
       setAiError(null);
     } catch (err) {
       setAiError("Failed to generate real-time evaluation framework.");
@@ -106,42 +107,43 @@ const PropertyDetail = () => {
   const fetchHistoricalTrends = async () => {
     try {
       setTrendLoading(true);
-      const res = await axios.get(`http://localhost:8080/api/predictions/historical-trends/${id}`);
-      setTrendData(res.data.timeline);
+const res = await api.get(
+  `/predictions/historical-trends/${id}`
+);      setTrendData(res.data.timeline);
     } catch (err) {
 console.error("🔍 DEBUG AI TRAJECTORY ERROR:", err.response?.[0] || err.response || err);    } finally {
       setTrendLoading(false);
     }
   };
+const fetchProperty = async () => {
+  try {
+    setLoading(true);
 
-  const fetchProperty = async () => {
-    try {
-      setLoading(true);
+    const res = await api.get(`/properties/id/${id}`);
 
-      const res = await axios.get(
-        `http://localhost:8080/api/properties/id/${id}`
-      );
+    const data = res.data;
 
-      const data = res.data;
-      setProperty(data);
-      
-      // Default messaging details prefill
-      setContactMessage(
-        `Assalam-o-Alaikum, I am interested in your property "${data.title}" (PKR ${formatPrice(data.price)}) located in ${data.area}, ${data.city?.name || data.city}. Please get back to me. JazakAllah.`
-      );
+    setProperty(data);
 
-      const relatedRes = await axios.get(
-        `http://localhost:8080/api/properties/type/${data.propertyType}`
-      );
+    setContactMessage(
+      `Assalam-o-Alaikum, I am interested in your property "${data.title}" (PKR ${formatPrice(data.price)}) located in ${data.area}, ${data.city?.name || data.city}. Please get back to me. JazakAllah.`
+    );
 
-      setRelated((relatedRes.data || []).filter((p) => p.id !== data.id));
-    } catch (err) {
-      console.log(err);
-      setProperty(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const relatedRes = await api.get(
+      `/properties/type/${data.propertyType}`
+    );
+
+    setRelated(
+      (relatedRes.data || []).filter((p) => p.id !== data.id)
+    );
+
+  } catch (err) {
+    console.log("Property fetch error:", err);
+    setProperty(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
