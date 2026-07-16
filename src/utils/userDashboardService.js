@@ -1,34 +1,29 @@
-import axios from "axios";
+import api from "../utils/api"; // Adjust the path if needed
 
-// Pull current origin to maintain perfect proxy context mapping
-const BASE_URL = window.location.origin + "/api";
+/* =========================================================================
+   USER ANALYTICS & INSIGHTS (NEW ENDPOINTS ADDED)
+   ========================================================================= */
 
-// Create an isolated instance wrapper targeting your backend route structure
-const dashboardClient = axios.create({
-  baseURL: BASE_URL
-});
-
-// Dynamically intercept every outgoing request right before transmission execution
-dashboardClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token") || 
-                localStorage.getItem("jwt") || 
-                localStorage.getItem("accessToken");
-                
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+/**
+ * Fetches personalized financial turnover, successful wins, and listing performance
+ * GET /api/user/analytics/overview
+ */
+export const getPersonalAnalyticsOverview = async () => {
+  try {
+    const response = await api.get("/user/analytics/overview");
+    return response.data;
+  } catch (err) {
+    console.error("Personal analytics dashboard service unreachable:", err);
+    return {
+      totalBidsPlaced: 0,
+      successfulAuctionsWon: 0,
+      totalCapitalExpended: 0.0,
+      myTotalAuctionsCreated: 0,
+      myActiveAuctions: 0,
+      mySoldAuctions: 0
+    };
   }
-  
-  // Dynamically configure multipart content-type if raw FormData payload is detected
-  if (config.data instanceof FormData) {
-    config.headers["Content-Type"] = "multipart/form-data";
-  } else {
-    config.headers["Content-Type"] = "application/json";
-  }
-
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+};
 
 /* =========================================================================
    USER DASHBOARD METRICS & CORE METADATA
@@ -36,7 +31,7 @@ dashboardClient.interceptors.request.use((config) => {
 
 export const getDashboardStats = async () => {
   try {
-    const response = await dashboardClient.get("/user/dashboard/stats");
+    const response = await api.get("/user/dashboard/stats");
     return response.data;
   } catch (err) {
     console.error("Stats endpoint unreachable:", err);
@@ -46,7 +41,7 @@ export const getDashboardStats = async () => {
 
 export const getMyProperties = async () => {
   try {
-    const response = await dashboardClient.get("/user/dashboard/properties");
+    const response = await api.get("/user/dashboard/properties");
     return Array.isArray(response.data) ? response.data : [];
   } catch (err) {
     console.error("Properties endpoint unreachable:", err);
@@ -54,39 +49,56 @@ export const getMyProperties = async () => {
   }
 };
 
-
-export const getMyAuctions = async () => {
+/**
+ * Fetches auctions linked to the user. Optionally filters by status via request params.
+ * GET /api/user/dashboard/auctions?status=ACTIVE
+ */
+export const getMyAuctions = async (status = null) => {
   try {
-    const response = await dashboardClient.get("/user/dashboard/auctions");
+    const url = status ? `/user/dashboard/auctions?status=${status}` : "/user/dashboard/auctions";
+    const response = await api.get(url);
     return Array.isArray(response.data) ? response.data : [];
   } catch (err) {
-    console.error("Auctions endpoint unreachable:", err);
+    console.error(`Auctions endpoint unreachable (filter: ${status}):`, err);
     return [];
   }
 };
 
 /* =========================================================================
-   PROPERTY MANAGEMENT CRUD ACTIONS (Directly utilizing our centralized proxy)
+   PROPERTY MANAGEMENT & AUCTION WORKFLOWS
    ========================================================================= */
 
 export const createPropertyListing = async (formData) => {
-  // Uses multi-part form data implicitly due to our automated interceptor check
-  const response = await dashboardClient.post("/properties/create", formData);
+  const response = await api.post("/properties/create", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
 export const updatePropertyListing = async (id, formData) => {
-  const response = await dashboardClient.put(`/properties/id/${id}`, formData);
+  const response = await api.put(`/properties/id/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
 export const deletePropertyListing = async (id) => {
-  const response = await dashboardClient.delete(`/user/dashboard/properties/${id}`);
+  const response = await api.delete(`/user/dashboard/properties/${id}`);
   return response.data;
 };
 
-export const enablePropertyAuction = async (id) => {
-  const response = await dashboardClient.post(`/user/dashboard/properties/${id}/enable-auction`);
+/**
+ * Places an existing owned property listing onto the auction block.
+ * POST /api/user/dashboard/properties/{id}/enable-auction
+ * @param {number} id - The Property ID
+ * @param {Object} auctionData - The AuctionRequestDTO object { startingPrice, reservePrice, startTime, endTime }
+ */
+export const enablePropertyAuction = async (id, auctionData) => {
+  const response = await api.post(`/user/dashboard/properties/${id}/enable-auction`, auctionData);
   return response.data;
 };
 
@@ -96,7 +108,7 @@ export const enablePropertyAuction = async (id) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await dashboardClient.get("/user/dashboard/profile");
+    const response = await api.get("/user/dashboard/profile");
     return response.data;
   } catch (err) {
     console.error("Profile endpoint unreachable:", err);
@@ -105,6 +117,6 @@ export const getUserProfile = async () => {
 };
 
 export const updateUserProfile = async (profileData) => {
-  const response = await dashboardClient.put("/user/dashboard/profile", profileData);
+  const response = await api.put("/user/dashboard/profile", profileData);
   return response.data;
 };

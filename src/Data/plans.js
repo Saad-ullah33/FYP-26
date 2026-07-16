@@ -1,4 +1,4 @@
-export const PLANS = [
+ const PLANS = [
   {
     id: "free",
     name: "Free",
@@ -71,3 +71,4 @@ export const PLANS = [
     description: "Designed for real estate agencies and construction teams needing branding and seats.",
   },
 ];
+export default PLANS;

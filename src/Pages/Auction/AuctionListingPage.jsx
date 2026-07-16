@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MOCK_AUCTIONS } from "../../constants/mockAuctions";
+import api from "../../utils/api"; // Integrating your verified Axios utility instance
 import { FAISALABAD_LOCATIONS } from "../../constants/faisalabadLocations";
 import { 
   Search, 
@@ -22,7 +22,7 @@ const CardCountdown = ({ endDate, status }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0, ended: false });
 
   useEffect(() => {
-    if (status === "CLOSED" || status === "SOLD") {
+    if (status === "CLOSED" || status === "SOLD" || status === "CONCLUDED") {
       setTimeLeft(prev => ({ ...prev, ended: true }));
       return;
     }
@@ -71,6 +71,17 @@ const CardCountdown = ({ endDate, status }) => {
   );
 };
 
+const PreviewCard = ({ title, value }) => {
+  return (
+    <div className="bg-gray-50 border rounded-3xl p-5">
+      <p className="text-sm text-gray-500">{title}</p>
+      <h3 className="text-lg font-semibold text-gray-800 mt-1">
+        {value || "-"}
+      </h3>
+    </div>
+  );
+};
+
 const AuctionListingPage = () => {
   const navigate = useNavigate();
 
@@ -84,20 +95,24 @@ const AuctionListingPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [priceRange, setPriceRange] = useState("ALL");
 
-  // Fetch Auctions (Dynamic API Fallback)
+  // Fetch Approved/Live Public Auctions from Backend Pipeline
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8080/api/auctions?view=PUBLIC");
-        if (!response.ok) throw new Error("API Offline");
-        const result = await response.json();
-        const data = result?.data || result?.result || result || [];
-        setAuctions(Array.isArray(data) && data.length > 0 ? data : MOCK_AUCTIONS);
+        // Using your authorized api axios instance
+        const response = await api.get("/auctions?view=PUBLIC");
+        
+        const result = response.data;
+        // Handle variations in custom envelope parsing structures cleanly
+        const data = Array.isArray(result) 
+          ? result 
+          : result?.data || result?.result || [];
+          
+        setAuctions(data);
       } catch (error) {
-        console.warn("Backend offline or request failed. Loading NextProperty mock auctions...");
-        // Use premium mock data
-        setAuctions(MOCK_AUCTIONS);
+        console.error("❌ Failed to resolve public auction matrix streams:", error.message);
+        setAuctions([]); // Safe fallback to clear state
       } finally {
         setLoading(false);
       }
@@ -108,19 +123,20 @@ const AuctionListingPage = () => {
   // Filter Logic
   const filteredAuctions = useMemo(() => {
     return auctions.filter((item) => {
-      const matchSearch = item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchSearch = (item.title || item.propertyTitle || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (item.description || "").toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchLocation = selectedLocation === "" || 
-                            item.location?.toLowerCase().includes(selectedLocation.toLowerCase());
+                            (item.location || "").toLowerCase().includes(selectedLocation.toLowerCase());
 
       const matchType = selectedType === "" || item.propertyType === selectedType;
 
+      // Handle view status matches cleanly against public structures
       const matchStatus = selectedStatus === "ALL" || item.status === selectedStatus;
 
       let matchPrice = true;
       if (priceRange !== "ALL") {
-        const price = item.currentBid || item.startPrice;
+        const price = item.currentHighestBid || item.currentBid || item.startingPrice || item.startPrice || 0;
         if (priceRange === "UNDER_30M") matchPrice = price < 30000000;
         else if (priceRange === "30M_50M") matchPrice = price >= 30000000 && price <= 50000000;
         else if (priceRange === "50M_100M") matchPrice = price >= 50000000 && price <= 100000000;
@@ -139,12 +155,14 @@ const AuctionListingPage = () => {
     setPriceRange("ALL");
   };
 
+  // Compute active item lengths safely dynamically
+  const liveCount = auctions.filter(a => a.status === "ACTIVE").length;
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       
-      {/* ── HEADER BANNER (PREMIUM INTERACTIVE DESIGN) ── */}
+      {/* ── HEADER BANNER ── */}
       <div className="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 text-white overflow-hidden py-14 px-6 md:px-12 border-b border-indigo-900/30">
-        {/* Ambient Grid Overlays */}
         <div 
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
@@ -176,11 +194,11 @@ const AuctionListingPage = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
                 <span className="text-slate-400">Active Auctions</span>
-                <span className="font-bold text-teal-400">4 Active</span>
+                <span className="font-bold text-teal-400">{liveCount} Active</span>
               </div>
               <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
-                <span className="text-slate-400">Total Bidders</span>
-                <span className="font-bold text-blue-400">142 Registered</span>
+                <span className="text-slate-400">Total Available Catalog</span>
+                <span className="font-bold text-blue-400">{auctions.length} Listed</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">Secure Protocol</span>
@@ -193,7 +211,7 @@ const AuctionListingPage = () => {
         </div>
       </div>
 
-      {/* ── SEARCH & QUICK STAT BAR ── */}
+      {/* ── SEARCH & FILTER TABS BAR ── */}
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-20">
         <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
           <div className="relative w-full flex-1">
@@ -207,17 +225,17 @@ const AuctionListingPage = () => {
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-            {["ALL", "ACTIVE", "UPCOMING", "CLOSED"].map((status) => (
+            {["ALL", "ACTIVE", "SCHEDULED", "CONCLUDED"].map((status) => (
               <button
                 key={status}
                 onClick={() => setSelectedStatus(status)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide uppercase transition shrink-0 ${
                   selectedStatus === status
                     ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-660"
                 }`}
               >
-                {status}
+                {status === "SCHEDULED" ? "UPCOMING" : status === "CONCLUDED" ? "CLOSED" : status}
               </button>
             ))}
           </div>
@@ -267,7 +285,7 @@ const AuctionListingPage = () => {
               >
                 <option value="">All Types</option>
                 <option value="HOUSE">House / Villa</option>
-                <option value="APARTMENT">Apartment / Penthouse</option>
+                <option value="FLAT">Flat / Apartment</option>
                 <option value="PLOT">Residential/Commercial Plot</option>
                 <option value="COMMERCIAL">Commercial Plaza/Office</option>
               </select>
@@ -289,7 +307,6 @@ const AuctionListingPage = () => {
               </select>
             </div>
 
-            {/* SECURE BID WARNING CARD */}
             <div className="bg-slate-900 text-white rounded-xl p-4 space-y-2.5 relative overflow-hidden border border-slate-800">
               <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex items-center gap-1.5 text-xs text-blue-300 font-bold uppercase tracking-wider">
@@ -330,37 +347,29 @@ const AuctionListingPage = () => {
                     onClick={() => navigate(`/auction/${item.id}`)}
                     className="group bg-white rounded-2xl border border-slate-150 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-100/50 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between"
                   >
-                    {/* Top image and countdown */}
                     <div>
                       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                         <img
-                          src={item.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80"}
-                          alt={item.title}
+                          src={item.propertyImage || item.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80"}
+                          alt={item.title || item.propertyTitle}
                           className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500"
                         />
                         
                         {/* Countdown Badge overlay */}
                         <div className="absolute bottom-3 left-3 z-10">
-                          <CardCountdown endDate={item.endDate} status={item.status} />
+                          <CardCountdown endDate={item.endTime || item.endDate} status={item.status} />
                         </div>
-
-                        {/* Verified dealer badge overlay */}
-                        {item.owner?.verified && (
-                          <div className="absolute top-3 right-3 z-10 bg-slate-900/80 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-white/10 flex items-center gap-1 shadow">
-                            <CheckCircle size={10} className="text-blue-400" /> PropVerified
-                          </div>
-                        )}
 
                         {/* Status Label (Top-Left) */}
                         <div className="absolute top-3 left-3 z-10">
                           <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider shadow ${
                             item.status === "ACTIVE" 
                               ? "bg-teal-500 text-white" 
-                              : item.status === "UPCOMING"
+                              : item.status === "SCHEDULED" || item.status === "APPROVED"
                               ? "bg-indigo-600 text-white"
                               : "bg-slate-500 text-white"
                           }`}>
-                            {item.status}
+                            {item.status === "SCHEDULED" ? "UPCOMING" : item.status}
                           </span>
                         </div>
                       </div>
@@ -368,25 +377,25 @@ const AuctionListingPage = () => {
                       {/* Content Area */}
                       <div className="p-5">
                         <div className="flex gap-2 mb-2.5">
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                            {item.propertyType}
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                            {item.propertyType || "HOUSE"}
                           </span>
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                            {item.area}
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                            {item.area || "5 Marla"}
                           </span>
                         </div>
 
                         <h2 className="font-bold text-slate-950 group-hover:text-blue-600 transition-colors line-clamp-1 text-base">
-                          {item.title}
+                          {item.title || item.propertyTitle}
                         </h2>
 
                         <p className="text-slate-500 text-xs flex items-center gap-1 mt-1 font-semibold">
                           <MapPin size={12} className="text-slate-400 shrink-0" />
-                          {item.location}
+                          {item.location || "Faisalabad"}
                         </p>
 
                         <p className="text-slate-500 text-xs mt-3 line-clamp-2 leading-relaxed">
-                          {item.description}
+                          {item.description || "No description catalog configured for this structural asset listings block."}
                         </p>
                       </div>
                     </div>
@@ -396,7 +405,7 @@ const AuctionListingPage = () => {
                       <div>
                         <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Current Highest Bid</p>
                         <p className="text-blue-700 font-extrabold text-base mt-0.5">
-                          PKR {(item.currentBid || item.startPrice).toLocaleString()}
+                          PKR {(item.currentHighestBid || item.currentBid || item.startingPrice || item.startPrice || 0).toLocaleString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">

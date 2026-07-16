@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import api from "../../utils/api";
 import { TrendingUp, BarChart3, Info } from 'lucide-react';
 
 export default function PropertyTrendChart({ propertyId }) {
@@ -12,7 +12,7 @@ export default function PropertyTrendChart({ propertyId }) {
         async function fetchTrends() {
             try {
                 setLoading(true);
-                const res = await axios.get(`http://localhost:8080/api/predictions/historical-trends/${propertyId}`);
+                const res = await api.get(`/predictions/historical-trends/${propertyId}`);
                 
                 // Expects backend signature return structure mapping: List<Map<String, Object>>
                 const timeline = res.data.timeline || [];

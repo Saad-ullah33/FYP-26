@@ -8,12 +8,13 @@ import {
   clearAuth,
 } from "../utils/auth";
 
+
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
+    baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: true
 });
+
+
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -79,12 +80,15 @@ api.interceptors.response.use(
           throw new Error("No Refresh Token");
         }
 
-        const response = await axios.post(
-          "http://localhost:8080/api/auth/refresh",
-          {
-            refreshToken,
-          }
-        );
+       const response = await axios.post(
+  `${import.meta.env.VITE_API_URL}/auth/refresh`,
+  {
+    refreshToken,
+  },
+  {
+    withCredentials: true,
+  }
+);
 
         const { accessToken, refreshToken: newRefresh } =
           response.data;

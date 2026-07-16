@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 
 const PropertyListing = () => {
   const { type } = useParams();
@@ -21,9 +21,9 @@ const PropertyListing = () => {
 
       const formattedType = type?.toUpperCase();
 
-      const res = await axios.get(
-        `http://localhost:8080/api/properties/type/${formattedType}`
-      );
+const res = await api.get(
+  `/properties/type/${formattedType}`
+);
 
       setProperties(res.data || []);
     } catch (err) {

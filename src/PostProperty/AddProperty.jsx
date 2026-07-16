@@ -191,7 +191,7 @@ const AddProperty = () => {
     try {
       const description = await geminiService.generatePropertyDescription({
         title: formData.title,
-        propertyType: formData.propertyType,
+        propertyType: formData.propertyType.toUpperCase(),
         location: formData.location,
         area: formData.area,
         price: formData.price,

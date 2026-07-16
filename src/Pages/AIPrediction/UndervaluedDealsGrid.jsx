@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../utils/api";
 import { ArrowDownRight, MapPin, Building2, TrendingUp, AlertCircle } from 'lucide-react';
 
 export default function UndervaluedDealsGrid() {
@@ -12,8 +12,9 @@ export default function UndervaluedDealsGrid() {
     useEffect(() => {
         const fetchSectors = async () => {
             try {
-                const res = await axios.get('http://localhost:8080/api/predictions/faisalabad-sectors');
-                setSectors(res.data || []);
+const res = await api.get(
+ "/predictions/faisalabad-sectors"
+);                setSectors(res.data || []);
             } catch (err) {
                 console.error("Failed to map dynamic location registries.", err);
             }
@@ -26,11 +27,11 @@ export default function UndervaluedDealsGrid() {
         setLoading(true);
         try {
             // Passes filter down to your @GetMapping("/top-undervalued") backend method
-            const url = selectedSector 
-                ? `http://localhost:8080/api/predictions/top-undervalued?city=${encodeURIComponent(selectedSector)}` 
-                : 'http://localhost:8080/api/predictions/top-undervalued';
-            
-            const res = await axios.get(url);
+    const endpoint = selectedSector
+    ? `/predictions/top-undervalued?city=${encodeURIComponent(selectedSector)}`
+    : "/predictions/top-undervalued";
+
+const res = await api.get(endpoint);
             setDeals(res.data.deals || []);
         } catch (err) {
             console.error("Critical System Warning: Failed to parse arbitrage tracking pipeline arrays.", err);
