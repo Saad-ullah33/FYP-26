@@ -33,7 +33,8 @@ const Navbar = () => {
 
   const urls = [...baseUrls];
   if (user) {
-    if (user.role === "ADMIN") {
+    const userRole = user.role ? String(user.role).replace(/^ROLE_/, "").toUpperCase() : "";
+    if (userRole === "ADMIN") {
       urls.push({ name: "Admin Panel", url: "/admin/dashboard" });
     } else {
       urls.push({ name: "Dashboard", url: "/dashboard" });

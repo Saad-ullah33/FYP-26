@@ -189,71 +189,77 @@ const Header = () => {
             </button>
           ) : (
             <div className="relative" ref={dropdownRef}>
-
-              {/* AVATAR */}
-              <button
-                onClick={() => setOpenProfile(!openProfile)}
-                className="flex items-center gap-2 px-3 py-2 rounded-full bg-blue-600 text-white hover:shadow-md transition"
-              >
-                <div className="w-7 h-7 bg-white text-blue-600 rounded-full flex items-center justify-center font-bold">
-                  {user?.email?.charAt(0).toUpperCase()}
-                </div>
-
-                <span className="text-sm font-medium">{user.role}</span>
-              </button>
-
-              {/* DROPDOWN */}
-              {openProfile && (
-                <div className="absolute right-0 mt-3 w-52 bg-white shadow-xl rounded-xl border overflow-hidden">
-
-                  {user.role === "ADMIN" ? (
+              {(() => {
+                const userRole = user?.role ? String(user.role).replace(/^ROLE_/, "").toUpperCase() : "";
+                return (
+                  <>
+                    {/* AVATAR */}
                     <button
-                      onClick={() => {
-                        setOpenProfile(false);
-                        navigate("/admin/dashboard");
-                      }}
-                      className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm text-blue-600 font-semibold"
+                      onClick={() => setOpenProfile(!openProfile)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full bg-blue-600 text-white hover:shadow-md transition cursor-pointer"
                     >
-                      <User size={16} />
-                      Admin Panel
+                      <div className="w-7 h-7 bg-white text-blue-600 rounded-full flex items-center justify-center font-bold">
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </div>
+
+                      <span className="text-sm font-medium">{user.role}</span>
                     </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setOpenProfile(false);
-                          navigate("/dashboard?tab=profile");
-                        }}
-                        className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <User size={16} />
-                        My Profile
-                      </button>
-                      <button
-                        onClick={() => {
-                          setOpenProfile(false);
-                          navigate("/dashboard");
-                        }}
-                        className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <User size={16} />
-                        Dashboard
-                      </button>
-                    </>
-                  )}
 
-                  <div className="border-t" />
+                    {/* DROPDOWN */}
+                    {openProfile && (
+                      <div className="absolute right-0 mt-3 w-52 bg-white shadow-xl rounded-xl border overflow-hidden z-50">
 
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 text-sm"
-                  >
-                    <LogOut size={16} />
-                    Logout
-                  </button>
+                        {userRole === "ADMIN" ? (
+                          <button
+                            onClick={() => {
+                              setOpenProfile(false);
+                              navigate("/admin/dashboard");
+                            }}
+                            className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm text-blue-600 font-semibold cursor-pointer"
+                          >
+                            <User size={16} />
+                            Admin Panel
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setOpenProfile(false);
+                                navigate("/dashboard?tab=profile");
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm cursor-pointer"
+                            >
+                              <User size={16} />
+                              My Profile
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenProfile(false);
+                                navigate("/dashboard");
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 hover:bg-gray-100 text-sm cursor-pointer"
+                            >
+                              <User size={16} />
+                              Dashboard
+                            </button>
+                          </>
+                        )}
 
-                </div>
-              )}
+                        <div className="border-t" />
+
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 text-sm cursor-pointer"
+                        >
+                          <LogOut size={16} />
+                          Logout
+                        </button>
+
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 

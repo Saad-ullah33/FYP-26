@@ -34,6 +34,13 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const normalizeRole = (r) => {
+    if (!r) return "USER";
+    if (Array.isArray(r)) r = r[0];
+    if (typeof r === "object" && r?.authority) r = r.authority;
+    return String(r).replace(/^ROLE_/, "").toUpperCase();
+  };
+
   const initializeAuth = () => {
     const accessToken = getAccessToken();
     const refreshToken = getRefreshToken();
@@ -55,12 +62,15 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
+    const rawRole = payload.role || payload.roles || payload.authorities;
+
     setAuth({
       accessToken,
       refreshToken,
       user: {
-        email: payload.sub,
-        role: payload.role,
+        email: payload.sub || payload.email,
+        name: payload.name,
+        role: normalizeRole(rawRole),
       },
     });
 
@@ -75,13 +85,15 @@ export const AuthProvider = ({ children }) => {
     saveAccessToken(response.accessToken);
     saveRefreshToken(response.refreshToken);
 
+    const rawRole = response.role || response.roles || response.authorities;
+
     setAuth({
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
       user: {
         email: response.email,
         name: response.name,
-        role: response.role,
+        role: normalizeRole(rawRole),
         emailVerified: response.emailVerified,
       },
     });
@@ -108,14 +120,15 @@ export const AuthProvider = ({ children }) => {
     saveAccessToken(newAccessToken);
 
     const payload = decodeToken(newAccessToken);
+    const rawRole = payload?.role || payload?.roles || payload?.authorities;
 
     setAuth((prev) => ({
       ...prev,
       accessToken: newAccessToken,
       user: {
         ...prev.user,
-        email: payload.sub,
-        role: payload.role,
+        email: payload?.sub || payload?.email,
+        role: normalizeRole(rawRole),
       },
     }));
   };

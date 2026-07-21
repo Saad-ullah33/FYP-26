@@ -101,16 +101,16 @@ const AdminDashboard = () => {
     try {
       setGlobalLoading(true);
       const [statsData, usersData, completeAnalytics, auctionsData] = await Promise.all([
-        adminService.getStatsSummary(),
-        adminService.getAllUsers(),
-        adminService.getComprehensiveDashboard(),
-        adminService.getAllAuctions()
+        adminService.getStatsSummary().catch(() => null),
+        adminService.getAllUsers().catch(() => []),
+        adminService.getComprehensiveDashboard().catch(() => null),
+        adminService.getAllAuctions().catch(() => [])
       ]);
       
       setLiveStats(statsData || { totalUsers: 0, activeUsers: 0, blockedUsers: 0, pendingUsers: 0, totalProperties: 0, activeAuctions: 0, totalBids: 0 });
-      setUsersList(usersData || []);
+      setUsersList(Array.isArray(usersData) ? usersData : []);
       setAnalyticsData(completeAnalytics || null);
-      setAuctionsList(auctionsData || []);
+      setAuctionsList(Array.isArray(auctionsData) ? auctionsData : []);
     } catch (err) {
       console.error("Dashboard fetch error: ", err);
       triggerToast("Failed to fetch dynamic server metrics.");
@@ -124,11 +124,11 @@ const AdminDashboard = () => {
       setGlobalLoading(true);
       let data;
       if (auctionFilter === 'ALL') {
-        data = await adminService.getAllAuctions();
+        data = await adminService.getAllAuctions().catch(() => []);
       } else {
-        data = await adminService.getAuctionsByStatus(auctionFilter);
+        data = await adminService.getAuctionsByStatus(auctionFilter).catch(() => []);
       }
-      setAuctionsList(data || []);
+      setAuctionsList(Array.isArray(data) ? data : []);
     } catch (err) {
       triggerToast("Failed to retrieve filtered auction records.");
     } finally {
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
   };
 
   // Compute pending items count cleanly from our reactive arrays
-  const pendingRequestsCount = auctionsList.filter(a => a.status === "PENDING_APPROVAL").length;
+  const pendingRequestsCount = (auctionsList || []).filter(a => a && a.status === "PENDING_APPROVAL").length;
 
   // ── USER MANAGEMENT SIGNATURE PIPES (CONNECTED TO REFACTORED ADMIN CONTROLLER) ──
   const handleToggleUserBan = (user) => {

@@ -35,15 +35,16 @@ const AuthRoute = ({ children, role }) => {
 
 
     // Role protection
-    if (role && user.role !== role) {
+    const userRole = user?.role ? String(user.role).replace(/^ROLE_/, "").toUpperCase() : "";
+    const targetRole = role ? String(role).replace(/^ROLE_/, "").toUpperCase() : "";
 
+    if (targetRole && userRole !== targetRole) {
         return (
             <Navigate
                 to="/"
                 replace
             />
         );
-
     }
 
 

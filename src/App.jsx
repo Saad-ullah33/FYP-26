@@ -129,42 +129,29 @@ DASHBOARD ROUTE
 */
 
 const DashboardRoute = () => {
-
-
   const {user} = useAuth();
 
-
-
   if(!user){
-
     return (
       <Navigate
         to="/login"
         replace
       />
     );
-
   }
 
+  const userRole = user.role ? String(user.role).replace(/^ROLE_/, "").toUpperCase() : "";
 
-
-  if(user.role === "ADMIN"){
-
-
+  if(userRole === "ADMIN"){
     return (
       <Navigate
         to="/admin/dashboard"
         replace
       />
     );
-
   }
 
-
-
   return <UserDashboard />;
-
-
 };
 
 
