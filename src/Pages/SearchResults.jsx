@@ -554,7 +554,7 @@ JSON Output Schema:
         <div className="absolute bottom-[20%] right-[10%] w-[550px] h-[550px] bg-indigo-600/5 rounded-full blur-[150px]" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-5 pt-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
 
         {/* ── TOP NAV ── */}
         <div className="flex items-center justify-between mb-8 border-b border-slate-800/60 pb-5">

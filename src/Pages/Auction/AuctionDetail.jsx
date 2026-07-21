@@ -2,17 +2,17 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PremiumGate from "../../components/subscription/PremiumGate";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../utils/api"; 
-import { 
-  ChevronLeft, 
-  MapPin, 
-  Clock, 
-  TrendingUp, 
-  DollarSign, 
-  Send, 
-  Users, 
-  ShieldCheck, 
-  ChevronRight, 
+import api from "../../utils/api";
+import {
+  ChevronLeft,
+  MapPin,
+  Clock,
+  TrendingUp,
+  DollarSign,
+  Send,
+  Users,
+  ShieldCheck,
+  ChevronRight,
   AlertCircle,
   HelpCircle,
   Sparkles,
@@ -58,14 +58,13 @@ const DetailCountdown = ({ endDate, onEnded }) => {
     );
   }
 
-  const isEndingSoon = timeLeft.d === 0 && timeLeft.h < 2; 
+  const isEndingSoon = timeLeft.d === 0 && timeLeft.h < 2;
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-      isEndingSoon 
-        ? "bg-red-50 border-red-200 text-red-600 animate-pulse shadow-sm shadow-red-100" 
+    <div className={`p-4 rounded-2xl border transition-all duration-300 ${isEndingSoon
+        ? "bg-red-50 border-red-200 text-red-600 animate-pulse shadow-sm shadow-red-100"
         : "bg-blue-50/50 border-blue-100 text-blue-700"
-    }`}>
+      }`}>
       <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1 flex items-center gap-1">
         <Clock size={12} className={isEndingSoon ? "text-red-500" : "text-blue-500"} /> Time Remaining
       </p>
@@ -120,15 +119,15 @@ const AuctionDetail = () => {
         setLoading(true);
         const response = await api.get(`/auctions/${id}`);
         const data = response.data;
-        
+
         if (data) {
           setAuction(data);
           const incomingBids = data.bids || [];
           setBids(incomingBids);
-          
+
           const highestBid = data.currentHighestBid || data.startingPrice || 0;
           setCurrentHighestBid(highestBid);
-          
+
           if (data.status === "CLOSED" || data.status === "SOLD" || data.status === "CONCLUDED") {
             setIsEnded(true);
           }
@@ -213,9 +212,9 @@ const AuctionDetail = () => {
       });
     } catch (err) {
       console.error(err);
-      setNotification({ 
-        type: "error", 
-        text: err.response?.data?.message || "Failed to process bid transaction routing parameters." 
+      setNotification({
+        type: "error",
+        text: err.response?.data?.message || "Failed to process bid transaction routing parameters."
       });
     }
   };
@@ -262,10 +261,10 @@ const AuctionDetail = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 pt-6">
-      
+
       {/* ── TOP NAV BAR & HEADER INFO ── */}
       <div className="max-w-7xl mx-auto px-4 mb-6">
-        <button 
+        <button
           onClick={() => navigate("/auction")}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition mb-4 cursor-pointer"
         >
@@ -275,9 +274,8 @@ const AuctionDetail = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className={`px-2.5 py-0.5 rounded bg-teal-50 text-teal-600 text-[10px] font-black uppercase tracking-wider border border-teal-100 ${
-                auction.status === "ACTIVE" ? "animate-pulse" : ""
-              }`}>
+              <span className={`px-2.5 py-0.5 rounded bg-teal-50 text-teal-600 text-[10px] font-black uppercase tracking-wider border border-teal-100 ${auction.status === "ACTIVE" ? "animate-pulse" : ""
+                }`}>
                 ● {auction.status === "SCHEDULED" ? "UPCOMING" : auction.status}
               </span>
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-500">
@@ -309,11 +307,10 @@ const AuctionDetail = () => {
       {/* ── DYNAMIC NOTIFICATIONS OVERLAY ── */}
       {notification && (
         <div className="max-w-7xl mx-auto px-4 mb-4">
-          <div className={`p-4 rounded-xl border flex items-center justify-between text-sm font-bold shadow-sm ${
-            notification.type === "success" 
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+          <div className={`p-4 rounded-xl border flex items-center justify-between text-sm font-bold shadow-sm ${notification.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
               : "bg-red-50 border-red-200 text-red-800"
-          }`}>
+            }`}>
             <div className="flex items-center gap-2">
               {notification.type === "success" ? <CheckCircle2 size={16} className="text-emerald-500" /> : <AlertCircle size={16} className="text-red-500" />}
               {notification.text}
@@ -325,10 +322,10 @@ const AuctionDetail = () => {
 
       {/* ── MAIN CONTENT GRID ── */}
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* ================= LEFT SECTION (GALLERY & DETAILS) ================= */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* 1. IMAGE CAROUSEL CONTAINER */}
           <div className="bg-white rounded-3xl border border-slate-150 overflow-hidden shadow-sm p-4">
             <div className="relative h-[320px] md:h-[420px] rounded-2xl overflow-hidden bg-slate-100 shadow-inner">
@@ -351,9 +348,8 @@ const AuctionDetail = () => {
                     src={img}
                     alt={`View ${i}`}
                     onClick={() => setMainImageIndex(i)}
-                    className={`h-16 w-24 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 ${
-                      i === mainImageIndex ? "border-blue-600 scale-[1.03] shadow" : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
+                    className={`h-16 w-24 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 ${i === mainImageIndex ? "border-blue-600 scale-[1.03] shadow" : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
                   />
                 ))}
               </div>
@@ -365,7 +361,7 @@ const AuctionDetail = () => {
             <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Layers size={16} className="text-blue-600" /> Property Overview
             </h3>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-700">
               <div className="bg-slate-50 p-3 rounded-xl">
                 <span className="text-[10px] text-slate-400 block mb-0.5 uppercase tracking-wide">Property Size</span>
@@ -393,11 +389,10 @@ const AuctionDetail = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-3.5 text-xs font-black uppercase tracking-wider transition ${
-                    activeTab === tab 
-                      ? "text-blue-600 border-b-2 border-blue-600 bg-white" 
+                  className={`flex-1 py-3.5 text-xs font-black uppercase tracking-wider transition ${activeTab === tab
+                      ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                       : "text-slate-500 hover:text-slate-800"
-                  }`}
+                    }`}
                 >
                   {tab === "valuation" ? "📊 AI Analytics" : tab}
                 </button>
@@ -453,7 +448,7 @@ const AuctionDetail = () => {
 
         {/* ================= RIGHT SECTION (BIDDING CONSOLE) ================= */}
         <div className="space-y-6">
-          
+
           <div className="bg-white rounded-3xl border border-slate-150 p-6 shadow-sm space-y-5">
             <div>
               <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Current Highest Bid</span>
@@ -542,11 +537,10 @@ const AuctionDetail = () => {
                 <p className="text-center text-xs text-slate-400 py-6">No active records found for bids registry on this asset.</p>
               ) : (
                 bids.map((b, i) => (
-                  <div 
-                    key={b.id || i} 
-                    className={`p-2.5 rounded-xl border flex justify-between items-center text-xs transition ${
-                      i === 0 ? "bg-blue-50/40 border-blue-200 font-bold" : "bg-slate-50/50 border-slate-100 text-slate-600"
-                    }`}
+                  <div
+                    key={b.id || i}
+                    className={`p-2.5 rounded-xl border flex justify-between items-center text-xs transition ${i === 0 ? "bg-blue-50/40 border-blue-200 font-bold" : "bg-slate-50/50 border-slate-100 text-slate-600"
+                      }`}
                   >
                     <div>
                       <span className="font-semibold text-slate-700">{b.bidderName || b.bidderEmail?.split("@")[0].toUpperCase()}</span>

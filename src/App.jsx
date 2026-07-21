@@ -39,6 +39,7 @@ import PropertyFinder from "./Pages/PropertyFinder";
 
 import AllProjects from "./ExploreTools/AllProjects";
 import { NewProject } from "./ExploreTools/NewProject";
+import FloorPlanVisualizer from "./Pages/ExploreTools/FloorPlanVisualizer";
 
 import PropertyListing from "./Pages/PropertyListing";
 import PropertyDetail from "./Pages/PropertyDetail";
@@ -251,6 +252,11 @@ const AppContent = () => {
         <Route
           path="/ai-assessor"
           element={<AIPropertyAssessor />}
+        />
+
+        <Route
+          path="/tools/floorplan-visualizer"
+          element={<FloorPlanVisualizer />}
         />
 
         <Route

@@ -221,8 +221,8 @@ export default function PropertyIndex() {
   }, [city, type, size]);
 
   return (
-    <div className="bg-slate-50 min-h-screen pt-28 pb-16 font-sans">
-      <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-20 space-y-6">
+    <div className="bg-slate-50 min-h-screen pt-20 pb-16 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
         {/* BACK BUTTON */}
         <button 

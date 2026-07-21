@@ -44,16 +44,16 @@ const PropertyDetail = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [submittingContact, setSubmittingContact] = useState(false);
   const [submittingSchedule, setSubmittingSchedule] = useState(false);
-  
+
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
-  
+
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [liked, setLiked] = useState(false);
-  
+
   // Notification Toast
   const [toastMsg, setToastMsg] = useState("");
 
@@ -92,9 +92,9 @@ const PropertyDetail = () => {
   const fetchAiValuationMetrics = async () => {
     try {
       setAiLoading(true);
-const res = await api.get(
-  `/predictions/${id}/explanation`
-);      setAiData(res.data);
+      const res = await api.get(
+        `/predictions/${id}/explanation`
+      ); setAiData(res.data);
       setAiError(null);
     } catch (err) {
       setAiError("Failed to generate real-time evaluation framework.");
@@ -107,43 +107,44 @@ const res = await api.get(
   const fetchHistoricalTrends = async () => {
     try {
       setTrendLoading(true);
-const res = await api.get(
-  `/predictions/historical-trends/${id}`
-);      setTrendData(res.data.timeline);
+      const res = await api.get(
+        `/predictions/historical-trends/${id}`
+      ); setTrendData(res.data.timeline);
     } catch (err) {
-console.error("🔍 DEBUG AI TRAJECTORY ERROR:", err.response?.[0] || err.response || err);    } finally {
+      console.error("🔍 DEBUG AI TRAJECTORY ERROR:", err.response?.[0] || err.response || err);
+    } finally {
       setTrendLoading(false);
     }
   };
-const fetchProperty = async () => {
-  try {
-    setLoading(true);
+  const fetchProperty = async () => {
+    try {
+      setLoading(true);
 
-    const res = await api.get(`/properties/id/${id}`);
+      const res = await api.get(`/properties/id/${id}`);
 
-    const data = res.data;
+      const data = res.data;
 
-    setProperty(data);
+      setProperty(data);
 
-    setContactMessage(
-      `Assalam-o-Alaikum, I am interested in your property "${data.title}" (PKR ${formatPrice(data.price)}) located in ${data.area}, ${data.city?.name || data.city}. Please get back to me. JazakAllah.`
-    );
+      setContactMessage(
+        `Assalam-o-Alaikum, I am interested in your property "${data.title}" (PKR ${formatPrice(data.price)}) located in ${data.area}, ${data.city?.name || data.city}. Please get back to me. JazakAllah.`
+      );
 
-    const relatedRes = await api.get(
-      `/properties/type/${data.propertyType}`
-    );
+      const relatedRes = await api.get(
+        `/properties/type/${data.propertyType}`
+      );
 
-    setRelated(
-      (relatedRes.data || []).filter((p) => p.id !== data.id)
-    );
+      setRelated(
+        (relatedRes.data || []).filter((p) => p.id !== data.id)
+      );
 
-  } catch (err) {
-    console.log("Property fetch error:", err);
-    setProperty(null);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      console.log("Property fetch error:", err);
+      setProperty(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -168,12 +169,12 @@ const fetchProperty = async () => {
     setTimeout(() => {
       setSubmittingSchedule(false);
       setIsScheduleOpen(false);
-      
+
       // Format readable date
       const dateObj = new Date(scheduleDate);
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
       const formattedDate = dateObj.toLocaleDateString('en-US', options);
-      
+
       triggerToast(`Visit Scheduled for ${formattedDate} at ${scheduleTime}! An agent will call you to confirm.`);
       setScheduleDate("");
       setScheduleTime("");
@@ -197,8 +198,8 @@ const fetchProperty = async () => {
           <Info size={48} className="mx-auto text-red-500 mb-4 animate-bounce" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Property Not Found</h2>
           <p className="text-gray-500 text-sm mb-6">The listing you are searching for might have been removed or is temporarily unavailable.</p>
-          <button 
-            onClick={() => navigate('/property-finder')} 
+          <button
+            onClick={() => navigate('/property-finder')}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition shadow-md"
           >
             Return to Finder
@@ -220,7 +221,7 @@ const fetchProperty = async () => {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16 relative">
-      
+
       {/* FLOATING TOAST NOTIFICATION */}
       {toastMsg && (
         <div className="fixed top-24 right-5 z-50 bg-slate-900 border border-slate-800 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in">
@@ -245,15 +246,14 @@ const fetchProperty = async () => {
               setLiked(!liked);
               triggerToast(liked ? "Removed from Wishlist" : "Added to Wishlist!");
             }}
-            className={`p-2.5 rounded-xl border transition shadow-sm cursor-pointer ${
-              liked 
-                ? "bg-rose-50 text-rose-500 border-rose-100" 
+            className={`p-2.5 rounded-xl border transition shadow-sm cursor-pointer ${liked
+                ? "bg-rose-50 text-rose-500 border-rose-100"
                 : "bg-white text-gray-600 hover:text-rose-500 border-gray-200"
-            }`}
+              }`}
           >
             <Heart size={18} className={liked ? "fill-rose-500" : ""} />
           </button>
-          
+
           <button
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
@@ -274,11 +274,11 @@ const fetchProperty = async () => {
               {property.title}
             </h1>
             <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
-              <MapPin size={16} className="text-blue-600" /> 
+              <MapPin size={16} className="text-blue-600" />
               {property.address} • {property.area}, {property.city?.name || property.city}
             </p>
           </div>
-          
+
           <div className="flex gap-2 items-center">
             <span className="bg-blue-50 border border-blue-100 text-blue-700 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3.5 py-1.5 rounded-full">
               For {property.purpose || "Buy"}
@@ -339,11 +339,10 @@ const fetchProperty = async () => {
                 src={img.cloudinary_src}
                 alt="thumbnail"
                 onClick={() => setMainIndex(i)}
-                className={`h-16 w-24 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 hover:brightness-110 ${
-                  i === mainIndex
+                className={`h-16 w-24 object-cover rounded-xl cursor-pointer border-2 transition-all shrink-0 hover:brightness-110 ${i === mainIndex
                     ? "border-blue-600 ring-2 ring-blue-100 brightness-100"
                     : "border-transparent brightness-75"
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -352,10 +351,10 @@ const fetchProperty = async () => {
 
       {/* MAIN CONTENT SPLIT GRID */}
       <div className="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* LEFT COLUMN: SPECS & DESC & AGENT */}
         <div className="lg:col-span-2 space-y-8">
-          
+
           {/* OVERVIEW PANEL */}
           <div className="bg-white rounded-3xl p-6 border shadow-sm">
             <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
@@ -363,7 +362,7 @@ const fetchProperty = async () => {
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              
+
               {property.bedrooms > 0 && (
                 <div className="bg-slate-50/60 border border-slate-100 p-4 rounded-2xl flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -452,10 +451,10 @@ const fetchProperty = async () => {
                   <LineChart data={trendData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="month" stroke="#94a3b8" style={{ fontSize: '11px', fontWeight: '600' }} />
-                    <YAxis 
-                      stroke="#94a3b8" 
-                      style={{ fontSize: '11px', fontWeight: '600' }} 
-                      tickFormatter={(v) => v >= 10000000 ? `${(v / 10000000).toFixed(1)}C` : `${(v / 100000).toFixed(0)}L`} 
+                    <YAxis
+                      stroke="#94a3b8"
+                      style={{ fontSize: '11px', fontWeight: '600' }}
+                      tickFormatter={(v) => v >= 10000000 ? `${(v / 10000000).toFixed(1)}C` : `${(v / 100000).toFixed(0)}L`}
                     />
                     <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
                     <Line type="monotone" dataKey="price" stroke="#4f46e5" strokeWidth={2.5} dot={{ fill: '#4f46e5', r: 4 }} activeDot={{ r: 6 }} />
@@ -494,14 +493,14 @@ const fetchProperty = async () => {
                     <User className="text-blue-500" size={16} />
                     <span><b>Name:</b> {property.owner?.name || "Private Owner"}</span>
                   </p>
-                  
+
                   <p className="flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-blue-100/50">
                     <Phone className="text-blue-500" size={16} />
                     <span><b>Phone:</b> {property.owner?.phone || "+92 300 0000000"}</span>
                   </p>
                 </div>
 
-                <button 
+                <button
                   onClick={() => setIsContactOpen(true)}
                   className="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl transition shadow-md shadow-blue-500/10 cursor-pointer"
                 >
@@ -515,8 +514,8 @@ const fetchProperty = async () => {
                 <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4 leading-relaxed">
                   Log in with a developer bypass or real account to view the owner's phone number, name, and contact options.
                 </p>
-                <button 
-                  onClick={() => navigate('/login')} 
+                <button
+                  onClick={() => navigate('/login')}
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-6 rounded-xl transition shadow"
                 >
                   Log In to View Info
@@ -528,7 +527,7 @@ const fetchProperty = async () => {
 
         {/* RIGHT COLUMN: PRICE & SCHEDULING BOARD */}
         <div className="space-y-6">
-          
+
           {/* STICKY PRICE CARD */}
           <div className="bg-white rounded-3xl p-6 border shadow-lg sticky top-24 space-y-5">
             <div>
@@ -537,7 +536,7 @@ const fetchProperty = async () => {
                 PKR {formatPrice(property.price)}
               </p>
             </div>
-            
+
             {/* ── AI VALUATION PREMIUM INTERACTION FRAMEWORK (INTEGRATED) ── */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white relative overflow-hidden shadow-md">
               <div className="flex justify-between items-start mb-3">
@@ -569,7 +568,7 @@ const fetchProperty = async () => {
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowAiExplanation(!showAiExplanation)}
                     className="w-full bg-slate-800 hover:bg-slate-750 border border-slate-700 transition text-[10px] font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5"
@@ -593,14 +592,14 @@ const fetchProperty = async () => {
             </div>
 
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={() => setIsContactOpen(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-500/10 transition flex items-center justify-center gap-2 cursor-pointer text-sm"
               >
                 <MessageSquare size={18} /> Contact Seller
               </button>
 
-              <button 
+              <button
                 onClick={() => setIsScheduleOpen(true)}
                 className="w-full bg-white hover:bg-slate-50 text-gray-800 border border-gray-200 font-bold py-3.5 rounded-2xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer text-sm"
               >
@@ -641,7 +640,7 @@ const fetchProperty = async () => {
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-                    
+
                     <span className="absolute top-3 left-3 bg-blue-600 text-white font-bold text-[8px] uppercase tracking-widest px-2.5 py-0.5 rounded shadow">
                       {p.propertyType}
                     </span>
@@ -671,14 +670,14 @@ const fetchProperty = async () => {
       {isContactOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border animate-scale-up">
-            
+
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-5 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare size={20} />
                 <h3 className="font-bold text-base sm:text-lg">Contact Property Seller</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsContactOpen(false)}
                 className="text-white/80 hover:text-white font-bold text-xl cursor-pointer p-1"
               >
@@ -688,7 +687,7 @@ const fetchProperty = async () => {
 
             {/* Modal Form */}
             <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
-              
+
               {/* Dynamic User Details Warning if not Logged In */}
               {!user && (
                 <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-800">
@@ -761,7 +760,7 @@ const fetchProperty = async () => {
                 >
                   Cancel
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={submittingContact}
@@ -789,14 +788,14 @@ const fetchProperty = async () => {
       {isScheduleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border animate-scale-up">
-            
+
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-blue-750 to-blue-600 px-6 py-5 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar size={20} />
                 <h3 className="font-bold text-base sm:text-lg">Schedule Visit</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsScheduleOpen(false)}
                 className="text-white/80 hover:text-white font-bold text-xl cursor-pointer p-1"
               >
@@ -806,7 +805,7 @@ const fetchProperty = async () => {
 
             {/* Modal Form */}
             <form onSubmit={handleScheduleSubmit} className="p-6 space-y-4">
-              
+
               <div className="bg-blue-50 border border-blue-100 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-blue-800">
                 <Clock size={16} className="shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -850,7 +849,7 @@ const fetchProperty = async () => {
                 >
                   Cancel
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={submittingSchedule}
