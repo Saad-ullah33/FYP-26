@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { verifyDeedSignature, generateSignature, getDeedById, getAllDeeds, getQRBaseUrl } from "../utils/deedService";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
@@ -23,13 +23,15 @@ import {
   Sparkles,
   ExternalLink,
   Layers,
-  Award
+  Award,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 
 const DeedVerification = () => {
   const [searchParams] = useSearchParams();
+  const { deedId: routeDeedId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   
@@ -55,7 +57,7 @@ const DeedVerification = () => {
   const [verificationStep, setVerificationStep] = useState("");
   const [result, setResult] = useState(null);
 
-  const deedId = searchParams.get("deedId");
+  const deedId = routeDeedId || searchParams.get("deedId");
   const role = searchParams.get("role") || "public";
   const sig = searchParams.get("sig");
 

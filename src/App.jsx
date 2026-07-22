@@ -280,6 +280,10 @@ const AppContent = () => {
           path="/verify-deed"
           element={<DeedVerification />}
         />
+        <Route
+          path="/verify-deed/:deedId"
+          element={<DeedVerification />}
+        />
 
 
 

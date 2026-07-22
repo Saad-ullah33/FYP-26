@@ -200,16 +200,26 @@ export const verifyDeedSignature = (deedId, role = "public", sig = null) => {
   return { verified: true, role: role || "public", deed: responseData };
 };
 
-// Helper to get the correct Base URL for QR Codes (resolves in-app, local network, and tunnel origin)
+// Helper to get the correct Base URL for QR Codes (resolves Vercel production deployment URL vs local origin)
 export const getQRBaseUrl = () => {
   if (typeof window !== "undefined") {
+    // 1. Check custom QR host override in localStorage if explicitly set by user
     const customHost = localStorage.getItem("fyp26_custom_qr_host");
     if (customHost && customHost.trim()) {
       return customHost.trim().replace(/\/$/, "");
     }
+    // 2. If running on Vercel or live domain, use current origin
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return window.location.origin;
+    }
+    // 3. Environment variable VITE_PUBLIC_APP_URL
+    if (import.meta.env.VITE_PUBLIC_APP_URL && import.meta.env.VITE_PUBLIC_APP_URL.startsWith("http")) {
+      return import.meta.env.VITE_PUBLIC_APP_URL.replace(/\/$/, "");
+    }
+    // 4. Default fallback
     return window.location.origin;
   }
-  return "http://localhost:5173";
+  return "https://nextpropertypk.vercel.app";
 };
 
 // Generate QR Code data URL strings for different roles

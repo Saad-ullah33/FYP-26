@@ -1101,25 +1101,25 @@ const AdminDashboard = () => {
               <div className="bg-[#090d16] p-1.5 rounded-xl border border-slate-800 flex gap-1 mb-3 text-[10px]">
                 <button
                   onClick={() => {
-                    localStorage.setItem("fyp26_custom_qr_host", "https://bike-certificates-existed-hospital.trycloudflare.com");
-                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "https://bike-certificates-existed-hospital.trycloudflare.com");
+                    localStorage.setItem("fyp26_custom_qr_host", "https://nextpropertypk.vercel.app");
+                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "https://nextpropertypk.vercel.app");
                     setQrModal({ ...qrModal, url: newUrl });
-                    triggerToast("Switched QR to Cloudflare SSL Tunnel!");
+                    triggerToast("Switched QR to Live Vercel Production Link!");
                   }}
                   className="flex-1 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-black cursor-pointer"
                 >
-                  ⚡ Cloudflare SSL Mobile QR
+                  🌐 Vercel Production (Live)
                 </button>
                 <button
                   onClick={() => {
-                    localStorage.setItem("fyp26_custom_qr_host", "http://192.168.30.236:5173");
-                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "http://192.168.30.236:5173");
+                    localStorage.setItem("fyp26_custom_qr_host", "http://localhost:5173");
+                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "http://localhost:5173");
                     setQrModal({ ...qrModal, url: newUrl });
-                    triggerToast("Switched QR to Wi-Fi IP!");
+                    triggerToast("Switched QR to Localhost!");
                   }}
                   className="flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 cursor-pointer"
                 >
-                  📶 Wi-Fi IP
+                  💻 Localhost
                 </button>
               </div>
 
