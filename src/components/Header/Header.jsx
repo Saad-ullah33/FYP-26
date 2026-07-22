@@ -76,20 +76,20 @@ const Header = () => {
         {/* LOGO */}
         <div
           onClick={() => navigate("/")}
-          className="flex items-center gap-3 cursor-pointer group shrink-0"
+          className="flex items-center gap-3.5 cursor-pointer group shrink-0"
         >
           <img
             src="/favicon-icon.png"
             alt="NextProperty Icon"
-            className="w-10 h-10 object-contain group-hover:scale-105 transition-transform duration-300"
+            className="w-12 h-12 sm:w-[52px] sm:h-[52px] object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
           />
 
           {/* Brand text lockup */}
-          <div className="flex flex-col leading-none gap-[3px] text-left">
-            <span className="text-[15px] font-black tracking-tight leading-none text-slate-900">
+          <div className="flex flex-col leading-none gap-1 text-left">
+            <span className="text-xl sm:text-[22px] font-black tracking-tight leading-none text-slate-900">
               Next<span className="text-blue-600">Property</span>
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-slate-400 leading-none">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 leading-none">
               The Future of Real Estate
             </span>
           </div>
