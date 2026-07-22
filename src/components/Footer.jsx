@@ -1,9 +1,9 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import { IconMail, IconMapPin, IconPhone } from "@tabler/icons-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-gray-300 mt-16">
+    <footer className="bg-gray-900 text-gray-300 border-t border-gray-800 mt-0">
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
 
         {/* Brand */}
@@ -35,10 +35,11 @@ const Footer = () => {
             Quick Links
           </h4>
           <ul className="space-y-2 text-sm">
-            <li className="hover:text-white cursor-pointer">Home</li>
-            <li className="hover:text-white cursor-pointer">Properties</li>
-            <li className="hover:text-white cursor-pointer">Sell Property</li>
-            <li className="hover:text-white cursor-pointer">Contact Us</li>
+            <li><Link to="/" className="hover:text-white transition">Home</Link></li>
+            <li><Link to="/property-finder" className="hover:text-white transition">Property Finder</Link></li>
+            <li><Link to="/auction" className="hover:text-white transition">Property Auctions</Link></li>
+            <li><Link to="/verify-deed" className="hover:text-amber-400 font-bold transition flex items-center gap-1 text-amber-300">TrustDeed Verification</Link></li>
+            <li><Link to="/smart-build" className="hover:text-white transition">Smart Build</Link></li>
           </ul>
         </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getQRUrls, createDeed, initializeDeeds } from '../utils/deedService';
+import { getQRUrls, createDeed, initializeDeeds, getAllDeeds, generateSignature, getQRBaseUrl } from '../utils/deedService';
 import { adminService } from '../utils/adminService';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -65,13 +65,59 @@ const AdminDashboard = () => {
   const [auctionsList, setAuctionsList] = useState([]);
   const [analyticsData, setAnalyticsData] = useState(null);
 
-  // Static Fallback Lists for Non-Analytics Modules
-  const [trustDeeds, setTrustDeeds] = useState([
-    { id: 201, propertyId: 101, owner: 'Ali Khan', documentId: 'TD-9921-PB', registryOffice: 'Faisalabad West', status: 'Pending', uploadDate: '2026-06-26', verifiedAt: null }
-  ]);
-
-  const [qrModal, setQrModal] = useState({ isOpen: false, deedId: '', urls: {} });
+  // TrustDeed Administration States
+  const [adminDeeds, setAdminDeeds] = useState([]);
+  const [deedSearch, setDeedSearch] = useState('');
+  const [deedStatusFilter, setDeedStatusFilter] = useState('ALL');
+  const [qrModal, setQrModal] = useState({ isOpen: false, deedId: '', deedTitle: '', url: '' });
   const [toastMsg, setToastMsg] = useState("");
+
+  useEffect(() => {
+    const loaded = getAllDeeds();
+    setAdminDeeds(loaded);
+  }, []);
+
+  const handleGenerateDemoDeed = () => {
+    const demoTitles = [
+      { title: "8 Marla Modern Luxury Villa", location: "DHA Phase 7, Lahore", price: "2.9 Crore PKR", city: "Lahore" },
+      { title: "Commercial Office Suite 1200 Sq.Ft", location: "Blue Area, Islamabad", price: "3.8 Crore PKR", city: "Islamabad" },
+      { title: "1 Kanal Executive Corner Plot", location: "Bahria Town Phase 8, Rawalpindi", price: "4.5 Crore PKR", city: "Rawalpindi" },
+      { title: "Sea View Luxury Apartment 3-Bed", location: "Clifton Block 4, Karachi", price: "5.2 Crore PKR", city: "Karachi" }
+    ];
+
+    const randomProp = demoTitles[Math.floor(Math.random() * demoTitles.length)];
+    const randomId = Math.floor(100 + Math.random() * 900);
+
+    const newDeed = createDeed({
+      propertyId: randomId,
+      title: randomProp.title,
+      location: randomProp.location,
+      price: randomProp.price,
+      buyerName: "Demo Buyer " + Math.floor(10 + Math.random() * 89),
+      buyerEmail: `buyer${randomId}@example.com`,
+      buyerCNIC: `35202-${Math.floor(1000000 + Math.random() * 8999999)}-${Math.floor(1 + Math.random() * 9)}`,
+      sellerName: "Demo Developer " + Math.floor(10 + Math.random() * 89),
+      sellerEmail: `seller${randomId}@example.com`,
+      sellerCNIC: `35202-${Math.floor(1000000 + Math.random() * 8999999)}-${Math.floor(1 + Math.random() * 9)}`,
+      registryOffice: `${randomProp.city} Land Revenue Authority`,
+      status: Math.random() > 0.3 ? "Verified" : "Pending Verification",
+    });
+
+    setAdminDeeds(getAllDeeds());
+    triggerToast(`Generated new demo title deed #${newDeed.deedId}!`);
+  };
+
+  const handleApproveDeed = (deedId) => {
+    const allDeeds = getAllDeeds();
+    const target = allDeeds.find(d => d.deedId === deedId);
+    if (target) {
+      target.status = "Verified";
+      target.verifiedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      localStorage.setItem("fyp26_trust_deeds", JSON.stringify(allDeeds));
+      setAdminDeeds(allDeeds);
+      triggerToast(`Deed #${deedId} cryptographically sealed & verified!`);
+    }
+  };
 
   const [systemSettings, setSystemSettings] = useState({
     maintenanceMode: false, apiCaching: true, securityShield: true, backupInterval: 'Daily',
@@ -866,35 +912,255 @@ const AdminDashboard = () => {
 
         {/* ================= TAB: TRUSTDEED VERIFICATION ================= */}
         {activeTab === 'TrustDeed' && (
-          <div className="bg-[#0e1626]/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
-            <div className="p-6 border-b border-slate-800 bg-[#111c30]/20">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2"><QrCode size={18} className="text-orange-400" /> TrustDeed Certification Vault</h3>
+          <div className="space-y-6 animate-in fade-in text-left">
+            {/* HEADER ACTIONS BAR */}
+            <div className="bg-[#0e1626]/80 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <QrCode className="text-amber-400" size={22} />
+                  <h3 className="text-base font-extrabold text-white">TrustDeed Administrative Verification Vault</h3>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Review live land registry submissions, audit SHA-256 Merkle proofs, seal pending title deeds, or generate instant demo deeds for testing.
+                </p>
+              </div>
+
+              <button
+                onClick={handleGenerateDemoDeed}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer shrink-0"
+              >
+                <Sparkles size={16} /> Generate Demo Deed
+              </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-400">
-                <thead className="bg-[#121c2e]/40 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="p-4">Owner Name</th>
-                    <th className="p-4">Registry Office Document Reference</th>
-                    <th className="p-4 text-center">Trust Verification Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trustDeeds.map((item) => (
-                    <tr key={item.id} className="border-b border-slate-900 text-slate-300">
-                      <td className="p-4 font-bold text-white">{item.owner}</td>
-                      <td className="p-4 font-mono">{item.documentId} • {item.registryOffice}</td>
-                      <td className="p-4 text-center">
-                        {item.status === 'Pending' ? (
-                          <button onClick={() => approveTrustDeed(item.id)} className="bg-orange-600 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg hover:bg-orange-500 transition cursor-pointer">Seal Asset Title</button>
-                        ) : (
-                          <span className="text-emerald-400 font-bold font-mono">SEALED: {item.qrCode}</span>
-                        )}
-                      </td>
-                    </tr>
+
+            {/* DEED TABLE & CONTROLS */}
+            <div className="bg-[#0e1626]/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+              <div className="p-4 border-b border-slate-800 bg-[#111c30]/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 w-full sm:w-72 bg-[#090d16] border border-slate-800 rounded-xl px-3 py-2 text-xs">
+                  <Search size={14} className="text-slate-500 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search Deed ID, City, or Name..."
+                    value={deedSearch}
+                    onChange={(e) => setDeedSearch(e.target.value)}
+                    className="bg-transparent text-white outline-none w-full"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono">Filter:</span>
+                  {["ALL", "Verified", "Pending Verification"].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setDeedStatusFilter(status)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        deedStatusFilter === status
+                          ? "bg-amber-500 text-slate-950"
+                          : "bg-[#090d16] text-slate-400 hover:text-white border border-slate-800"
+                      }`}
+                    >
+                      {status}
+                    </button>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-[#121c2e]/60 uppercase text-[10px] tracking-wider text-slate-400 border-b border-slate-800">
+                    <tr>
+                      <th className="p-4">Deed Reference</th>
+                      <th className="p-4">Property & Location</th>
+                      <th className="p-4">Parties (Seller / Buyer)</th>
+                      <th className="p-4">Valuation & Office</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Admin Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-900">
+                    {adminDeeds
+                      .filter((d) => {
+                        const matchesSearch =
+                          !deedSearch ||
+                          d.deedId.toLowerCase().includes(deedSearch.toLowerCase()) ||
+                          d.title.toLowerCase().includes(deedSearch.toLowerCase()) ||
+                          d.location.toLowerCase().includes(deedSearch.toLowerCase()) ||
+                          (d.buyerName && d.buyerName.toLowerCase().includes(deedSearch.toLowerCase()));
+                        const matchesStatus =
+                          deedStatusFilter === "ALL" || d.status === deedStatusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .map((item) => {
+                        const isVerified = item.status === "Verified";
+                        const publicSig = generateSignature(item.deedId, "public");
+                        const adminSig = generateSignature(item.deedId, "admin");
+                        const publicUrl = `/verify-deed?deedId=${item.deedId}&role=public&sig=${publicSig}`;
+                        const adminUrl = `/verify-deed?deedId=${item.deedId}&role=admin&sig=${adminSig}`;
+
+                        return (
+                          <tr key={item.deedId} className="hover:bg-slate-900/50 transition">
+                            <td className="p-4 font-mono font-bold text-amber-400">
+                              <div>{item.deedId}</div>
+                              <span className="text-[9px] text-slate-500 font-sans block mt-0.5">Prop ID: #{item.propertyId}</span>
+                            </td>
+                            <td className="p-4">
+                              <div className="font-bold text-white text-xs">{item.title}</div>
+                              <div className="text-[11px] text-slate-400">{item.location}</div>
+                            </td>
+                            <td className="p-4 text-[11px]">
+                              <div><span className="text-slate-500">Seller:</span> <span className="font-semibold text-slate-200">{item.sellerName || "N/A"}</span></div>
+                              <div><span className="text-slate-500">Buyer:</span> <span className="font-semibold text-emerald-400">{item.buyerName || "N/A"}</span></div>
+                            </td>
+                            <td className="p-4 text-[11px]">
+                              <div className="font-extrabold text-emerald-400">{item.price}</div>
+                              <div className="text-slate-500 text-[10px]">{item.registryOffice}</div>
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                isVerified
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                  : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                              }`}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {!isVerified && (
+                                  <button
+                                    onClick={() => handleApproveDeed(item.deedId)}
+                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition cursor-pointer flex items-center gap-1"
+                                  >
+                                    <ShieldCheck size={12} /> Approve & Seal Title
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => setQrModal({
+                                    isOpen: true,
+                                    deedId: item.deedId,
+                                    deedTitle: item.title,
+                                    url: `${getQRBaseUrl()}${publicUrl}`
+                                  })}
+                                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] rounded-lg border border-slate-700 transition cursor-pointer flex items-center gap-1"
+                                  title="Display Scannable Mobile QR Code"
+                                >
+                                  <QrCode size={13} /> Scan QR
+                                </button>
+
+                                <button
+                                  onClick={() => navigate(publicUrl)}
+                                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] rounded-lg border border-slate-700 transition cursor-pointer flex items-center gap-1"
+                                  title="Public Masked Scan"
+                                >
+                                  <ExternalLink size={13} /> Public
+                                </button>
+
+                                <button
+                                  onClick={() => navigate(adminUrl)}
+                                  className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-extrabold text-[10px] rounded-lg border border-amber-500/40 transition cursor-pointer flex items-center gap-1"
+                                  title="Full Admin Unmasked Certificate"
+                                >
+                                  <ShieldCheck size={13} /> Admin
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {adminDeeds.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-center py-12 text-slate-500 text-xs">
+                          No title deed records found. Click "Generate Demo Deed" above to create live demonstration deeds.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* QR CODE SCANNER MODAL FOR ADMIN */}
+        {qrModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setQrModal({ ...qrModal, isOpen: false })} />
+            <div className="relative bg-[#0e1626] border border-amber-500/40 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl shadow-amber-500/10 animate-in zoom-in-95">
+              <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-3 text-left">
+                <div>
+                  <span className="text-[10px] font-mono text-amber-400 font-bold uppercase block">{qrModal.deedId}</span>
+                  <h3 className="text-sm font-bold text-white truncate max-w-[220px]">{qrModal.deedTitle}</h3>
+                </div>
+                <button onClick={() => setQrModal({ ...qrModal, isOpen: false })} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Host Mode Switcher */}
+              <div className="bg-[#090d16] p-1.5 rounded-xl border border-slate-800 flex gap-1 mb-3 text-[10px]">
+                <button
+                  onClick={() => {
+                    localStorage.setItem("fyp26_custom_qr_host", "https://bike-certificates-existed-hospital.trycloudflare.com");
+                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "https://bike-certificates-existed-hospital.trycloudflare.com");
+                    setQrModal({ ...qrModal, url: newUrl });
+                    triggerToast("Switched QR to Cloudflare SSL Tunnel!");
+                  }}
+                  className="flex-1 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-black cursor-pointer"
+                >
+                  ⚡ Cloudflare SSL Mobile QR
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem("fyp26_custom_qr_host", "http://192.168.30.236:5173");
+                    const newUrl = qrModal.url.replace(/https?:\/\/[^/]+/, "http://192.168.30.236:5173");
+                    setQrModal({ ...qrModal, url: newUrl });
+                    triggerToast("Switched QR to Wi-Fi IP!");
+                  }}
+                  className="flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 cursor-pointer"
+                >
+                  📶 Wi-Fi IP
+                </button>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border-2 border-amber-500/40 inline-block shadow-lg my-1">
+                <QRCodeSVG value={qrModal.url} size={180} level="H" includeMargin={true} />
+              </div>
+
+              <p className="text-[11px] text-slate-400 mt-2 font-mono leading-tight">
+                📷 Point any smartphone camera at this QR code to test opening the title deed page.
+              </p>
+
+              <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(qrModal.url);
+                      triggerToast("Verification URL copied to clipboard!");
+                    }}
+                    className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Copy size={14} /> Copy URL
+                  </button>
+                  <button
+                    onClick={() => window.open(qrModal.url, "_blank")}
+                    className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <ExternalLink size={14} /> Open Link
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setQrModal({ ...qrModal, isOpen: false });
+                    const sig = generateSignature(qrModal.deedId, "public");
+                    navigate(`/verify-deed?deedId=${qrModal.deedId}&role=public&sig=${sig}`);
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
+                >
+                  <ShieldCheck size={14} /> ⚡ Verify Title Deed Flow (In-App)
+                </button>
+              </div>
             </div>
           </div>
         )}

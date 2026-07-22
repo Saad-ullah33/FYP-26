@@ -42,8 +42,8 @@ const Faq = () => {
   };
 
   return (
-    // Alternating pale-gray background matching the Explore section flow
-    <div className="py-20 bg-slate-50/50 border-t border-slate-100">
+    // Clean solid white background
+    <div className="py-20 bg-white border-t border-gray-100">
       <div className="px-6 md:px-12 lg:px-20 max-w-[1600px] mx-auto">
         
         {/* ── HEADER ── */}

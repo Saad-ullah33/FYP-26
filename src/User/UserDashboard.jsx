@@ -49,8 +49,7 @@ import {
 } from 'lucide-react';
 
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { getQRUrls, getDeeds } from '../utils/deedService';
+import { getQRUrls, getDeeds, getUserDeeds, requestDeedVerification, generateSignature, getQRBaseUrl } from '../utils/deedService';
 import { QRCodeSVG } from 'qrcode.react';
 import { useSubscription } from '../hooks/useSubscription';
 import { geminiService } from '../services/geminiService';
@@ -197,19 +196,26 @@ const UserDashboard = () => {
     }
   };
 
+  const [myDeeds, setMyDeeds] = useState([]);
+  const [isDeedModalOpen, setIsDeedModalOpen] = useState(false);
+  const [selectedPropForDeed, setSelectedPropForDeed] = useState("");
+
   const loadUserProfile = async () => {
     try {
       const data = await getUserProfile();
+      const userEmail = data.email || "user@app.com";
       setProfileForm({
         fullName: data.fullName || "",
-        email: data.email || "",
+        email: userEmail,
         phone: data.phone || "",
         city: data.city || "",
         address: data.address || "",
         notificationsEnabled: data.notificationsEnabled ?? true
       });
+      setMyDeeds(getUserDeeds(userEmail));
     } catch (err) {
       console.error("Error pulling profile:", err);
+      setMyDeeds(getUserDeeds("user@app.com"));
     }
   };
 
@@ -979,6 +985,175 @@ const handlePropertyFormSubmit = async (e) => {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ================= TAB: DIGITAL DEEDS ================= */}
+        {activeTab === 'Deeds' && (
+          <div className="space-y-6 animate-in fade-in duration-200 text-left">
+            {/* HEADER BANNER */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <QrCode className="text-amber-500" size={20} />
+                  <h3 className="text-lg font-black text-slate-800">My Registered Title Deeds</h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Cryptographically sealed property title deeds backed by SHA-256 blockchain proofs and land revenue registry approval.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsDeedModalOpen(true)}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-amber-500/10 shrink-0"
+              >
+                <PlusCircle size={15} /> Request Deed Verification
+              </button>
+            </div>
+
+            {/* DEEDS GRID */}
+            {myDeeds.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
+                <QrCode size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-500 font-medium">No title deed verification requests submitted yet.</p>
+                <button
+                  onClick={() => setIsDeedModalOpen(true)}
+                  className="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl transition cursor-pointer"
+                >
+                  Submit Property for Verification
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {myDeeds.map((deed) => {
+                  const isVerified = deed.status === "Verified";
+                  const publicSig = generateSignature(deed.deedId, "public");
+                  const ownerSig = generateSignature(deed.deedId, "buyer");
+                  const publicUrl = `/verify-deed?deedId=${deed.deedId}&role=public&sig=${publicSig}`;
+                  const ownerUrl = `/verify-deed?deedId=${deed.deedId}&role=buyer&sig=${ownerSig}`;
+
+                  return (
+                    <div key={deed.deedId} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-mono text-xs font-bold">
+                            {deed.deedId}
+                          </span>
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                            isVerified 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            {deed.status}
+                          </span>
+                        </div>
+
+                        <h4 className="text-base font-extrabold text-slate-900">{deed.title}</h4>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                          <MapPin size={13} className="text-slate-400" /> {deed.location}
+                        </p>
+
+                        <div className="my-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Transaction Valuation:</span>
+                            <span className="font-bold text-slate-800">{deed.price}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Registry Authority:</span>
+                            <span className="font-medium text-slate-700">{deed.registryOffice}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Verification Status:</span>
+                            <span className="font-mono text-xs text-slate-700">{deed.verifiedAt}</span>
+                          </div>
+                        </div>
+
+                        {/* Live Scannable Vector QR Code */}
+                        {isVerified && (
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center gap-4 my-3">
+                            <div className="bg-white p-2 rounded-xl border border-slate-200 shrink-0">
+                              <QRCodeSVG 
+                                value={`${getQRBaseUrl()}${publicUrl}`} 
+                                size={90} 
+                                level="H" 
+                                includeMargin={true} 
+                              />
+                            </div>
+                            <div className="text-left space-y-1">
+                              <span className="text-[10px] font-mono font-bold text-amber-600 uppercase block">📷 Mobile Camera Scannable QR</span>
+                              <p className="text-[11px] text-slate-500 leading-tight">
+                                Point any mobile camera or QR app at this code to verify public title deed authenticity.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 flex gap-2">
+                        <button
+                          onClick={() => navigate(publicUrl)}
+                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <ExternalLink size={14} /> Public Scan
+                        </button>
+
+                        <button
+                          onClick={() => navigate(ownerUrl)}
+                          className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10"
+                        >
+                          <ShieldCheck size={14} /> Owner Unmasked Deed
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODAL: REQUEST DEED VERIFICATION */}
+        {isDeedModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsDeedModalOpen(false)} />
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95">
+              <div className="flex items-center gap-2 border-b pb-3 mb-4 text-slate-800">
+                <QrCode className="text-amber-500" size={20} />
+                <h3 className="text-md font-bold">Request Title Deed Verification</h3>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const selectedProp = myListings.find(p => String(p.id) === String(selectedPropForDeed)) || { id: Math.floor(100 + Math.random() * 900), title: "My Residential Property", location: "Faisalabad", price: "1.5 Crore" };
+                requestDeedVerification(selectedProp, profileForm.email);
+                setMyDeeds(getUserDeeds(profileForm.email));
+                setIsDeedModalOpen(false);
+              }} className="space-y-4 text-xs text-left">
+                <div>
+                  <label className="block font-bold text-slate-400 uppercase mb-1">Select Property Listing</label>
+                  <select 
+                    value={selectedPropForDeed} 
+                    onChange={(e) => setSelectedPropForDeed(e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 text-slate-700 font-semibold"
+                    required
+                  >
+                    <option value="">-- Choose from posted properties --</option>
+                    {myListings.map(p => (
+                      <option key={p.id} value={p.id}>{p.title || p.propertyTitle || `Property #${p.id}`}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-2 text-amber-800 text-[11px] leading-relaxed">
+                  <Info size={16} className="shrink-0 mt-0.5" />
+                  <p>Submitting your property initiates cryptographic SHA-256 land revenue record matching and generates your camera-scannable QR title deed.</p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <button type="button" onClick={() => setIsDeedModalOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-slate-50 cursor-pointer font-bold">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 rounded-xl hover:opacity-95 cursor-pointer font-black">Submit for Verification</button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

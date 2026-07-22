@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../utils/api";
+import { generateSignature } from "../utils/deedService";
 import {
   ChevronLeft,
   ChevronRight,
@@ -522,6 +523,42 @@ const PropertyDetail = () => {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* TRUSTDEED CERTIFICATION CARD */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-xl text-white relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-sm text-white">TrustDeed Title Verification</h3>
+                  <p className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider">
+                    SHA-256 Blockchain Verified
+                  </p>
+                </div>
+              </div>
+
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider">
+                Title Clear
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-300 text-left leading-relaxed mb-4">
+              This property features a cryptographically sealed land registry deed certificate. Audit public ownership records, transaction dates, and blockchain transaction proofs.
+            </p>
+
+            <button
+              onClick={() => {
+                const deedId = `TD-${property.id || 101}-9921`;
+                const sig = generateSignature(deedId, "public");
+                navigate(`/verify-deed?deedId=${deedId}&role=public&sig=${sig}`);
+              }}
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black py-3 rounded-2xl transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2 cursor-pointer text-xs"
+            >
+              <ShieldCheck size={16} /> Audit Digital Title Deed
+            </button>
           </div>
         </div>
 

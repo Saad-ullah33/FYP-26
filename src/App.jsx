@@ -189,15 +189,11 @@ const AppContent = () => {
 
 
   return (
-
-    <>
-
-
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 selection:bg-blue-600 selection:text-white">
       {!hideLayout && <Header />}
 
-
-
-      <Routes>
+      <main className="flex-1 flex flex-col">
+        <Routes>
 
 
         {/* PUBLIC */}
@@ -514,17 +510,13 @@ const AppContent = () => {
 
 
       </Routes>
-
-
-
-
+      </main>
 
       {!hideFooter && <Footer />}
 
       <UpgradeModal />
       {user && <AIChatbotAssistant />}
-    </>
-
+    </div>
   );
 
 };
