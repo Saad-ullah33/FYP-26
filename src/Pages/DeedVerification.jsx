@@ -227,48 +227,41 @@ const DeedVerification = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start p-4 md:p-8 relative overflow-hidden font-sans">
       <style>{`
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
         @media print {
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
-          }
           body, html, #root {
             background: #ffffff !important;
             color: #0f172a !important;
-            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif !important;
+            font-family: "Inter", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .absolute {
+          .absolute, nav, footer, header {
             display: none !important;
           }
-          .print\\:hidden, button, header, footer, nav {
+          .print\\:hidden, button {
             display: none !important;
           }
           .print-container {
             background: #ffffff !important;
             border: 4px double #d4af37 !important;
-            border-radius: 12px !important;
+            outline: 1px solid rgba(212, 175, 55, 0.4) !important;
+            outline-offset: -8px !important;
+            border-radius: 0px !important;
             box-shadow: none !important;
-            padding: 24px !important;
+            padding: 24px 32px !important;
             margin: 0 auto !important;
             width: 100% !important;
+            max-width: 100% !important;
             color: #0f172a !important;
             page-break-inside: avoid !important;
           }
           .print-bg-light {
             background-color: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-          }
-          .print-text-dark {
-            color: #0f172a !important;
-          }
-          .print-text-gold {
-            color: #b45309 !important;
-          }
-          .print-logo {
-            filter: none !important;
-            display: block !important;
+            border: 1px solid #cbd5e1 !important;
           }
         }
       `}</style>
@@ -312,7 +305,7 @@ const DeedVerification = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-slate-900/90 backdrop-blur-xl border-2 border-amber-500/40 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(212,175,55,0.15)] print-container relative overflow-hidden text-left"
+              className="bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(212,175,55,0.1)] print-container relative overflow-hidden"
             >
               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -332,147 +325,145 @@ const DeedVerification = () => {
                 </div>
               </div>
 
-              {/* OFFICIAL NEXTPROPERTY BRAND HEADER */}
-              <div className="flex items-center justify-between pb-5 mb-6 border-b-2 border-amber-500/40 print:border-amber-600">
+              {/* Official Print Header with Logo & Brand (Visible during Print / PDF) */}
+              <div className="hidden print:flex items-center justify-between pb-4 mb-6 border-b-2 border-amber-500/40">
                 <div className="flex items-center gap-3">
-                  <img 
-                    src="/next_logo2.png" 
-                    alt="NextProperty Logo" 
-                    className="h-12 w-auto object-contain print:h-14 print-logo"
-                  />
+                  <img src="/next_logo2.png" alt="NextProperty Logo" className="h-10 w-auto object-contain" />
                   <div>
-                    <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white print-text-dark font-sans flex items-center gap-2">
-                      Next<span className="text-amber-400 print-text-gold">Property</span>
-                    </h2>
-                    <p className="text-[10px] text-amber-400/90 print-text-gold font-mono tracking-widest uppercase font-bold">
-                      Official Title Deed & Land Registry Vault
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight">NEXTPROPERTY</h2>
+                    <p className="text-[9px] font-mono font-bold text-amber-700 uppercase tracking-widest">
+                      Government Land Revenue & Title Registry Vault
                     </p>
                   </div>
                 </div>
-
                 <div className="text-right">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 print:bg-emerald-50 border border-emerald-500/30 print:border-emerald-300 text-emerald-400 print:text-emerald-800 text-[10px] font-mono font-bold uppercase mb-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Authenticated & Immutable
-                  </div>
-                  <p className="text-[10px] text-slate-400 print:text-slate-600 font-mono block">
-                    REF: <span className="font-bold text-amber-400 print-text-dark">{result.deed.deedId}</span>
-                  </p>
+                  <span className="inline-block px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-900 text-[10px] font-mono font-bold rounded-md uppercase">
+                    Official Verification Certificate
+                  </span>
+                  <p className="text-[9px] font-mono text-slate-500 mt-1">Ref: FYP26-REG-2026</p>
                 </div>
               </div>
 
-              {/* Certificate Main Title Block with Scannable QR */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6 pb-6 border-b border-slate-800/80 print:border-slate-300">
+              {/* Certificate Header with Scannable QR */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-800/80 print:border-slate-300">
                 <div className="text-center md:text-left space-y-1">
-                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-amber-400 print-text-gold block">
-                    Government of Pakistan Land Revenue Standards
-                  </span>
-                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white print-text-dark uppercase">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 print:text-amber-800 text-xs font-mono font-bold uppercase mb-2">
+                    <ShieldCheck className="w-4 h-4" /> Cryptographically Sealed Title
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white print:text-slate-900 uppercase">
                     Digital Title Deed Certificate
                   </h1>
-                  <p className="text-xs text-slate-400 font-mono tracking-wider print:text-slate-600">
-                    Verified Ownership Seal & Cryptographic Ledger Proof
+                  <p className="text-xs text-slate-400 font-mono tracking-wider print:text-slate-700">
+                    Official Land Revenue Registry Verification Seal
                   </p>
                 </div>
 
                 {/* Live Scannable Vector QR Code */}
-                <div className="bg-white p-2.5 rounded-2xl border-2 border-amber-500/40 print:border-amber-600 shadow-xl flex flex-col items-center justify-center shrink-0">
+                <div className="bg-white p-3 rounded-2xl border-2 border-amber-500/40 shadow-xl shadow-amber-500/5 flex flex-col items-center justify-center shrink-0">
                   <QRCodeSVG 
                     value={`${getQRBaseUrl()}/verify-deed?deedId=${result.deed.deedId}&role=public&sig=${generateSignature(result.deed.deedId, "public")}`}
-                    size={105}
+                    size={110}
                     level="H"
                     includeMargin={true}
                   />
-                  <span className="text-[8px] font-mono font-extrabold text-slate-900 mt-1 uppercase tracking-wider">
-                    📷 Mobile Scannable
+                  <span className="text-[9px] font-mono font-extrabold text-slate-900 mt-1 uppercase tracking-wider">
+                    📷 Scan via Mobile
                   </span>
                 </div>
               </div>
 
               {/* Deed Specifications Box */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 print-bg-light border border-slate-800 print:border-slate-300 p-5 rounded-2xl mb-5">
-                <div className="space-y-3.5 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 print-bg-light border border-slate-850 p-6 rounded-2xl mb-6">
+                <div className="space-y-4 text-left">
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Deed ID / Registry ID</label>
-                    <p className="text-sm font-extrabold font-mono text-amber-400 print-text-dark">{result.deed.deedId}</p>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Deed ID / Registry ID</label>
+                    <p className="text-sm font-semibold font-mono text-amber-400 print:text-slate-900">{result.deed.deedId}</p>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Property Title</label>
-                    <p className="text-base font-extrabold text-slate-100 print-text-dark">{result.deed.title}</p>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Property Title</label>
+                    <p className="text-base font-bold text-slate-100 print:text-slate-950">{result.deed.title}</p>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Location / Sector</label>
-                    <p className="text-xs font-semibold text-slate-300 print-text-dark">{result.deed.location}</p>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Location</label>
+                    <p className="text-sm text-slate-300 print:text-slate-700">{result.deed.location}</p>
                   </div>
                 </div>
 
-                <div className="space-y-3.5 text-left">
+                <div className="space-y-4 text-left">
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Transaction Value</label>
-                    <p className="text-base font-black text-emerald-400 print:text-emerald-700">{result.deed.price}</p>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Transaction Value</label>
+                    <p className="text-base font-black text-emerald-400 print:text-emerald-800">{result.deed.price}</p>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Registration Date & Land Office</label>
-                    <p className="text-xs text-slate-200 print-text-dark font-medium">
-                      {result.deed.soldDate} — <span className="text-slate-400 print:text-slate-600 font-semibold">{result.deed.registryOffice}</span>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Registration Date & Office</label>
+                    <p className="text-sm text-slate-200 print:text-slate-900 font-medium">
+                      {result.deed.soldDate} — <span className="text-slate-400 print:text-slate-700">{result.deed.registryOffice}</span>
                     </p>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block">Verification Timestamp</label>
-                    <p className="text-xs text-slate-400 print:text-slate-700 font-mono">{result.deed.verifiedAt}</p>
+                    <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Verification Timestamp</label>
+                    <p className="text-xs text-slate-400 print:text-slate-600 font-mono">{result.deed.verifiedAt}</p>
                   </div>
                 </div>
               </div>
 
               {/* Blockchain Integrity Block */}
-              <div className="bg-slate-950/80 print-bg-light border border-slate-800 print:border-slate-300 p-3.5 rounded-xl mb-5 text-left">
-                <span className="text-[9px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider block mb-1 font-mono">Blockchain Merkle Proof Hash</span>
-                <p className="text-[10px] font-mono text-amber-300/90 print-text-dark break-all leading-tight">
+              <div className="bg-slate-950/80 print-bg-light border border-slate-800 p-4 rounded-xl mb-6 text-left">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1 font-mono">Blockchain Merkle Proof Hash</span>
+                <p className="text-[11px] font-mono text-slate-400 print:text-slate-800 break-all leading-tight">
                   {result.deed.blockchainHash}
                 </p>
               </div>
 
               {/* Parties Details Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-6">
-                <div className="bg-slate-950/40 print-bg-light border border-slate-800 print:border-slate-300 p-4 rounded-xl">
-                  <span className="text-[10px] text-emerald-400 print:text-emerald-700 uppercase tracking-wider block font-bold mb-2">Seller Details</span>
+                <div className="bg-slate-950/40 print-bg-light border border-slate-850 p-4 rounded-xl">
+                  <span className="text-[10px] text-emerald-400 print:text-emerald-800 uppercase tracking-wider block font-bold mb-2">Seller Details</span>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-slate-200 print-text-dark">{result.deed.sellerName}</p>
+                    <p className="font-semibold text-slate-200 print:text-slate-900">{result.deed.sellerName}</p>
                     <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.sellerEmail}</p>
-                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">CNIC: {result.deed.sellerCNIC}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.sellerCNIC}</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-950/40 print-bg-light border border-slate-800 print:border-slate-300 p-4 rounded-xl">
-                  <span className="text-[10px] text-sky-400 print:text-sky-700 uppercase tracking-wider block font-bold mb-2">Buyer Details</span>
+                <div className="bg-slate-950/40 print-bg-light border border-slate-850 p-4 rounded-xl">
+                  <span className="text-[10px] text-sky-400 print:text-sky-800 uppercase tracking-wider block font-bold mb-2">Buyer Details</span>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-slate-200 print-text-dark">{result.deed.buyerName}</p>
+                    <p className="font-semibold text-slate-200 print:text-slate-900">{result.deed.buyerName}</p>
                     <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.buyerEmail}</p>
-                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">CNIC: {result.deed.buyerCNIC}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.buyerCNIC}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Official Signature Lines & Registry Watermark (Prints on Certificate) */}
-              <div className="pt-6 border-t-2 border-slate-800 print:border-slate-400 grid grid-cols-2 gap-8 text-center text-xs">
-                <div>
-                  <div className="h-10 flex items-end justify-center pb-1">
-                    <span className="font-serif italic text-amber-300/80 print:text-slate-800 text-xs font-semibold">
-                      NextProperty Cryptographic Ledger #04
-                    </span>
+              {/* Official Seals & Signatures Block */}
+              <div className="my-6 pt-6 border-t-2 border-slate-800 print:border-slate-300 grid grid-cols-3 gap-4 items-center text-left">
+                {/* Official Gold Seal Badge */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-500/10 print:bg-amber-100 flex flex-col items-center justify-center text-amber-500 print:text-amber-700 shrink-0">
+                    <Award className="w-5 h-5" />
+                    <span className="text-[6px] font-black uppercase tracking-tighter">SEAL</span>
                   </div>
-                  <div className="border-t border-slate-700 print:border-slate-400 pt-1 text-[9px] text-slate-400 print:text-slate-600 uppercase font-mono font-bold">
-                    Automated Vault Verification Seal
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-200 print:text-slate-900 uppercase tracking-wider">Official Title Seal</p>
+                    <p className="text-[8px] text-slate-400 print:text-slate-600 font-mono">Government Registry Audit</p>
                   </div>
                 </div>
-                <div>
-                  <div className="h-10 flex items-end justify-center pb-1">
-                    <span className="font-serif italic text-amber-300/80 print:text-slate-800 text-xs font-semibold">
-                      {result.deed.registryOffice}
-                    </span>
+
+                {/* Sub-Registrar Authority Signature */}
+                <div className="text-center space-y-1">
+                  <div className="h-8 border-b border-dashed border-slate-600 print:border-slate-400 flex items-end justify-center pb-0.5">
+                    <span className="font-serif italic text-amber-400 print:text-slate-800 text-xs font-semibold">Sub-Registrar Revenue</span>
                   </div>
-                  <div className="border-t border-slate-700 print:border-slate-400 pt-1 text-[9px] text-slate-400 print:text-slate-600 uppercase font-mono font-bold">
-                    Registrar General Seal & Signature
+                  <p className="text-[9px] font-bold text-slate-300 print:text-slate-900 uppercase tracking-wide">Sub-Registrar Signature</p>
+                </div>
+
+                {/* Blockchain Officer Signature */}
+                <div className="text-right space-y-1">
+                  <div className="h-8 border-b border-dashed border-slate-600 print:border-slate-400 flex items-end justify-end pb-0.5">
+                    <span className="font-mono text-[10px] text-amber-400 print:text-slate-800 font-bold">0x8f39...b56cd7e8</span>
                   </div>
+                  <p className="text-[9px] font-bold text-slate-300 print:text-slate-900 uppercase tracking-wide">Cryptographic Ledger Seal</p>
                 </div>
               </div>
 
