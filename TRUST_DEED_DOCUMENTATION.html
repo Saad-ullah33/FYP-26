@@ -677,14 +677,121 @@
     }
 
     @media print {
-      body { background: white; color: #111; }
-      body::before { display: none; }
-      .sidebar { display: none; }
-      .layout { grid-template-columns: 1fr; }
-      .cover { min-height: auto; padding: 40px; border: 4px double #d4af37; }
-      .cover-grid { display: none; }
-      .card, .code-block, .json-block, .flow, .schema-field { border: 1px solid #e5e7eb; background: #f9fafb !important; }
-      pre, .json-block { color: #111; }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+      body, html, .layout, main, .content {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        min-height: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      body::before, .cover::after, .cover-grid, .sidebar {
+        display: none !important;
+      }
+      .cover {
+        display: none !important;
+      }
+      .brand-name, .cover-title, .cover-title .highlight, .section-title {
+        background: none !important;
+        -webkit-text-fill-color: initial !important;
+        color: #0f172a !important;
+      }
+      .cover-title .highlight {
+        color: #b45309 !important;
+      }
+      .doc-badge {
+        background: #fef3c7 !important;
+        border-color: #f59e0b !important;
+        color: #92400e !important;
+      }
+      .cover-subtitle, .meta-chip, .card p, .toc-list li a, .step-body p, .file-table td {
+        color: #334155 !important;
+      }
+      .meta-chip {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+      }
+      .meta-chip span {
+        color: #0f172a !important;
+      }
+      .layout {
+        grid-template-columns: 1fr !important;
+        padding: 0 !important;
+      }
+      .card, .code-block, .json-block, .flow, .schema-field, .role-card, .step, .checklist li {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+      }
+      pre, code, .code-block pre {
+        color: #0f172a !important;
+        background: #f8fafc !important;
+      }
+      .code-header {
+        background: #f1f5f9 !important;
+        border-bottom-color: #cbd5e1 !important;
+      }
+      .kw, .fn, .str, .cmt, .key, .val {
+        color: #0f172a !important;
+      }
+      .callout {
+        background: #fef3c7 !important;
+        border-left-color: #d4af37 !important;
+      }
+      .callout p, .callout strong {
+        color: #78350f !important;
+      }
+      .section {
+        page-break-inside: avoid !important;
+      }
+      .print-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #d4af37;
+      }
+      .print-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .print-logo {
+        height: 36px;
+        width: auto;
+      }
+      .print-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+      }
+      .print-subtitle {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin: 0;
+      }
+      .print-meta {
+        font-size: 0.7rem;
+        color: #475569;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+    }
+
+    .print-header {
+      display: none;
     }
   </style>
 </head>
@@ -738,6 +845,21 @@
 
     <!-- ── MAIN CONTENT ── -->
     <main class="content">
+
+      <!-- ── PRINT HEADER (Visible only in PDF/Print) ── -->
+      <div class="print-header">
+        <div class="print-brand">
+          <img src="/next_logo2.png" alt="NextProperty Logo" class="print-logo" />
+          <div>
+            <h1 class="print-title">NextProperty — TrustDeed Verification System</h1>
+            <p class="print-subtitle">Technical Feature Documentation &amp; Architecture Reference · FYP-26</p>
+          </div>
+        </div>
+        <div class="print-meta">
+          <span>Status: ✅ Production Verified</span>
+          <span>Vite 7.3 · React 18</span>
+        </div>
+      </div>
 
       <!-- ── 01. OVERVIEW ── -->
       <section class="section section-anchor" id="overview">

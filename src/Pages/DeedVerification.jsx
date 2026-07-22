@@ -232,36 +232,54 @@ const DeedVerification = () => {
           margin: 8mm;
         }
         @media print {
-          body, html, #root {
+          body, html, #root, #root > div, main, .min-h-screen, .my-auto {
             background: #ffffff !important;
+            background-color: #ffffff !important;
             color: #0f172a !important;
             font-family: "Inter", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            min-height: auto !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            overflow: visible !important;
           }
-          .absolute, nav, footer, header {
-            display: none !important;
-          }
-          .print\\:hidden, button {
+          .absolute, nav, footer, header, .print\\:hidden, button {
             display: none !important;
           }
           .print-container {
             background: #ffffff !important;
+            background-color: #ffffff !important;
             border: 4px double #d4af37 !important;
             outline: 1px solid rgba(212, 175, 55, 0.4) !important;
             outline-offset: -8px !important;
             border-radius: 0px !important;
             box-shadow: none !important;
-            padding: 24px 32px !important;
-            margin: 0 auto !important;
+            padding: 20px 24px !important;
+            margin: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             color: #0f172a !important;
             page-break-inside: avoid !important;
+            position: static !important;
           }
           .print-bg-light {
             background-color: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
+          }
+          .print-container p, .print-container span, .print-container label, .print-container div {
+            color: #0f172a !important;
+          }
+          .print-container .text-amber-400, .print-container .text-amber-300 {
+            color: #b45309 !important;
+          }
+          .print-container .text-emerald-400 {
+            color: #047857 !important;
+          }
+          .print-container .text-sky-400 {
+            color: #0369a1 !important;
           }
         }
       `}</style>
