@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrustDeed Feature Documentation — NextProperty</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #d4af37;
+      --gold-light: #f3e5ab;
+      --gold-dim: rgba(212,175,55,0.15);
+      --navy: #0a1628;
+      --navy-mid: #0e1f3a;
+      --navy-light: #142545;
+      --slate: #64748b;
+      --slate-light: #94a3b8;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(212,175,55,0.2);
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #040d1a;
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── STARFIELD BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 0%, rgba(30,58,138,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(212,175,55,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 80% at 50% 50%, #040d1a 0%, #060f1e 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── COVER PAGE ── */
+    .cover {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .cover::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(212,175,55,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cover-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(212,175,55,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,175,55,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px rgba(212,175,55,0.5));
+    }
+
+    .brand-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+
+    .doc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--gold-dim);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .doc-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 8px var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .cover-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      max-width: 700px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 20px;
+    }
+
+    .cover-title .highlight {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cover-subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 48px;
+      line-height: 1.8;
+    }
+
+    .cover-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .meta-chip {
+      padding: 8px 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .meta-chip span {
+      color: #fff;
+    }
+
+    /* ── LAYOUT ── */
+    .layout {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    /* ── SIDEBAR TOC ── */
+    .sidebar {
+      position: sticky;
+      top: 32px;
+      padding-top: 48px;
+    }
+
+    .toc-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .toc-list {
+      list-style: none;
+      border-left: 2px solid rgba(255,255,255,0.07);
+    }
+
+    .toc-list li a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      border-left: 2px solid transparent;
+      margin-left: -2px;
+      transition: all 0.2s;
+    }
+
+    .toc-list li a:hover {
+      color: var(--gold);
+      border-left-color: var(--gold);
+      background: var(--gold-dim);
+    }
+
+    /* ── MAIN CONTENT ── */
+    .content {
+      padding-top: 48px;
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-anchor {
+      scroll-margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(212,175,55,0.15);
+    }
+
+    .section-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--gold-dim);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: linear-gradient(135deg, rgba(14,31,58,0.8) 0%, rgba(10,22,40,0.9) 100%);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(212,175,55,0.2);
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    /* ── ROLE BADGES ── */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .role-card {
+      padding: 18px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+    }
+
+    .role-card.public { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.07); }
+    .role-card.buyer  { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.07); }
+    .role-card.seller { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); }
+    .role-card.admin  { border-color: rgba(239,68,68,0.3);  background: rgba(239,68,68,0.07); }
+
+    .role-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .role-card.public .role-badge { background: rgba(99,102,241,0.2); color: #818cf8; }
+    .role-card.buyer  .role-badge { background: rgba(16,185,129,0.2); color: #34d399; }
+    .role-card.seller .role-badge { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .role-card.admin  .role-badge { background: rgba(239,68,68,0.2);  color: #f87171; }
+
+    .role-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── STEPS ── */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+
+    .step {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 28px;
+      position: relative;
+    }
+
+    .step:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 18px;
+      top: 40px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
+    }
+
+    .step-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      border: 2px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .step-body h4 { font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .step-body p  { font-size: 0.8rem; color: var(--text-muted); }
+    .step-body code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gold-light); background: rgba(212,175,55,0.1); padding: 1px 6px; border-radius: 4px; }
+
+    /* ── FILE TABLE ── */
+    .file-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+    .file-table th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .file-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    .file-table tr:hover td { background: rgba(212,175,55,0.03); }
+
+    .file-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      background: rgba(14,31,58,0.8);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #7dd3fc;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: #020810;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .code-dot.r { background: #ff5f57; }
+    .code-dot.y { background: #febc2e; }
+    .code-dot.g { background: #28c840; }
+
+    .code-lang {
+      margin-left: auto;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    pre {
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: #c9d1d9;
+      overflow-x: auto;
+    }
+
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .key { color: #7ee787; }
+    .val { color: #ffa657; }
+
+    /* ── JSON BLOCK ── */
+    .json-block {
+      background: #020810;
+      border: 1px solid rgba(212,175,55,0.15);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.9;
+      color: #c9d1d9;
+      overflow-x: auto;
+    }
+
+    /* ── CHECKLIST ── */
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 18px;
+      background: rgba(14,31,58,0.5);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+
+    .checklist li::before {
+      content: '✓';
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.15);
+      border: 1.5px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #10b981;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .checklist li strong { color: #fff; }
+
+    /* ── CALLOUT ── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      margin: 20px 0;
+      border-left: 3px solid var(--gold);
+      background: var(--gold-dim);
+    }
+
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .callout p { font-size: 0.82rem; color: #e2cb7f; line-height: 1.7; }
+    .callout strong { color: var(--gold); }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 24px;
+      background: #020810;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flow-node {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .flow-arrow {
+      font-size: 0.85rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .flow-spacer {
+      width: 2px;
+      height: 20px;
+      background: rgba(212,175,55,0.3);
+      margin-left: 60px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+
+    .fn-user    { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; }
+    .fn-router  { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+    .fn-service { background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3); color: var(--gold-light); }
+    .fn-storage { background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+
+    /* ── FORMULA CALLOUT ── */
+    .formula {
+      background: rgba(10,22,40,0.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px 24px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--gold-light);
+      margin: 16px 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── SCHEMA TABLE ── */
+    .schema-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .schema-field {
+      background: rgba(14,31,58,0.6);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+
+    .schema-field .field-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #7dd3fc;
+      margin-bottom: 3px;
+    }
+
+    .schema-field .field-val {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .schema-field.highlight-field {
+      border-color: rgba(212,175,55,0.2);
+      grid-column: span 2;
+    }
+
+    .schema-field.highlight-field .field-name { color: var(--gold); }
+    .schema-field.highlight-field .field-val  { color: #e2cb7f; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+
+    /* ── FOOTER ── */
+    .doc-footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .doc-footer p {
+      font-size: 0.75rem;
+      color: var(--slate);
+    }
+
+    .doc-footer strong { color: var(--gold); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+      .schema-grid {
+        grid-template-columns: 1fr;
+      }
+      .schema-field.highlight-field {
+        grid-column: span 1;
+      }
+      .role-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .role-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: white; color: #111; }
+      body::before { display: none; }
+      .sidebar { display: none; }
+      .layout { grid-template-columns: 1fr; }
+      .cover { min-height: auto; padding: 40px; border: 4px double #d4af37; }
+      .cover-grid { display: none; }
+      .card, .code-block, .json-block, .flow, .schema-field { border: 1px solid #e5e7eb; background: #f9fafb !important; }
+      pre, .json-block { color: #111; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ COVER PAGE -->
+  <section class="cover">
+    <div class="cover-grid"></div>
+
+    <div class="brand">
+      <img src="/next_logo2.png" alt="NextProperty Logo" class="brand-logo" />
+      <span class="brand-name">NextProperty</span>
+    </div>
+
+    <div class="doc-badge">
+      Technical Feature Documentation · v1.0
+    </div>
+
+    <h1 class="cover-title">
+      TrustDeed <span class="highlight">Verification</span><br/>System
+    </h1>
+
+    <p class="cover-subtitle">
+      Cryptographically secured property title deed verification engine — empowering buyers, sellers, land registry officials, and public users with tamper-proof ownership authentication.
+    </p>
+
+    <div class="cover-meta">
+      <div class="meta-chip">Project <span>NextProperty (FYP-26)</span></div>
+      <div class="meta-chip">Module <span>TrustDeed</span></div>
+      <div class="meta-chip">Status <span>✅ Production Verified</span></div>
+      <div class="meta-chip">Build <span>Vite 7.3 · React 18</span></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- ── SIDEBAR TOC ── -->
+    <aside class="sidebar">
+      <p class="toc-title">📋 Contents</p>
+      <ul class="toc-list">
+        <li><a href="#overview">01. Executive Overview</a></li>
+        <li><a href="#core">02. Core Functionalities</a></li>
+        <li><a href="#flow">03. End-to-End Flow</a></li>
+        <li><a href="#files">04. File Architecture</a></li>
+        <li><a href="#api">05. Developer API</a></li>
+        <li><a href="#schema">06. Data Schema</a></li>
+        <li><a href="#enhancements">07. Enhancements</a></li>
+      </ul>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="content">
+
+      <!-- ── 01. OVERVIEW ── -->
+      <section class="section section-anchor" id="overview">
+        <div class="section-header">
+          <div class="section-number">01</div>
+          <h2 class="section-title">Executive Overview</h2>
+        </div>
+
+        <div class="card">
+          <p>The <strong style="color:#fff">TrustDeed Verification System</strong> is a cryptographically secured property title deed verification engine integrated into <strong style="color:var(--gold)">NextProperty (FYP-26)</strong>. It allows buyers, sellers, real estate investors, land registry officials, and public users to verify the authenticity, ownership integrity, and transaction parameters of real estate properties — without relying on centralized physical paperwork.</p>
+        </div>
+
+        <div class="callout">
+          <div class="callout-icon">🏛️</div>
+          <p><strong>Architecture Model:</strong> Self-contained client-side cryptographic service layer (<code style="font-family:monospace;color:#7dd3fc">deedService.js</code>) using deterministic HMAC signature simulation, local storage persistence (<code style="font-family:monospace;color:#7dd3fc">fyp26_trust_deeds</code>), GDPR-compliant role-based masking, and 1-click verification UI (<code style="font-family:monospace;color:#7dd3fc">DeedVerification.jsx</code>).</p>
+        </div>
+      </section>
+
+      <!-- ── 02. CORE FUNCTIONALITIES ── -->
+      <section class="section section-anchor" id="core">
+        <div class="section-header">
+          <div class="section-number">02</div>
+          <h2 class="section-title">Core Functionalities</h2>
+        </div>
+
+        <!-- 2.1 HMAC -->
+        <div class="card">
+          <div class="card-title">🔐 Cryptographic HMAC Signature Generation</div>
+          <p>Deterministic Base64 payload hashing using central secret keying. Ensures URL parameters cannot be tampered with — any modification immediately triggers a <strong style="color:#f87171">TAMPERING DETECTED</strong> alert.</p>
+          <div class="formula">
+            Signature = Base64( deedId + "-" + role + "-" + SECRET_KEY ) → 32-char hex string
+          </div>
+        </div>
+
+        <!-- 2.2 ROLES -->
+        <div class="card">
+          <div class="card-title">🛡️ GDPR-Compliant Role-Based Access &amp; Data Masking</div>
+          <p style="margin-bottom:16px">The system dynamically controls data visibility based on the authenticated URL <code style="font-family:monospace;color:#7dd3fc;font-size:0.82rem">role</code> parameter:</p>
+          <div class="role-grid">
+            <div class="role-card public">
+              <div class="role-badge">public</div>
+              <p>Masks CNICs, emails &amp; full names. Safe for any anonymous scan.</p>
+            </div>
+            <div class="role-card buyer">
+              <div class="role-badge">buyer</div>
+              <p>Unmasked full transaction data for the purchasing party.</p>
+            </div>
+            <div class="role-card seller">
+              <div class="role-badge">seller</div>
+              <p>Full ownership records for the property's selling party.</p>
+            </div>
+            <div class="role-card admin">
+              <div class="role-badge">admin</div>
+              <p>Full audit logs, registry authority proofs, and ledger detail.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2.3–2.6 -->
+        <div class="card">
+          <div class="card-title">🏛️ TrustDeed Certified Registry Vault</div>
+          <p>Pre-seeded real estate deeds across major metropolitan locations (Lahore, Islamabad, Faisalabad, Rawalpindi). Multi-criteria search by Deed ID, title, city, or party name. 1-click cryptographic verification for any registered property.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚡ Step-by-Step Ledger Verification Animation</div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-dot">1</div>
+              <div class="step-body"><h4>Reading cryptographic signature...</h4></div>
+            </div>
+            <div class="step">
+              <div class="step-dot">2</div>
+              <div class="step-body"><h4>Verifying signature with Central Secret...</h4></div>
+            </div>
+            <div class="step">
+              <div class="step-dot">3</div>
+              <div class="step-body"><h4>Querying secure registry database...</h4></div>
+            </div>
+            <div class="step">
+              <div class="step-dot" style="background:rgba(16,185,129,0.15);border-color:#10b981;color:#10b981">✓</div>
+              <div class="step-body"><h4>Validating blockchain hash integrity</h4><p>Complemented by confetti animations on successful validation.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📱 Multi-Role QR Code &amp; URL Link Generator</div>
+          <p>Dynamically constructs shareable verification URLs with embedded signatures for each access role. QR codes point to <code style="font-family:monospace;color:#7dd3fc;font-size:0.8rem">https://nextpropertypk.vercel.app/verify-deed?deedId=&hellip;</code> — scannable from any smartphone camera globally.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🖨️ Printable Digital Title Certificate</div>
+          <p>Print-optimized CSS (<code style="font-family:monospace;color:#7dd3fc;font-size:0.8rem">@media print</code>) renders a formal <strong style="color:#fff">Digital Title Deed Certificate</strong> with double gold borders, official seals, signature lines, and full transaction details.</p>
+        </div>
+      </section>
+
+      <!-- ── 03. FLOW ── -->
+      <section class="section section-anchor" id="flow">
+        <div class="section-header">
+          <div class="section-number">03</div>
+          <h2 class="section-title">End-to-End User Flow</h2>
+        </div>
+
+        <div class="flow">
+          <div class="flow-row"><div class="flow-node fn-user">👤 User / Buyer / Admin</div><div class="flow-arrow">→</div><div class="flow-node fn-router">Navbar / Property Card</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-router">Route: /verify-deed</div><div class="flow-arrow">→</div><div class="flow-node fn-service">DeedVerification.jsx mounts</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-service">getAllDeeds()</div><div class="flow-arrow">→</div><div class="flow-node fn-storage">localStorage (fyp26_trust_deeds)</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-storage">Registered Deeds Array</div><div class="flow-arrow">→</div><div class="flow-node fn-router">Render Certified Vault</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-user">Click "Verify"</div><div class="flow-arrow">→</div><div class="flow-node fn-service">generateSignature(deedId, role)</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-router">Navigate to /verify-deed?deedId=…&amp;sig=…</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-service">verifyDeedSignature()</div><div class="flow-arrow">→</div><div class="flow-node fn-storage">getDeedById() → Deed Found</div></div>
+          <div class="flow-spacer"></div>
+          <div class="flow-row"><div class="flow-node fn-service" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7">✅ { verified: true, deed }</div><div class="flow-arrow">→</div><div class="flow-node fn-user">Digital Certificate + Confetti 🎉</div></div>
+        </div>
+      </section>
+
+      <!-- ── 04. FILES ── -->
+      <section class="section section-anchor" id="files">
+        <div class="section-header">
+          <div class="section-number">04</div>
+          <h2 class="section-title">File Architecture</h2>
+        </div>
+
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Role &amp; Responsibilities</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="file-pill">deedService.js</span></td>
+              <td>Core service layer: initial deeds repository, HMAC signature generation, GDPR string masking, LocalStorage CRUD, QR URL builder.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">DeedVerification.jsx</span></td>
+              <td>Main UI page: Registry Vault view, search bar, city filters, verification animation, digital certificate, in-app QR scanner, print handler.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">AdminDashboard.jsx</span></td>
+              <td>Admin Verification Vault: 1-click Demo Deed Generator, SHA-256 Title Approval, QR Code modal with host switcher.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">UserDashboard.jsx</span></td>
+              <td>User "Digital Deeds" tab: displays user's own deeds, status badges, and Request Verification modal.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">Navbar.jsx</span></td>
+              <td>Top navigation "More" dropdown card linking to TrustDeed verification.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">Footer.jsx</span></td>
+              <td>Global footer Quick Link to <code style="font-family:monospace;font-size:0.7rem">/verify-deed</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="file-pill">vercel.json</span></td>
+              <td>SPA rewrite rules — routes all deep-link paths to <code style="font-family:monospace;font-size:0.7rem">index.html</code> for Vercel deployment.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ── 05. DEVELOPER API ── -->
+      <section class="section section-anchor" id="api">
+        <div class="section-header">
+          <div class="section-number">05</div>
+          <h2 class="section-title">Developer API Reference</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-title">generateSignature(deedId, role)</div>
+          <p style="margin-bottom:12px">Generates a 32-character hex-like signature string for a given <code style="font-family:monospace;color:#7dd3fc;font-size:0.8rem">deedId</code> and <code style="font-family:monospace;color:#7dd3fc;font-size:0.8rem">role</code>.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+              <span class="code-lang">JavaScript</span>
+            </div>
+            <pre><span class="kw">import</span> { generateSignature } <span class="kw">from</span> <span class="str">"../utils/deedService"</span>;
+
+<span class="kw">const</span> sig = <span class="fn">generateSignature</span>(<span class="str">"TD-101-9921"</span>, <span class="str">"public"</span>);
+<span class="cmt">// Returns: "d839e1a02837bcde8f12a34b56cd7e8a"</span></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">verifyDeedSignature(deedId, role, sig)</div>
+          <p style="margin-bottom:12px">Verifies the cryptographic signature and returns the deed object with GDPR masking applied for public role.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+              <span class="code-lang">JavaScript</span>
+            </div>
+            <pre><span class="kw">const</span> result = <span class="fn">verifyDeedSignature</span>(<span class="str">"TD-101-9921"</span>, <span class="str">"public"</span>, sig);
+
+<span class="cmt">// Returns:</span>
+<span class="cmt">// {</span>
+<span class="cmt">//   verified: true,</span>
+<span class="cmt">//   role: "public",</span>
+<span class="cmt">//   deed: {</span>
+<span class="cmt">//     deedId: "TD-101-9921",</span>
+<span class="cmt">//     buyerName: "A** Khan",    ← GDPR masked</span>
+<span class="cmt">//     buyerCNIC: "374**-****-9" ← GDPR masked</span>
+<span class="cmt">//   }</span>
+<span class="cmt">// }</span></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">createDeed(deedData)</div>
+          <p style="margin-bottom:12px">Registers a new deed entry into local storage and auto-generates a unique <code style="font-family:monospace;color:#7dd3fc;font-size:0.8rem">deedId</code> &amp; blockchain hash.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+              <span class="code-lang">JavaScript</span>
+            </div>
+            <pre><span class="kw">const</span> newDeed = <span class="fn">createDeed</span>({
+  <span class="key">propertyId</span>: <span class="val">204</span>,
+  <span class="key">title</span>:      <span class="str">"10 Marla Luxury House"</span>,
+  <span class="key">location</span>:   <span class="str">"DHA Phase 5, Islamabad"</span>,
+  <span class="key">price</span>:      <span class="str">"3.2 Crore PKR"</span>,
+  <span class="key">buyerName</span>:  <span class="str">"Hamza Ali"</span>,
+  <span class="key">sellerName</span>: <span class="str">"Usman Raza"</span>,
+});</pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">getQRBaseUrl()</div>
+          <p style="margin-bottom:12px">Resolves the correct base URL for QR code generation — supports Vercel production, local overrides, and environment variables.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+              <span class="code-lang">JavaScript</span>
+            </div>
+            <pre><span class="kw">const</span> base = <span class="fn">getQRBaseUrl</span>();
+<span class="cmt">// Returns: "https://nextpropertypk.vercel.app"</span>
+<span class="cmt">// (or current window origin when deployed)</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 06. SCHEMA ── -->
+      <section class="section section-anchor" id="schema">
+        <div class="section-header">
+          <div class="section-number">06</div>
+          <h2 class="section-title">Security &amp; Data Schema</h2>
+        </div>
+
+        <div class="schema-grid">
+          <div class="schema-field">
+            <div class="field-name">deedId</div>
+            <div class="field-val">"TD-101-9921"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">propertyId</div>
+            <div class="field-val">101</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">title</div>
+            <div class="field-val">"5 Marla Modern Executive Villa"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">location</div>
+            <div class="field-val">"DHA Phase 6, Lahore"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">buyerName</div>
+            <div class="field-val">"Ali Khan"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">buyerCNIC</div>
+            <div class="field-val">"37405-1234567-9"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">sellerName</div>
+            <div class="field-val">"Kamran Shah"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">soldDate</div>
+            <div class="field-val">"2026-06-25"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">registryOffice</div>
+            <div class="field-val">"Lahore Central Land Registry"</div>
+          </div>
+          <div class="schema-field">
+            <div class="field-name">status</div>
+            <div class="field-val">✅ "Verified"</div>
+          </div>
+          <div class="schema-field highlight-field">
+            <div class="field-name">blockchainHash</div>
+            <div class="field-val">"0x8f39b1a0e1c27e8d35678ab26c91d4e0871ba9e102837bcde8f12a34b56cd7e8"</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 07. ENHANCEMENTS ── -->
+      <section class="section section-anchor" id="enhancements">
+        <div class="section-header">
+          <div class="section-number">07</div>
+          <h2 class="section-title">Summary of Enhancements</h2>
+        </div>
+
+        <ul class="checklist">
+          <li><div><strong>Self-Contained Architecture</strong> — TrustDeed operates entirely on client-side cryptographic services with no external API dependency.</div></li>
+          <li><div><strong>Navigation Integration</strong> — Streamlined Navbar header with TrustDeed verification in "More" dropdown and Footer quick links.</div></li>
+          <li><div><strong>Certified Vault Landing View</strong> — Interactive deed vault with city filters, live search, and 1-click verification cards.</div></li>
+          <li><div><strong>GDPR Public Masking Enforced</strong> — Public scans mask all sensitive CNICs, phone numbers, and email addresses.</div></li>
+          <li><div><strong>User Dashboard Integration</strong> — "Digital Deeds" tab in UserDashboard.jsx for deed management and verification requests.</div></li>
+          <li><div><strong>Admin Dashboard Vault &amp; Demo Generator</strong> — Full TrustDeed administration vault with 1-click Demo Deed Generator and SHA-256 Title Approval.</div></li>
+          <li><div><strong>In-App Camera QR Scanner</strong> — Built-in webcam &amp; image QR scanner powered by <code style="font-family:monospace;color:#7dd3fc;font-size:0.82rem">html5-qrcode</code> on /verify-deed.</div></li>
+          <li><div><strong>Vercel SPA Routing</strong> — vercel.json rewrites ensure all deep-link paths load correctly on mobile browsers without 404 errors.</div></li>
+          <li><div><strong>Production Verified</strong> — Build confirmed via <code style="font-family:monospace;color:#7dd3fc;font-size:0.82rem">npx vite build</code> with zero errors, deployed on Vercel at <strong style="color:var(--gold)">nextpropertypk.vercel.app</strong>.</div></li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="doc-footer">
+    <p>© 2026 <strong>NextProperty</strong> · TrustDeed Feature Documentation · Final Year Project (FYP-26) · Built with React 18 + Vite 7</p>
+  </footer>
+
+</body>
+</html>
