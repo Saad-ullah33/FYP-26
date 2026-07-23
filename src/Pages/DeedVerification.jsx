@@ -28,224 +28,196 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
 
 const DeedVerification = () => {
   const [searchParams] = useSearchParams();
-  const params = useParams();
+  const { deedId: routeDeedId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Camera scanner modal state
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
 
-  // Read params
-  const paramDeedId = searchParams.get("deedId") || params.deedId || "";
-  const paramRole = searchParams.get("role") || "public";
-  const paramSig = searchParams.get("sig") || "";
-
-  // Component state
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [deedId, setDeedId] = useState(paramDeedId);
-  const [role, setRole] = useState(paramRole);
-  const [sig, setSig] = useState(paramSig);
-
-  // Verification Step Animation state
-  const [verificationStep, setVerificationStep] = useState("");
-  const [verificationProgress, setVerificationProgress] = useState(0);
-
-  // Certified Vault state
-  const [allDeeds, setAllDeeds] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCity, setSelectedCity] = useState("ALL");
+  // State for search/lookup portal when parameters are missing
   const [lookupId, setLookupId] = useState("");
   const [lookupRole, setLookupRole] = useState("public");
   const [lookupError, setLookupError] = useState("");
 
-  // Ledger Audit Consensus Modal
+  // Vault filtering states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCity, setSelectedCity] = useState("ALL");
+
+  // State for ledger integrity audit simulation modal
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditProgress, setAuditProgress] = useState(0);
 
-  // In-App Camera Scanner Modal State
-  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [verificationStep, setVerificationStep] = useState("");
+  const [result, setResult] = useState(null);
 
-  // Load deeds catalog
-  useEffect(() => {
-    const deeds = getAllDeeds();
-    setAllDeeds(deeds);
-  }, []);
+  const deedId = routeDeedId || searchParams.get("deedId");
+  const role = searchParams.get("role") || "public";
+  const sig = searchParams.get("sig");
 
-  // Main verification effect
-  useEffect(() => {
-    if (paramDeedId) {
-      setDeedId(paramDeedId);
-      setRole(paramRole);
+  // Load all registered deeds for vault display
+  const allDeeds = useMemo(() => getAllDeeds(), []);
 
-      const generatedSig = paramSig || generateSignature(paramDeedId, paramRole);
-      setSig(generatedSig);
-
-      executeVerificationFlow(paramDeedId, paramRole, generatedSig);
-    } else {
-      setResult(null);
-      setLoading(false);
-    }
-  }, [paramDeedId, paramRole, paramSig]);
-
-  // Execute 4-Step Verification Sequence
-  const executeVerificationFlow = (targetDeedId, targetRole, targetSig) => {
-    setLoading(true);
-    setResult(null);
-    setVerificationProgress(10);
-    setVerificationStep("Reading cryptographic signature & key payloads...");
-
-    setTimeout(() => {
-      setVerificationProgress(40);
-      setVerificationStep("Verifying signature validity with Central Secret Key...");
-    }, 600);
-
-    setTimeout(() => {
-      setVerificationProgress(75);
-      setVerificationStep("Querying Land Revenue Secure Registry Database...");
-    }, 1200);
-
-    setTimeout(() => {
-      setVerificationProgress(100);
-      setVerificationStep("Validating SHA-256 Blockchain Hash Consensus...");
-    }, 1800);
-
-    setTimeout(() => {
-      const res = verifyDeedSignature(targetDeedId, targetRole, targetSig);
-      setResult(res);
-      setLoading(false);
-
-      if (res && res.verified) {
-        confetti({
-          particleCount: 70,
-          spread: 60,
-          origin: { y: 0.6 }
-        });
-      }
-    }, 2200);
-  };
-
-  // Handle Manual Form Lookup
-  const handleLookupSubmit = (overrideId, overrideRole) => {
-    const targetId = (overrideId || lookupId || searchTerm).trim();
-    const targetRole = overrideRole || lookupRole;
-
-    if (!targetId) {
-      setLookupError("Please enter a valid Deed ID (e.g. TD-101-9921) to audit.");
-      return;
-    }
-
-    setLookupError("");
-    const generatedSig = generateSignature(targetId, targetRole);
-    navigate(`/verify-deed?deedId=${encodeURIComponent(targetId)}&role=${targetRole}&sig=${generatedSig}`);
-  };
-
-  // Filtered catalogue deeds
   const filteredDeeds = useMemo(() => {
-    return allDeeds.filter((deed) => {
-      const matchesSearch = 
-        deed.deedId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deed.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deed.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deed.buyerName.toLowerCase().includes(searchTerm.toLowerCase());
+    return allDeeds.filter(d => {
+      const matchSearch = searchTerm === "" || 
+        d.deedId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (d.buyerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (d.sellerName || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesCity = selectedCity === "ALL" || deed.location.toLowerCase().includes(selectedCity.toLowerCase());
+      const matchCity = selectedCity === "ALL" || d.location.toLowerCase().includes(selectedCity.toLowerCase());
 
-      return matchesSearch && matchesCity;
+      return matchSearch && matchCity;
     });
   }, [allDeeds, searchTerm, selectedCity]);
 
-  // Handle In-App Camera QR Code Scanner Initializer
   useEffect(() => {
-    let html5QrcodeScanner = null;
+    if (!deedId || !sig) {
+      setResult(null);
+      setLoading(false);
+      return;
+    }
 
-    if (isCameraModalOpen) {
-      const timer = setTimeout(() => {
-        try {
-          html5QrcodeScanner = new Html5QrcodeScanner(
-            "qr-reader-container",
-            { 
-              fps: 10, 
-              qrbox: { width: 250, height: 250 },
-              rememberLastUsedCamera: true,
-              aspectRatio: 1.0
-            },
-            /* verbose= */ false
-          );
+    // Reset results and start verification simulation
+    setResult(null);
+    setLoading(true);
+    setVerificationProgress(0);
 
-          html5QrcodeScanner.render(
-            (decodedText) => {
-              console.log("Scanned QR Code URL:", decodedText);
-              if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(err => console.error("Scanner clear error", err));
-              }
-              setIsCameraModalOpen(false);
+    const steps = [
+      { progress: 20, text: "Reading cryptographic signature..." },
+      { progress: 50, text: "Verifying signature validity with Central Secret..." },
+      { progress: 85, text: "Querying secure registry database..." },
+      { progress: 100, text: "Validating blockchain hash integrity..." },
+    ];
 
-              try {
-                if (decodedText.includes("deedId=")) {
-                  const urlObj = new URL(decodedText);
-                  const scannedDeedId = urlObj.searchParams.get("deedId");
-                  const scannedRole = urlObj.searchParams.get("role") || "public";
-                  const scannedSig = urlObj.searchParams.get("sig") || "";
+    let currentStepIdx = 0;
+    const interval = setInterval(() => {
+      if (currentStepIdx < steps.length) {
+        setVerificationProgress(steps[currentStepIdx].progress);
+        setVerificationStep(steps[currentStepIdx].text);
+        currentStepIdx++;
+      } else {
+        clearInterval(interval);
+        
+        const verifyRes = verifyDeedSignature(deedId, role, sig);
+        setResult(verifyRes);
+        setLoading(false);
 
-                  if (scannedDeedId) {
-                    navigate(`/verify-deed?deedId=${encodeURIComponent(scannedDeedId)}&role=${scannedRole}&sig=${scannedSig}`);
-                  } else {
-                    alert("Scanned QR code does not contain a valid Deed ID.");
-                  }
-                } else {
-                  alert(`Scanned content: ${decodedText}`);
-                }
-              } catch (e) {
-                if (decodedText.startsWith("TD-")) {
-                  navigate(`/verify-deed?deedId=${encodeURIComponent(decodedText)}&role=public`);
-                } else {
-                  alert(`Scanned QR Text: ${decodedText}`);
-                }
-              }
-            },
-            (errorMessage) => {
-              // Ignore scanning frame errors
-            }
-          );
-        } catch (err) {
-          console.error("Camera scanner init error:", err);
+        if (verifyRes.verified) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#d4af37", "#f3e5ab", "#4caf50", "#2196f3"],
+          });
         }
-      }, 300);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [deedId, role, sig]);
+
+  // Handle in-app webcam QR Scanner
+  useEffect(() => {
+    if (isCameraModalOpen) {
+      let scanner = null;
+      try {
+        scanner = new Html5QrcodeScanner("qr-reader-container", {
+          fps: 10,
+          qrbox: { width: 220, height: 220 },
+          aspectRatio: 1.0,
+        });
+
+        scanner.render(
+          (decodedText) => {
+            scanner.clear().catch(e => console.error(e));
+            setIsCameraModalOpen(false);
+
+            if (decodedText.includes("deedId=")) {
+              try {
+                const urlObj = new URL(decodedText);
+                const did = urlObj.searchParams.get("deedId");
+                const r = urlObj.searchParams.get("role") || "public";
+                const s = urlObj.searchParams.get("sig") || generateSignature(did, r);
+                navigate(`/verify-deed?deedId=${did}&role=${r}&sig=${s}`);
+              } catch (e) {
+                const cleanId = decodedText.split("deedId=")[1]?.split("&")[0] || "TD-101-9921";
+                const s = generateSignature(cleanId, "public");
+                navigate(`/verify-deed?deedId=${cleanId}&role=public&sig=${s}`);
+              }
+            } else {
+              const cleanId = decodedText.trim();
+              const s = generateSignature(cleanId, "public");
+              navigate(`/verify-deed?deedId=${cleanId}&role=public&sig=${s}`);
+            }
+          },
+          (errorMessage) => {
+            // searching
+          }
+        );
+      } catch (err) {
+        console.error("Camera scanner error:", err);
+      }
 
       return () => {
-        clearTimeout(timer);
-        if (html5QrcodeScanner) {
-          html5QrcodeScanner.clear().catch(err => console.error(err));
+        if (scanner) {
+          scanner.clear().catch(e => console.error(e));
         }
       };
     }
   }, [isCameraModalOpen, navigate]);
 
-  // Handle Ledger Consensus Audit Simulation
+  const handleLookupSubmit = (targetDeedId = null, targetRole = null) => {
+    const deedToVerify = targetDeedId || lookupId.trim();
+    const roleToUse = targetRole || lookupRole;
+
+    if (!deedToVerify) {
+      setLookupError("Please select or enter a valid Deed ID.");
+      return;
+    }
+
+    const deed = getDeedById(deedToVerify);
+    if (!deed) {
+      setLookupError(`Deed ID '${deedToVerify}' not found in secure registry.`);
+      return;
+    }
+
+    const signature = generateSignature(deed.deedId, roleToUse);
+    navigate(`/verify-deed?deedId=${deed.deedId}&role=${roleToUse}&sig=${signature}`);
+  };
+
   const handleAuditLedger = () => {
     setIsAuditing(true);
-    setAuditProgress(10);
-    setAuditLogs([
-      "Connecting to NextProperty Distributed Ledger Nodes...",
-      `Querying Merkle Tree proof for Deed ID: ${result?.deed?.deedId || deedId}`
-    ]);
+    setAuditProgress(0);
+    setAuditLogs([]);
 
-    setTimeout(() => {
-      setAuditProgress(40);
-      setAuditLogs(prev => [...prev, `SHA-256 Hash Verified: ${result?.deed?.blockchainHash}`]);
-    }, 800);
+    const logs = [
+      "Connecting to Local Registry Ledger Node #04...",
+      "Resolving Merkle root hash trees...",
+      "Matching transaction proof (SHA-256 integrity block)...",
+      "Retrieving state proofs from 5 active validator nodes...",
+      "Consensus verified (100% agreement on block status).",
+      "Ledger State: VALID & IMMUTABLE."
+    ];
 
-    setTimeout(() => {
-      setAuditProgress(75);
-      setAuditLogs(prev => [...prev, "Checking Land Revenue Registry Validator Nodes... Status: 100% Match"]);
-    }, 1600);
-
-    setTimeout(() => {
-      setAuditProgress(100);
-      setAuditLogs(prev => [...prev, "✅ Consensus Achieved: Title Deed Record is 100% Authentic and Unaltered."]);
-    }, 2400);
+    let logIdx = 0;
+    const interval = setInterval(() => {
+      if (logIdx < logs.length) {
+        setAuditLogs((prev) => [...prev, logs[logIdx]]);
+        setAuditProgress(Math.round(((logIdx + 1) / logs.length) * 100));
+        logIdx++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 450);
   };
 
   const handlePrint = () => {
@@ -253,7 +225,7 @@ const DeedVerification = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-start p-4 md:p-8 relative font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start p-4 md:p-8 relative overflow-hidden font-sans">
       <style>{`
         @page {
           size: A4 portrait;
@@ -312,8 +284,9 @@ const DeedVerification = () => {
         }
       `}</style>
       
-      {/* Light subtle top background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-slate-50 to-slate-100 pointer-events-none" />
+      {/* Background radial glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(30,41,59,0.3)_0%,rgba(2,6,23,0.85)_100%)] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-30" />
 
       <div className="w-full max-w-5xl z-10 my-auto">
         <AnimatePresence mode="wait">
@@ -325,18 +298,18 @@ const DeedVerification = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-slate-200/80 rounded-3xl p-8 md:p-12 shadow-2xl text-center max-w-lg mx-auto"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 md:p-12 shadow-2xl text-center max-w-lg mx-auto"
             >
               <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
-                <Lock className="w-8 h-8 text-blue-600" />
+                <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin" />
+                <Lock className="w-8 h-8 text-amber-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Cryptographic Verification</h2>
-              <p className="text-xs text-slate-500 font-mono mb-6">{verificationStep || "Initializing signature checks..."}</p>
+              <h2 className="text-xl font-bold text-slate-100 mb-2">Cryptographic Verification</h2>
+              <p className="text-xs text-slate-400 font-mono mb-6">{verificationStep || "Initializing signature checks..."}</p>
               
-              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200 p-0.5">
+              <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800 p-0.5">
                 <div 
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-300" 
+                  className="bg-gradient-to-r from-amber-500 to-amber-300 h-full rounded-full transition-all duration-300" 
                   style={{ width: `${verificationProgress}%` }}
                 />
               </div>
@@ -350,21 +323,21 @@ const DeedVerification = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white border-2 border-amber-400/60 rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-200/80 print-container relative overflow-hidden text-slate-900"
+              className="bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(212,175,55,0.1)] print-container relative overflow-hidden"
             >
               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
               {/* Top Navigation Back Action */}
-              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 print:hidden">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800 print:hidden">
                 <button
                   onClick={() => navigate("/verify-deed")}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition cursor-pointer"
+                  className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-amber-400 transition cursor-pointer"
                 >
                   <ArrowLeft size={16} /> Back to Registry Vault
                 </button>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-500 uppercase font-mono">View Mode:</span>
-                  <span className="px-2.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold capitalize">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono">View Mode:</span>
+                  <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-extrabold capitalize">
                     {role} Profile
                   </span>
                 </div>
@@ -390,21 +363,21 @@ const DeedVerification = () => {
               </div>
 
               {/* Certificate Header with Scannable QR */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-200 print:border-slate-300">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-800/80 print:border-slate-300">
                 <div className="text-center md:text-left space-y-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 print:text-amber-800 text-xs font-mono font-bold uppercase mb-2">
-                    <ShieldCheck className="w-4 h-4 text-amber-700" /> Cryptographically Sealed Title
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 print:text-amber-800 text-xs font-mono font-bold uppercase mb-2">
+                    <ShieldCheck className="w-4 h-4" /> Cryptographically Sealed Title
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 uppercase">
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white print:text-slate-900 uppercase">
                     Digital Title Deed Certificate
                   </h1>
-                  <p className="text-xs text-slate-600 font-mono tracking-wider">
+                  <p className="text-xs text-slate-400 font-mono tracking-wider print:text-slate-700">
                     Official Land Revenue Registry Verification Seal
                   </p>
                 </div>
 
                 {/* Live Scannable Vector QR Code */}
-                <div className="bg-white p-3 rounded-2xl border-2 border-amber-400 shadow-lg shadow-amber-500/10 flex flex-col items-center justify-center shrink-0">
+                <div className="bg-white p-3 rounded-2xl border-2 border-amber-500/40 shadow-xl shadow-amber-500/5 flex flex-col items-center justify-center shrink-0">
                   <QRCodeSVG 
                     value={`${getQRBaseUrl()}/verify-deed?deedId=${result.deed.deedId}&role=public&sig=${generateSignature(result.deed.deedId, "public")}`}
                     size={110}
@@ -418,105 +391,105 @@ const DeedVerification = () => {
               </div>
 
               {/* Deed Specifications Box */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 print-bg-light border border-slate-200 p-6 rounded-2xl mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 print-bg-light border border-slate-850 p-6 rounded-2xl mb-6">
                 <div className="space-y-4 text-left">
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Deed ID / Registry ID</label>
-                    <p className="text-sm font-bold font-mono text-amber-800 print:text-slate-900">{result.deed.deedId}</p>
+                    <p className="text-sm font-semibold font-mono text-amber-400 print:text-slate-900">{result.deed.deedId}</p>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Property Title</label>
-                    <p className="text-base font-extrabold text-slate-900">{result.deed.title}</p>
+                    <p className="text-base font-bold text-slate-100 print:text-slate-950">{result.deed.title}</p>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Location</label>
-                    <p className="text-sm text-slate-700 font-medium">{result.deed.location}</p>
+                    <p className="text-sm text-slate-300 print:text-slate-700">{result.deed.location}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4 text-left">
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Transaction Value</label>
-                    <p className="text-base font-black text-emerald-700 print:text-emerald-800">{result.deed.price}</p>
+                    <p className="text-base font-black text-emerald-400 print:text-emerald-800">{result.deed.price}</p>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Registration Date & Office</label>
-                    <p className="text-sm text-slate-800 print:text-slate-900 font-semibold">
-                      {result.deed.soldDate} — <span className="text-slate-600">{result.deed.registryOffice}</span>
+                    <p className="text-sm text-slate-200 print:text-slate-900 font-medium">
+                      {result.deed.soldDate} — <span className="text-slate-400 print:text-slate-700">{result.deed.registryOffice}</span>
                     </p>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wide block">Verification Timestamp</label>
-                    <p className="text-xs text-slate-600 font-mono">{result.deed.verifiedAt}</p>
+                    <p className="text-xs text-slate-400 print:text-slate-600 font-mono">{result.deed.verifiedAt}</p>
                   </div>
                 </div>
               </div>
 
               {/* Blockchain Integrity Block */}
-              <div className="bg-slate-900 text-slate-100 print-bg-light border border-slate-800 p-4 rounded-xl mb-6 text-left">
-                <span className="text-[10px] text-amber-400 uppercase tracking-wider block mb-1 font-mono">Blockchain Merkle Proof Hash</span>
-                <p className="text-[11px] font-mono text-slate-300 print:text-slate-800 break-all leading-tight">
+              <div className="bg-slate-950/80 print-bg-light border border-slate-800 p-4 rounded-xl mb-6 text-left">
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1 font-mono">Blockchain Merkle Proof Hash</span>
+                <p className="text-[11px] font-mono text-slate-400 print:text-slate-800 break-all leading-tight">
                   {result.deed.blockchainHash}
                 </p>
               </div>
 
               {/* Parties Details Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-6">
-                <div className="bg-slate-50 print-bg-light border border-slate-200 p-4 rounded-xl">
-                  <span className="text-[10px] text-emerald-700 uppercase tracking-wider block font-bold mb-2">Seller Details</span>
+                <div className="bg-slate-950/40 print-bg-light border border-slate-850 p-4 rounded-xl">
+                  <span className="text-[10px] text-emerald-400 print:text-emerald-800 uppercase tracking-wider block font-bold mb-2">Seller Details</span>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-slate-900">{result.deed.sellerName}</p>
-                    <p className="text-slate-600 font-mono text-[11px]">{result.deed.sellerEmail}</p>
-                    <p className="text-slate-600 font-mono text-[11px]">{result.deed.sellerCNIC}</p>
+                    <p className="font-semibold text-slate-200 print:text-slate-900">{result.deed.sellerName}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.sellerEmail}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.sellerCNIC}</p>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 print-bg-light border border-slate-200 p-4 rounded-xl">
-                  <span className="text-[10px] text-blue-700 uppercase tracking-wider block font-bold mb-2">Buyer Details</span>
+                <div className="bg-slate-950/40 print-bg-light border border-slate-850 p-4 rounded-xl">
+                  <span className="text-[10px] text-sky-400 print:text-sky-800 uppercase tracking-wider block font-bold mb-2">Buyer Details</span>
                   <div className="text-xs space-y-1">
-                    <p className="font-bold text-slate-900">{result.deed.buyerName}</p>
-                    <p className="text-slate-600 font-mono text-[11px]">{result.deed.buyerEmail}</p>
-                    <p className="text-slate-600 font-mono text-[11px]">{result.deed.buyerCNIC}</p>
+                    <p className="font-semibold text-slate-200 print:text-slate-900">{result.deed.buyerName}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.buyerEmail}</p>
+                    <p className="text-slate-400 print:text-slate-700 font-mono text-[11px]">{result.deed.buyerCNIC}</p>
                   </div>
                 </div>
               </div>
 
               {/* Official Seals & Signatures Block */}
-              <div className="my-6 pt-6 border-t-2 border-slate-200 print:border-slate-300 grid grid-cols-3 gap-4 items-center text-left">
+              <div className="my-6 pt-6 border-t-2 border-slate-800 print:border-slate-300 grid grid-cols-3 gap-4 items-center text-left">
                 {/* Official Gold Seal Badge */}
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-100 flex flex-col items-center justify-center text-amber-800 shrink-0">
-                    <Award className="w-5 h-5 text-amber-700" />
+                  <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-500/10 print:bg-amber-100 flex flex-col items-center justify-center text-amber-500 print:text-amber-700 shrink-0">
+                    <Award className="w-5 h-5" />
                     <span className="text-[6px] font-black uppercase tracking-tighter">SEAL</span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-900 uppercase tracking-wider">Official Title Seal</p>
-                    <p className="text-[8px] text-slate-500 font-mono">Government Registry Audit</p>
+                    <p className="text-[10px] font-bold text-slate-200 print:text-slate-900 uppercase tracking-wider">Official Title Seal</p>
+                    <p className="text-[8px] text-slate-400 print:text-slate-600 font-mono">Government Registry Audit</p>
                   </div>
                 </div>
 
                 {/* Sub-Registrar Authority Signature */}
                 <div className="text-center space-y-1">
-                  <div className="h-8 border-b border-dashed border-slate-400 flex items-end justify-center pb-0.5">
-                    <span className="font-serif italic text-slate-800 text-xs font-semibold">Sub-Registrar Revenue</span>
+                  <div className="h-8 border-b border-dashed border-slate-600 print:border-slate-400 flex items-end justify-center pb-0.5">
+                    <span className="font-serif italic text-amber-400 print:text-slate-800 text-xs font-semibold">Sub-Registrar Revenue</span>
                   </div>
-                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">Sub-Registrar Signature</p>
+                  <p className="text-[9px] font-bold text-slate-300 print:text-slate-900 uppercase tracking-wide">Sub-Registrar Signature</p>
                 </div>
 
                 {/* Blockchain Officer Signature */}
                 <div className="text-right space-y-1">
-                  <div className="h-8 border-b border-dashed border-slate-400 flex items-end justify-end pb-0.5">
-                    <span className="font-mono text-[10px] text-slate-800 font-bold">0x8f39...b56cd7e8</span>
+                  <div className="h-8 border-b border-dashed border-slate-600 print:border-slate-400 flex items-end justify-end pb-0.5">
+                    <span className="font-mono text-[10px] text-amber-400 print:text-slate-800 font-bold">0x8f39...b56cd7e8</span>
                   </div>
-                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">Cryptographic Ledger Seal</p>
+                  <p className="text-[9px] font-bold text-slate-300 print:text-slate-900 uppercase tracking-wide">Cryptographic Ledger Seal</p>
                 </div>
               </div>
 
               {/* Role Toggle Bar */}
-              <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 print:hidden">
+              <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 print:hidden">
                 <div className="text-left">
-                  <h4 className="text-xs font-bold text-slate-900">Switch View Mode & Role Authentication</h4>
-                  <p className="text-[11px] text-slate-600">Public scans mask CNIC and owner details for privacy.</p>
+                  <h4 className="text-xs font-bold text-slate-200">Switch View Mode & Role Authentication</h4>
+                  <p className="text-[11px] text-slate-400">Public scans mask CNIC and owner details for privacy.</p>
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
@@ -526,8 +499,8 @@ const DeedVerification = () => {
                       onClick={() => handleLookupSubmit(result.deed.deedId, r)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${
                         role === r 
-                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/20" 
-                          : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-300"
+                          ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" 
+                          : "bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800"
                       }`}
                     >
                       {r}
@@ -540,14 +513,14 @@ const DeedVerification = () => {
               <div className="flex flex-col sm:flex-row gap-3 justify-end print:hidden">
                 <button
                   onClick={handleAuditLedger}
-                  className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Sparkles size={16} className="text-amber-400" /> Audit Ledger Consensus
                 </button>
 
                 <button
                   onClick={handlePrint}
-                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 cursor-pointer"
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
                   <Download size={16} /> Print / Save PDF Certificate
                 </button>
@@ -563,17 +536,17 @@ const DeedVerification = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-red-200 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl"
+              className="bg-slate-900/90 backdrop-blur-xl border border-red-500/40 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl"
             >
-              <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 border border-red-200 mx-auto mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20 mx-auto mb-4">
                 <ShieldAlert className="w-8 h-8" />
               </div>
-              <h2 className="text-xl font-bold text-red-600 mb-1">Verification Failed</h2>
-              <p className="text-xs text-slate-600 font-mono mb-4">{result.error}</p>
+              <h2 className="text-xl font-bold text-red-400 mb-1">Verification Failed</h2>
+              <p className="text-xs text-slate-400 font-mono mb-4">{result.error}</p>
 
               <button
                 onClick={() => navigate("/verify-deed")}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition text-xs cursor-pointer"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl border border-slate-800 transition text-xs cursor-pointer"
               >
                 Return to Registry Vault
               </button>
@@ -590,21 +563,23 @@ const DeedVerification = () => {
               className="space-y-8"
             >
               {/* Header Banner */}
-              <div className="bg-white border border-slate-200/80 rounded-3xl p-8 text-center relative overflow-hidden shadow-xl shadow-slate-200/60">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold tracking-wider uppercase mb-3">
-                  <Award size={13} className="text-amber-700" /> Official Title Deed Registry
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-amber-500/20 rounded-3xl p-8 text-center relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold tracking-wider uppercase mb-3">
+                  <Award size={13} /> Official Title Deed Registry
                 </div>
-                <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
-                  TrustDeed <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-600 text-transparent bg-clip-text">Verification Vault</span>
+                <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                  TrustDeed <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 text-transparent bg-clip-text">Verification Vault</span>
                 </h1>
-                <p className="text-slate-600 text-xs md:text-sm max-w-xl mx-auto mt-2 font-medium">
+                <p className="text-slate-400 text-xs md:text-sm max-w-xl mx-auto mt-2 font-medium">
                   Cryptographically sealed property title deeds backed by SHA-256 blockchain hash proofs and land revenue authority validation.
                 </p>
 
                 {/* Quick Search & Manual Lookup Form */}
-                <div className="mt-6 max-w-2xl mx-auto bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-col md:flex-row gap-3">
+                <div className="mt-6 max-w-2xl mx-auto bg-slate-950/80 p-3 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input
                       type="text"
                       placeholder="Enter Deed ID (e.g. TD-101-9921) or location..."
@@ -615,14 +590,14 @@ const DeedVerification = () => {
                         setSearchTerm(val);
                         setLookupError("");
                       }}
-                      className="w-full bg-white border border-slate-300 focus:border-blue-600 text-slate-900 placeholder:text-slate-400 rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono focus:outline-none transition shadow-sm"
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500 text-white rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono focus:outline-none transition"
                     />
                   </div>
 
                   <select
                     value={lookupRole}
                     onChange={(e) => setLookupRole(e.target.value)}
-                    className="bg-white border border-slate-300 text-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-600 font-medium shadow-sm"
+                    className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 font-medium"
                   >
                     <option value="public">Public Scan</option>
                     <option value="buyer">Buyer Profile</option>
@@ -632,7 +607,7 @@ const DeedVerification = () => {
 
                   <button
                     onClick={() => setIsCameraModalOpen(true)}
-                    className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-blue-700 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer shrink-0 flex items-center justify-center gap-1.5 shadow-sm"
+                    className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
                     title="Scan QR code using live webcam or camera"
                   >
                     <QrCode size={16} /> 📷 Camera Scan
@@ -640,34 +615,34 @@ const DeedVerification = () => {
 
                   <button
                     onClick={() => handleLookupSubmit()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-black px-5 py-2.5 rounded-xl text-xs transition shadow-md shadow-blue-600/20 cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/10 cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
                   >
                     <ShieldCheck size={16} /> Audit Deed
                   </button>
                 </div>
-                {lookupError && <p className="text-xs text-red-600 mt-2 font-semibold">{lookupError}</p>}
+                {lookupError && <p className="text-xs text-red-400 mt-2 font-semibold">{lookupError}</p>}
               </div>
 
               {/* Certified Deeds Catalogue Section */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                      <QrCode size={18} className="text-blue-600" /> Registered Property Title Deeds
+                    <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                      <QrCode size={18} className="text-amber-400" /> Registered Property Title Deeds
                     </h3>
-                    <p className="text-xs text-slate-500">Select any title deed record below for 1-click cryptographic verification.</p>
+                    <p className="text-xs text-slate-400">Select any title deed record below for 1-click cryptographic verification.</p>
                   </div>
 
                   {/* Filter Pills */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
                     {["ALL", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"].map((city) => (
                       <button
                         key={city}
                         onClick={() => setSelectedCity(city)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                           selectedCity === city 
-                            ? "bg-blue-600 text-white shadow-md shadow-blue-600/20" 
-                            : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-100"
+                            ? "bg-amber-500 text-slate-950" 
+                            : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
                         }`}
                       >
                         {city}
@@ -681,40 +656,40 @@ const DeedVerification = () => {
                   {filteredDeeds.map((deed) => (
                     <div 
                       key={deed.deedId}
-                      className="bg-white border border-slate-200/90 hover:border-blue-400 p-5 rounded-2xl transition-all duration-300 group flex flex-col justify-between hover:shadow-xl hover:shadow-blue-500/10 text-left"
+                      className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 hover:border-amber-500/40 p-5 rounded-2xl transition-all duration-300 group flex flex-col justify-between hover:shadow-xl hover:shadow-amber-500/5 text-left"
                     >
                       <div>
                         {/* Top Badge Row */}
                         <div className="flex items-center justify-between mb-3">
-                          <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-mono text-[11px] font-bold">
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[11px] font-bold">
                             {deed.deedId}
                           </span>
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                             <CheckCircle size={10} /> Verified
                           </span>
                         </div>
 
                         {/* Title & Location */}
-                        <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                        <h4 className="text-sm font-extrabold text-white group-hover:text-amber-300 transition-colors leading-snug">
                           {deed.title}
                         </h4>
-                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                          <Building2 size={12} className="text-slate-400 shrink-0" /> {deed.location}
+                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                          <Building2 size={12} className="text-slate-500 shrink-0" /> {deed.location}
                         </p>
 
                         {/* Specs list */}
-                        <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
+                        <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1.5 text-xs">
                           <div className="flex justify-between text-[11px]">
                             <span className="text-slate-500">Transaction Price:</span>
-                            <span className="font-bold text-slate-900">{deed.price}</span>
+                            <span className="font-bold text-slate-200">{deed.price}</span>
                           </div>
                           <div className="flex justify-between text-[11px]">
                             <span className="text-slate-500">Registered Date:</span>
-                            <span className="font-mono text-slate-600">{deed.soldDate}</span>
+                            <span className="font-mono text-slate-400">{deed.soldDate}</span>
                           </div>
                           <div className="flex justify-between text-[11px]">
                             <span className="text-slate-500">Authority:</span>
-                            <span className="text-slate-700 font-medium truncate max-w-[150px]">{deed.registryOffice}</span>
+                            <span className="text-slate-300 font-medium truncate max-w-[150px]">{deed.registryOffice}</span>
                           </div>
                         </div>
                       </div>
@@ -722,7 +697,7 @@ const DeedVerification = () => {
                       {/* Action Button */}
                       <button
                         onClick={() => handleLookupSubmit(deed.deedId, "public")}
-                        className="mt-5 w-full bg-slate-900 hover:bg-blue-600 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        className="mt-5 w-full bg-slate-950 hover:bg-amber-500 hover:text-slate-950 text-amber-400 border border-amber-500/30 hover:border-amber-500 font-extrabold py-2.5 rounded-xl text-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <ShieldCheck size={14} /> Verify Title Deed
                       </button>
@@ -731,7 +706,7 @@ const DeedVerification = () => {
                 </div>
 
                 {filteredDeeds.length === 0 && (
-                  <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center text-slate-500 text-xs">
+                  <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-2xl text-center text-slate-400 text-xs">
                     No verified deed records found matching your filter criteria.
                   </div>
                 )}
@@ -745,34 +720,34 @@ const DeedVerification = () => {
 
       {/* Ledger Audit Modal */}
       {isAuditing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 max-w-lg w-full text-left space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                <Sparkles size={16} className="text-blue-600" /> Decentralized Ledger Consensus Audit
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-6 md:p-8 max-w-lg w-full text-left space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <Sparkles size={16} className="text-amber-400" /> Decentralized Ledger Consensus Audit
               </h3>
               <button 
                 onClick={() => setIsAuditing(false)}
-                className="text-slate-400 hover:text-slate-700 text-xs font-mono cursor-pointer"
+                className="text-slate-400 hover:text-white text-xs font-mono cursor-pointer"
               >
                 ✕ Close
               </button>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 space-y-1.5 min-h-[160px]">
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 font-mono text-[11px] text-amber-300 space-y-1.5 min-h-[160px]">
               {auditLogs.map((log, idx) => (
                 <p key={idx} className="animate-fade-in">&gt; {log}</p>
               ))}
             </div>
 
-            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-              <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${auditProgress}%` }} />
+            <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div className="bg-amber-400 h-full transition-all duration-300" style={{ width: `${auditProgress}%` }} />
             </div>
 
             {auditProgress === 100 && (
               <button
                 onClick={() => setIsAuditing(false)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition cursor-pointer"
               >
                 Audit Complete - Ledger Immutable
               </button>
@@ -784,29 +759,29 @@ const DeedVerification = () => {
       {/* IN-APP CAMERA SCANNER MODAL */}
       {isCameraModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsCameraModalOpen(false)} />
-          <div className="relative bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl z-10">
-            <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsCameraModalOpen(false)} />
+          <div className="relative bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl z-10">
+            <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <QrCode className="text-blue-600" size={20} />
-                <h3 className="text-sm font-bold text-slate-900">Live Camera & Image QR Scanner</h3>
+                <QrCode className="text-amber-400" size={20} />
+                <h3 className="text-sm font-bold text-white">Live Camera & Image QR Scanner</h3>
               </div>
-              <button onClick={() => setIsCameraModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer">
+              <button onClick={() => setIsCameraModalOpen(false)} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="bg-slate-50 p-2 rounded-2xl border border-slate-200 overflow-hidden my-2">
-              <div id="qr-reader-container" className="w-full rounded-xl overflow-hidden text-slate-700 text-xs"></div>
+            <div className="bg-slate-950 p-2 rounded-2xl border border-slate-800 overflow-hidden my-2">
+              <div id="qr-reader-container" className="w-full rounded-xl overflow-hidden text-slate-300 text-xs"></div>
             </div>
 
-            <p className="text-xs text-slate-500 mt-3 font-mono">
+            <p className="text-xs text-slate-400 mt-3 font-mono">
               📷 Point your webcam or camera at any QR code, or select an image file to scan.
             </p>
 
             <button
               onClick={() => setIsCameraModalOpen(false)}
-              className="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+              className="mt-4 w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
             >
               Cancel Scan
             </button>
