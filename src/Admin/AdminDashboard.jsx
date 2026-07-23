@@ -477,16 +477,32 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
+      {/* MOBILE BACKDROP OVERLAY */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40"
+        />
+      )}
+
       {/* ================= MAIN CONTENT AREA ================= */}
-      <main className="flex-1 overflow-y-auto bg-[#090d16] p-6 lg:p-8 relative">
-        {globalLoading && <div className="absolute top-4 left-1/2 bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full z-50 animate-bounce">Syncing Server Logs...</div>}
+      <main className="flex-1 overflow-y-auto bg-[#090d16] p-4 sm:p-6 lg:p-8 relative">
+        {globalLoading && <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full z-50 animate-bounce">Syncing Server Logs...</div>}
         
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#142035] relative z-10">
-          <div>
-            <h2 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              {activeTab === 'Auctions' ? 'Property Auctions' : activeTab}
-            </h2>
-            <p className="text-slate-400 text-xs mt-1">PropSight AI ERP Administration Dashboard Panel.</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden p-2 bg-[#121c2e] text-slate-300 hover:text-white rounded-xl border border-[#1e2d4a] flex items-center gap-2 text-xs font-bold shrink-0 cursor-pointer"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="text-left">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                {activeTab === 'Auctions' ? 'Property Auctions' : activeTab}
+              </h2>
+              <p className="text-slate-400 text-xs mt-1">PropSight AI ERP Administration Dashboard Panel.</p>
+            </div>
           </div>
           <div className="flex items-center gap-3.5">
             <button 

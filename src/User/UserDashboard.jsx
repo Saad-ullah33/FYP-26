@@ -447,8 +447,20 @@ const handlePropertyFormSubmit = async (e) => {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-700 font-sans overflow-hidden">
+      {/* MOBILE BACKDROP OVERLAY */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-xs z-40"
+        />
+      )}
+
       {/* ================= SIDEBAR ================= */}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}>
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50 md:z-30
+        ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20'} 
+        bg-white border-r border-slate-200 transition-all duration-300 flex flex-col shrink-0
+      `}>
         <div className="p-4 flex items-center justify-between h-20 border-b border-slate-200">
           {isSidebarOpen ? (
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
@@ -474,23 +486,23 @@ const handlePropertyFormSubmit = async (e) => {
               onClick={() => navigate('/')}
             />
           )}
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded cursor-pointer transition">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer transition min-h-[44px] min-w-[44px] flex items-center justify-center">
             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-6">
           <ul className="space-y-1.5 px-3">
-            <SidebarItem icon={LayoutDashboard} text="Overview" active={activeTab === 'Overview'} onClick={() => setActiveTab('Overview')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={Building2} text="My Listings" active={activeTab === 'My Listings'} onClick={() => setActiveTab('My Listings')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={Heart} text="Saved Properties" active={activeTab === 'Saved Properties'} onClick={() => setActiveTab('Saved Properties')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={Calculator} text="Smart Build" active={activeTab === 'Smart Build'} onClick={() => setActiveTab('Smart Build')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={Gavel} text="Auctions" active={activeTab === 'Auctions'} onClick={() => setActiveTab('Auctions')} isOpen={isSidebarOpen} />
-            <SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => setActiveTab('Deeds')} isOpen={isSidebarOpen} />
+            <SidebarItem icon={LayoutDashboard} text="Overview" active={activeTab === 'Overview'} onClick={() => { setActiveTab('Overview'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
+            <SidebarItem icon={Building2} text="My Listings" active={activeTab === 'My Listings'} onClick={() => { setActiveTab('My Listings'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
+            <SidebarItem icon={Heart} text="Saved Properties" active={activeTab === 'Saved Properties'} onClick={() => { setActiveTab('Saved Properties'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
+            <SidebarItem icon={Calculator} text="Smart Build" active={activeTab === 'Smart Build'} onClick={() => { setActiveTab('Smart Build'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
+            <SidebarItem icon={Gavel} text="Auctions" active={activeTab === 'Auctions'} onClick={() => { setActiveTab('Auctions'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
+            <SidebarItem icon={QrCode} text="Digital Deeds" active={activeTab === 'Deeds'} onClick={() => { setActiveTab('Deeds'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
             <div className={`mt-6 mb-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider ${!isSidebarOpen && 'hidden'}`}>
               Account Settings
             </div>
-            <SidebarItem icon={User} text="Profile" active={activeTab === 'Profile'} onClick={() => setActiveTab('Profile')} isOpen={isSidebarOpen} />
+            <SidebarItem icon={User} text="Profile" active={activeTab === 'Profile'} onClick={() => { setActiveTab('Profile'); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} />
           </ul>
         </nav>
 
@@ -515,23 +527,31 @@ const handlePropertyFormSubmit = async (e) => {
       </aside>
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-6 lg:p-8">
-        {loading && <div className="absolute top-4 left-1/2 bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full z-50 animate-bounce">Processing Server Requests...</div>}
+      <main className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 sm:p-6 lg:p-8">
+        {loading && <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full z-50 animate-bounce">Processing Server Requests...</div>}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
-          <div>
-            <h2 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              {activeTab === 'Overview' && <LayoutDashboard className="text-blue-600" />}
-              {activeTab === 'My Listings' && <Building2 className="text-blue-600" />}
-              {activeTab === 'Saved Properties' && <Heart className="text-blue-600" />}
-              {activeTab === 'Smart Build' && <Calculator className="text-blue-600" />}
-              {activeTab === 'Auctions' && <Gavel className="text-blue-600" />}
-              {activeTab === 'Deeds' && <QrCode className="text-blue-600" />}
-              {activeTab === 'Profile' && <User className="text-blue-600" />}
-              {activeTab === 'Deeds' ? "Digital Deeds" : activeTab}
-            </h2>
-            <p className="text-slate-500 text-sm mt-1">
-              Manage listings, appraisal histories, bids, and profile credentials.
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="md:hidden p-2 bg-white text-slate-700 hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2 text-xs font-bold shrink-0 cursor-pointer min-h-[44px] min-w-[44px] justify-center"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="text-left">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                {activeTab === 'Overview' && <LayoutDashboard className="text-blue-600" />}
+                {activeTab === 'My Listings' && <Building2 className="text-blue-600" />}
+                {activeTab === 'Saved Properties' && <Heart className="text-blue-600" />}
+                {activeTab === 'Smart Build' && <Calculator className="text-blue-600" />}
+                {activeTab === 'Auctions' && <Gavel className="text-blue-600" />}
+                {activeTab === 'Deeds' && <QrCode className="text-blue-600" />}
+                {activeTab === 'Profile' && <User className="text-blue-600" />}
+                {activeTab === 'Deeds' ? "Digital Deeds" : activeTab}
+              </h2>
+              <p className="text-slate-500 text-xs sm:text-sm mt-1">
+                Manage listings, appraisal histories, bids, and profile credentials.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3.5 self-start sm:self-center">
